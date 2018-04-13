@@ -62,7 +62,7 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 
 |Bang|Description|Inputs|
 |----|-----------|------|
-||The empty bang matches all tracks in the database. In addition, a bang-less search matches track titles partially.|
+||Track Title Search|The empty bang matches all tracks in the database. In addition, a bang-less search matches track titles partially.|
 |`!q`|Full Text Search|Matches track title, album title, artist partially.|
 |`!Q`|Exact Full Text Search|Matches track title, album title, artist exactly.|
 |`!al`|Album Title|Matches the name of the album partially.|
