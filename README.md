@@ -1,6 +1,6 @@
 <h1>
   <ruby>
-    調 <rt>せい</rt>
+    調 <rt>整</rt>
     理 <rt>り</rt>
   </ruby>
   <em>seiri</em>
