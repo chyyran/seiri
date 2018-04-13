@@ -11,7 +11,7 @@
 ## About
 *seiri* is an opinionated music manager designed for large libraries (10000+ tracks). *Opinionated* means that *seiri* intentionally has one way of organizing music, and is not customizable besides very few options. This helps keeps large libraries consolidated and easily searachable. *seiri* doesn't care about the music player you use to listen to your library, or the tools used to tag your tracks, only the way the files are organized in folders. Because of this, *seiri* works best with music players that don't care where your music is stored, like [foobar2000](https://www.foobar2000.org/).
 
-*seiri* is a rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
+*seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
 
 
 ## What *seiri* does do.
@@ -80,3 +80,74 @@ Bangs can be combined with the logical symbols `&&` (AND) and `||` (OR).
 `seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
 
 `seiri-core` exposes a GraphQL endpoint with the following schema to communicate with any clients.
+
+```graphql
+enum FileType {
+        FLAC,
+        FLAC_4,
+        FLAC_8,
+        FLAC_16,
+        FLAC_24,
+        FLAC_32,
+        ALAC,
+        MP3_CBR,
+        MP3_VBR,
+        AAC,
+        VORBIS,
+        OPUS,
+        WAVPACK,
+        APE
+        UNKNOWN
+}
+
+type PageInfo {
+  # When paginating forwards, are there more items?
+  hasNextPage: Boolean!
+  # When paginating backwards, are there more items?
+  hasPreviousPage: Boolean!
+  # When paginating backwards, the cursor to continue.
+  startCursor: String
+  # When paginating forwards, the cursor to continue.
+  endCursor: String
+}
+
+type Track {
+  FilePath: String!
+  Title: String!
+  Artist: String!
+  AlbumArtists: String!
+  Album: String!
+  Year: Int!
+  TrackNumber: Int!
+  MusicBrainzTrackId: String!
+  HasFrontCover: Boolean!
+  FrontCoverWidth: Int!
+  FrontCoverHeight: Int!
+  Bitrate: Int!
+  SampleRate: Int!
+  Source: String!
+  DiscNumber: Int!
+  Duration: Int!
+  FileType: FileType!
+}
+
+type TrackEdge {
+  cursor: String!
+  node: Track!
+}
+
+type TrackConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [TrackEdge]!
+  items: [Track]!
+}
+
+type Query {
+  # Gets the tracks as a connection for the following query.
+  tracks(query: String!, after: String, first: Int!): TrackConnection
+  
+  # Refresh the tracks with the given file path, and return the new tracks.
+  refresh(files: [String]): [Track]
+}
+```
