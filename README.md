@@ -112,23 +112,23 @@ type PageInfo {
 }
 
 type Track {
-  FilePath: String!
-  Title: String!
-  Artist: String!
-  AlbumArtists: String!
-  Album: String!
-  Year: Int!
-  TrackNumber: Int!
-  MusicBrainzTrackId: String!
-  HasFrontCover: Boolean!
-  FrontCoverWidth: Int!
-  FrontCoverHeight: Int!
-  Bitrate: Int!
-  SampleRate: Int!
-  Source: String!
-  DiscNumber: Int!
-  Duration: Int!
-  FileType: FileType!
+  filePath: String!
+  title: String!
+  artist: String!
+  albumArtists: String!
+  album: String!
+  year: Int!
+  trackNumber: Int!
+  musicBrainzTrackId: String!
+  hasFrontCover: Boolean!
+  frontCoverWidth: Int!
+  frontCoverHeight: Int!
+  bitrate: Int!
+  sampleRate: Int!
+  source: String!
+  discNumber: Int!
+  duration: Int!
+  fileType: FileType!
 }
 
 type TrackEdge {
