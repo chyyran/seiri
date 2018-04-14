@@ -5,3 +5,8 @@ authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 
 [dependencies]
 notify = "4.0.3"
+taglib = "0.1.0"
+
+[dependencies.rusqlite]
+version = "0.13.0"
+features = ["bundled"]

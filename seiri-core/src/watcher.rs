@@ -2,10 +2,10 @@ extern crate notify;
 
 use std::path::PathBuf;
 use std::fs::OpenOptions;
-
+use std::fs;
+use std::io;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
-use std::thread;
 use std::time::Duration;
 use notify::DebouncedEvent;
 
@@ -22,7 +22,23 @@ fn check_idle(path: &PathBuf) -> bool {
     };
 }
 
-pub fn watch(watch_dir: &str) -> notify::Result<()> {
+pub fn list<F>(watch_dir: &str, process: F) -> ()
+where
+    F: Fn(&PathBuf) -> (),
+{
+    if let Ok(paths) = fs::read_dir(watch_dir) {
+        for result in paths {
+            if let Ok(path) = result {
+                process(&path.path());
+            }
+        }
+    }
+}
+
+pub fn watch<F>(watch_dir: &str, process: F) -> notify::Result<()>
+where
+    F: Fn(&PathBuf) -> (),
+{
     // Create a channel to receive the events.
     let (tx, rx) = channel();
 
@@ -39,19 +55,18 @@ pub fn watch(watch_dir: &str) -> notify::Result<()> {
 
     loop {
         match rx.recv() {
-            Ok(event) => match &event {
-                &DebouncedEvent::Write(ref path) => {
+            Ok(event) => {
+                if let DebouncedEvent::Write(ref path) = event {
                     if check_idle(path) {
-                        println!("File settled at {:?} from write event", path);
+                        process(path);
                     }
                 }
-                &DebouncedEvent::Create(ref path) => {
+                if let DebouncedEvent::Create(ref path) = event {
                     if check_idle(path) {
-                        println!("File settled at {:?} from create event.", path);
+                        process(path);
                     }
                 }
-                _ => println!("Other event occurred: {:?}", event),
-            },
+            }
             Err(e) => println!("watch error: {:?}", e),
         }
     }
