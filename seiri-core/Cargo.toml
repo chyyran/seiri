@@ -1,0 +1,7 @@
+[package]
+name = "seiri-core"
+version = "0.1.0"
+authors = ["Ronny Chan <ronny@ronnchyran.com>"]
+
+[dependencies]
+notify = "4.0.3"
