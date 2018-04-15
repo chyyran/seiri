@@ -17,7 +17,7 @@ enum TrackFileType {
     Vorbis,
     Opus,
     Wavpack,
-    Ape,
+    MonkeysAudio,
     Unknown,
 }
 
