@@ -8,6 +8,7 @@ notify = "4.0.3"
 
 [dependencies.taglib]
 path = "deps/taglib-rust"
+features = ["use-vcpkg"]
 
 [dependencies.rusqlite]
 version = "0.13.0"

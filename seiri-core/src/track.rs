@@ -43,6 +43,7 @@ pub struct Track {
 impl Track {
     pub fn get_track_title(file_path: &str) -> Result<Option<String>, taglib::FileError> {
         let track = File::new(file_path);
+        println!("hi");
         Ok(track?.tag()?.title)
     }
 }
