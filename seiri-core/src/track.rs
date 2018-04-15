@@ -108,22 +108,34 @@ impl Track {
             _ => TrackFileType::Unknown,
         };
 
-        let empty_artists = Vec::<Value>::new();
         let album_artists_unwrapped = match album_artists.as_array() {
             Some(arr) => arr,
-            None => &empty_artists,
+            None => return Err(Error::MissingRequiredTag(file_path.to_str().unwrap().to_owned(), "AlbumArtist"))
         };
 
+        let title = title.as_str().unwrap_or("").to_owned();
+        let artist = artist.as_str().unwrap_or("").to_owned();
+        let album = album.as_str().unwrap_or("").to_owned();
+
+        if title.is_empty() {
+            return Err(Error::MissingRequiredTag(file_path.to_str().unwrap().to_owned(), "Title"))
+        }
+        if artist.is_empty() {
+            return Err(Error::MissingRequiredTag(file_path.to_str().unwrap().to_owned(), "Artist"))
+        }
+        if album.is_empty() {
+            return Err(Error::MissingRequiredTag(file_path.to_str().unwrap().to_owned(), "Album"))
+        }
         let track = Track {
             file_path: file_path.to_str().unwrap().to_owned(),
             source: source.unwrap_or(String::from("None")),
-            title: title.as_str().unwrap_or("Unknown Title").to_owned(),
-            artist: artist.as_str().unwrap_or("Unknown Artist").to_owned(),
+            title: title,
+            artist: artist,
             album_artists: album_artists_unwrapped
                 .into_iter()
                 .map(|val| val.as_str().unwrap().to_owned())
                 .collect::<Vec<String>>(),
-            album: album.as_str().unwrap_or("Unknown Album").to_owned(),
+            album: album,
             year: year.as_u64().unwrap_or(0).to_owned(),
             track_number: track_number.as_u64().unwrap_or(0).to_owned(),
             musicbrainz_track_id: musicbrainz_track_id.as_str().unwrap_or("").to_owned(),

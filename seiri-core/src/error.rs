@@ -23,5 +23,9 @@ quick_error! {
             description("Katatsuki tag helper was not found in tools.")
             display("Katatsuki tag helper was not found in tools.")
         }
+        MissingRequiredTag(file_name: String, tag_name: &'static str) {
+            description("Track does not contain the required tag.")
+            display(r#"The track "{}" does not have the required tag {}"#, file_name, tag_name)
+        }
     }
 }

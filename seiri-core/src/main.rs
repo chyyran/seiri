@@ -25,6 +25,7 @@ fn process(path: &PathBuf) {
         ),
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
+            Error::MissingRequiredTag(file_name, tag) => println!("Found track {} but missing tag {}", file_name, tag),
             _ => {}
         },
     }
