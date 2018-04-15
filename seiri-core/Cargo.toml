@@ -7,7 +7,7 @@ authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 notify = "4.0.3"
 
 [dependencies.taglib]
-path = "taglib/taglib-rust"
+path = "deps/taglib-rust"
 
 [dependencies.rusqlite]
 version = "0.13.0"
