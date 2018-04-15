@@ -1,18 +1,33 @@
+#[macro_use]
+extern crate quick_error;
+
 extern crate notify;
-extern crate taglib;
+extern crate serde_json;
+extern crate tree_magic;
 
 use std::path::PathBuf;
 use std::thread;
-use std::fs::File;
-use std::io::Write;
+
+use error::Error;
 
 mod utils;
 mod watcher;
 mod track;
 mod taglibsharp;
+mod error;
 
-fn process(path : &PathBuf) {
-    println!("Found path to be watched {:?}", path);
+fn process(path: &PathBuf) {
+    let track = track::Track::new(path, None);
+    match track {
+        Ok(tagdata) => println!(
+            "Found track {} - {} - {:?}",
+            tagdata.title, tagdata.artist, tagdata.file_type
+        ),
+        Err(err) => match err {
+            Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
+            _ => {}
+        },
+    }
 }
 
 fn main() {
@@ -23,10 +38,5 @@ fn main() {
         }
     });
 
-    let track_data = taglibsharp::call_helper("C:\\watch\\1-08 seeds.flac");
-    let file = File::create("foo.txt");
-    let track_data = track_data.unwrap();
-    file.unwrap().write_all(&track_data.as_bytes());
-    println!("{}", &track_data);
     utils::wait_for_exit();
 }

@@ -1,4 +1,5 @@
-namespace taglibsharp_katatsuki {
+namespace taglibsharp_katatsuki
+{
     public enum TrackFileType
     {
         FLAC,

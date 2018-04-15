@@ -56,6 +56,9 @@ where
     loop {
         match rx.recv() {
             Ok(event) => {
+                // We only want to process events when the file is idle.
+                // However, if the write finishes before the delay, only the create event is fired.
+                // Otherwise, the write event will be delayed until the latest possible.
                 if let DebouncedEvent::Write(ref path) = event {
                     if check_idle(path) {
                         process(path);

@@ -1,9 +1,11 @@
-use std::process::{Command, Output};
+use std::process::Command;
 use std::env;
-use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use error::{Error, Result};
 
-fn locate_helper() -> Result<PathBuf, io::Error> {
+extern crate tree_magic;
+
+fn locate_helper() -> Result<PathBuf> {
     if cfg!(target_os = "windows") {
         let mut path = env::current_dir().unwrap();
         path.push("tools");
@@ -11,29 +13,39 @@ fn locate_helper() -> Result<PathBuf, io::Error> {
         path.push("taglibsharp-katatsuki");
         path.push("taglibsharp-katatsuki.exe");
         if !path.exists() {
-            let err = io::Error::new(io::ErrorKind::NotFound, "Could not find TagLibSharp Helper");
-            return Err(err);
+            return Err(Error::HelperNotFound);
         }
-        return Ok(path)
+        return Ok(path);
     }
-    let err = io::Error::new(io::ErrorKind::NotFound, "Unsupported Operating System");
-    return Err(err);
+    return Err(Error::UnsupportedOS);
 }
 
-pub fn call_helper(file_path: &str) -> Option<String> {
+pub fn call_helper(file_path: &str) -> Result<String> {
+    let pathbuf = PathBuf::from(file_path);
+    if !pathbuf.exists() {
+        return Err(Error::FileNotFound(file_path.to_owned()));
+    }
+    let mimetype = tree_magic::from_filepath(pathbuf.as_path());
+    if !mimetype.starts_with("audio") {
+        return Err(Error::UnsupportedFile(file_path.to_owned()));
+    } 
     let helper = locate_helper();
-    if let Ok(path) = helper {
-        let mut command = Command::new(path);
-        command.arg(file_path);
-        let result = command.output().ok().and_then(|output: Output| {
-            if output.status.success() {
-                Some(String::from_utf8(output.stdout).unwrap())
-            } else {
-                None
+    match helper {
+        Ok(path) => {
+            let mut command = Command::new(path);
+            command.arg(file_path);
+            match command.output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        let result = String::from_utf8(output.stdout).unwrap();
+                        Ok(result)
+                    } else {
+                        Err(Error::UnsupportedFile(file_path.to_owned()))
+                    }
+                }
+                Err(_) => Err(Error::HelperNotFound),
             }
-        });
-        result
-    } else {
-        None
+        }
+        Err(err) => Err(err),
     }
 }

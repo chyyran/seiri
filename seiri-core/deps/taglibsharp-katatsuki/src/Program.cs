@@ -8,19 +8,30 @@ namespace taglibsharp_katatsuki
     {
         static void Main(string[] args)
         {
-            if (args.Length == 0) {
-                Console.WriteLine("Specify file as commandline argument.");
+            if (args.Length == 0)
+            {
+                Console.Error.WriteLine("Specify file as commandline argument.");
                 Environment.Exit(1);
             }
 
-            if (!File.Exists(args[0])) {
-                Console.WriteLine($"Cannot find file {args[0]}.");
+            if (!File.Exists(args[0]))
+            {
+                Console.Error.WriteLine($"Cannot find file {args[0]}.");
                 Environment.Exit(1);
             }
 
-            var track = new Track(args[0]);
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.WriteLine(JsonConvert.SerializeObject(track));
+            try
+            {
+                var track = new Track(args[0]);
+                Console.OutputEncoding = Encoding.UTF8;
+                Console.WriteLine(JsonConvert.SerializeObject(track));
+                Environment.Exit(0);
+            }
+            catch (TagLib.UnsupportedFormatException)
+            {
+                Console.Error.WriteLine($"File {args[0]} is unsupported.");
+                Environment.Exit(0);
+            }
         }
     }
 }

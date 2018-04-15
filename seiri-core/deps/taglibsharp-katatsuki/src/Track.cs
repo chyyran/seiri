@@ -12,7 +12,6 @@ namespace taglibsharp_katatsuki
 {
     public class Track
     {
-        public string FilePath { get; set; }
         public string Title { get; set; }
         public string Artist { get; set; }
         public IList<string> AlbumArtists { get; set; }
@@ -26,16 +25,14 @@ namespace taglibsharp_katatsuki
         public int Bitrate { get; set; }
         public int SampleRate { get; set; }
         public long Duration { get; set; }
-        
+
         [JsonConverter(typeof(StringEnumConverter))]
         public TrackFileType FileType { get; set; }
 
         public Track(string filename)
         {
-            this.FilePath = Path.GetFullPath(filename);
             using (var file = TagLib.File.Create(filename))
             {
-
                 this.FileType = Track.GetTrackFileType(file.Properties.Description, file.Properties.BitsPerSample);
                 this.Duration = file.Properties.Duration.Ticks;
                 this.SampleRate = file.Properties.AudioSampleRate;
@@ -62,7 +59,6 @@ namespace taglibsharp_katatsuki
             }
 
         }
-
         private static TrackFileType GetTrackFileType(string description, int bitdepth = 0)
         {
 
@@ -109,26 +105,6 @@ namespace taglibsharp_katatsuki
             }
             return TrackFileType.Unknown;
         }
-        public Track()
-        {
-
-        }
-
-
-        public override bool Equals(object obj)
-        {
-            if (obj is Track t)
-            {
-                return t.FilePath.Equals(this.FilePath, StringComparison.InvariantCultureIgnoreCase);
-            }
-            return base.Equals(obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.FilePath.GetHashCode();
-        }
-
         private static TrackFileType GetFlacType(int bitdepth)
         {
             switch (bitdepth)

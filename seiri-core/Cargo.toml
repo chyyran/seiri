@@ -6,10 +6,9 @@ include = ["tools/**/*"]
 
 [dependencies]
 notify = "4.0.3"
-
-[dependencies.taglib]
-path = "deps/taglib-rust"
-features = ["use-vcpkg"]
+serde_json = "1.0.14"
+quick-error = "1.2.1"
+tree_magic = "0.2.0"
 
 [dependencies.rusqlite]
 version = "0.13.0"
