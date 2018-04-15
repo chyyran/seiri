@@ -44,11 +44,11 @@ where
 
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = try!(Watcher::new(tx, Duration::from_secs(1)));
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
-    try!(watcher.watch(watch_dir, RecursiveMode::Recursive));
+    watcher.watch(watch_dir, RecursiveMode::Recursive)?;
 
     // This is a simple loop, but you may want to use more complex logic here,
     // for example to handle I/O.

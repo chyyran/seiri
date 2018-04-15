@@ -1,0 +1,6 @@
+[submodule "seiri-core/taglib/taglib-rust"]
+	path = seiri-core/taglib/taglib-rust
+	url = https://github.com/RonnChyran/taglib-rust
+[submodule "seiri-core/taglib/taglib"]
+	path = seiri-core/taglib/taglib
+	url = https://github.com/taglib/taglib

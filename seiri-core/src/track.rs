@@ -1,5 +1,6 @@
 extern crate taglib;
 
+use taglib::*;
 use std::time::Duration;
 
 enum TrackFileType {
@@ -20,7 +21,7 @@ enum TrackFileType {
     Unknown,
 }
 
-struct Track {
+pub struct Track {
     file_path: String,
     title: String,
     artist: String,
@@ -40,5 +41,8 @@ struct Track {
 }
 
 impl Track {
-
+    pub fn get_track_title(file_path: &str) -> Result<Option<String>, taglib::FileError> {
+        let track = File::new(file_path);
+        Ok(track?.tag()?.title)
+    }
 }

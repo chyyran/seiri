@@ -20,5 +20,13 @@ fn main() {
         }
     });
 
+    let track_title = track::Track::get_track_title("C:\\watch\\1-07 Alone.flac");
+    
+    if let Ok(title) = track_title {
+        if let Some(title) = title {
+            println!("{}", title);
+        }
+    }
+
     utils::wait_for_exit();
 }
