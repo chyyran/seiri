@@ -9,8 +9,8 @@ fn locate_helper() -> Result<PathBuf> {
     if cfg!(target_os = "windows") {
         let mut path = env::current_dir().unwrap();
         path.push("tools");
-        path.push("win-x64");
         path.push("taglibsharp-katatsuki");
+        path.push("win-x64");
         path.push("taglibsharp-katatsuki.exe");
         if !path.exists() {
             return Err(Error::HelperNotFound);

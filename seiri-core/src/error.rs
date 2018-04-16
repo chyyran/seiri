@@ -27,5 +27,9 @@ quick_error! {
             description("Track does not contain the required tag.")
             display(r#"The track "{}" does not have the required tag {}"#, file_name, tag_name)
         }
+        InvalidFormatError {
+            description("Invalid Track Format.")
+            display("Invalid Track Format.")
+        }
     }
 }

@@ -9,6 +9,8 @@ notify = "4.0.3"
 serde_json = "1.0.14"
 quick-error = "1.2.1"
 tree_magic = "0.2.0"
+regex = "0.2.10"
+lazy_static = "1.0.0"
 
 [dependencies.rusqlite]
 version = "0.13.0"
