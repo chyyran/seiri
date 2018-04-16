@@ -11,7 +11,7 @@ pub fn wait_for_exit() {
         }
         if input.trim().starts_with("query") {
             let query_str : &str = input.trim().splitn(2, " ").last().unwrap();
-            println!("{:?}", Bang::parse(query_str));
+            println!("{}", Bang::parse(query_str).to_sql());
         }
         input.clear();
         continue;
