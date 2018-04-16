@@ -3,7 +3,6 @@ extern crate notify;
 use std::path::PathBuf;
 use std::fs::OpenOptions;
 use std::fs;
-use std::io;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
 use std::time::Duration;

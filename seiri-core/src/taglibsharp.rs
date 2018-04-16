@@ -1,6 +1,6 @@
 use std::process::Command;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use error::{Error, Result};
 
 extern crate tree_magic;

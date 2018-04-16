@@ -4,6 +4,7 @@ extern crate quick_error;
 extern crate notify;
 extern crate serde_json;
 extern crate tree_magic;
+extern crate rusqlite;
 
 use std::path::PathBuf;
 use std::thread;
@@ -15,6 +16,7 @@ mod watcher;
 mod track;
 mod taglibsharp;
 mod error;
+mod database;
 
 fn process(path: &PathBuf) {
     let track = track::Track::new(path, None);
