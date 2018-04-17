@@ -1,5 +1,6 @@
 extern crate quick_error;
 
+use bangs::LexerMode;
 use std::result;
 
 pub type Result<T> = result::Result<T, Error>;
@@ -30,6 +31,10 @@ quick_error! {
         InvalidFormatError {
             description("Invalid Track Format.")
             display("Invalid Track Format.")
+        }
+        LexerUnexpectedCharacter(character: char, mode: LexerMode) {
+            description("Unexpected character when lexing query string.")
+            display(r#"Unexpected "{}" when lexing {:?}"#, character, mode)
         }
     }
 }

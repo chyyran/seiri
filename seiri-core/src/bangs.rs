@@ -1,8 +1,11 @@
 extern crate lazy_static;
 extern crate regex;
 
+use std::iter::Peekable;
+use std::str::Chars;
 use regex::{Match, Regex};
 
+use error::{Error, Result};
 use std::str::FromStr;
 use track::TrackFileType;
 
@@ -35,16 +38,14 @@ impl<'a> ArgumentConverter<'a> for Option<Match<'a>> {
             .unwrap_or(0)
     }
 
-     fn as_bool(&self) -> bool {
+    fn as_bool(&self) -> bool {
         self.and_then(|arg: Match| Some(arg.as_str()))
             .and_then(|arg: &str| arg.parse::<bool>().ok())
             .unwrap_or(false)
     }
 
     fn get_index(&self) -> usize {
-        self.and_then(|arg: Match| { 
-            Some(arg.end())
-        }).unwrap_or(0)
+        self.and_then(|arg: Match| Some(arg.end())).unwrap_or(0)
     }
 }
 
@@ -75,33 +76,6 @@ pub enum Bang {
 }
 
 impl Bang {
-    fn prefix(&self) -> &'static str {
-        match *self {
-            Bang::TitleSearch(_) => "",
-            Bang::FullTextSearch(_) => "!q",
-            Bang::FullTextSearchExact(_) => "!Q",
-            Bang::AlbumTitle(_) => "!al",
-            Bang::AlbumTitleExact(_) => "!AL",
-            Bang::AlbumArtists(_) => "!alar",
-            Bang::AlbumArtistsExact(_) => "!ALAR",
-            Bang::Artist(_) => "!ar",
-            Bang::ArtistExact(_) => "!AR",
-            Bang::Format(_) => "!f",
-            Bang::BitrateLessThan(_) => "!brlt",
-            Bang::BitrateGreaterThan(_) => "!brgt",
-            Bang::CoverArtHeightGreaterThan(_) => "!chgt",
-            Bang::CoverArtHeightLessThan(_) => "!chlt",
-            Bang::CoverArtWidthGreaterThan(_) => "!cwgt",
-            Bang::CoverArtWidthLessThan(_) => "!cwlt",
-            Bang::HasCoverArt(_) => "!c",
-            Bang::HasMusicbrainzId(_) => "!mb",
-            Bang::Duplicates => "!dup",
-            Bang::LogicalAnd(_, _) => "&",
-            Bang::LogicalOr(_, _) => "|",
-            Bang::Grouping(_) => "!",
-        }
-    }
-
     pub fn to_sql(&self) -> String {
         match *self {
             Bang::TitleSearch(ref title) => format!("Title LIKE '%{}%'", title),
@@ -132,17 +106,13 @@ impl Bang {
         };
 
         let bang_str: Option<Match> = match NON_LOGICAL_BANG_REGEX.find(&query) {
-            Some(bang_str) => {
-                Some(bang_str)
-            }
+            Some(bang_str) => Some(bang_str),
             None => None,
         };
 
         let arg_str: Option<Match> = match QUERY_ARGUMENT_REGEX.captures(&query) {
             Some(captures) => match captures.get(1) {
-                Some(arg) => {
-                    Some(arg)
-                }
+                Some(arg) => Some(arg),
                 None => None,
             },
             None => None,
@@ -173,12 +143,9 @@ impl Bang {
             None => Bang::TitleSearch(query.to_owned().to_string()),
         };
 
-        let concatenator_str: Option<Match> =
-            match LOGICAL_BANG_REGEX.captures(&query) {
+        let concatenator_str: Option<Match> = match LOGICAL_BANG_REGEX.captures(&query) {
             Some(captures) => match captures.get(1) {
-                Some(operator) => {
-                    Some(operator)
-                }
+                Some(operator) => Some(operator),
                 None => None,
             },
             None => None,
@@ -201,4 +168,132 @@ impl Bang {
             bang
         }
     }
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum Token {
+    BangBegin(char),
+    BangIdentifier(String),
+    ArgumentBegin,
+    ArgumentEnd,
+    Argument(String),
+    LogicalOperator(char),
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum LexerMode {
+    Bang,
+    BangIdentifier,
+    Group,
+    ArgumentEdge,
+    Argument,
+}
+
+fn match_bang(c: &char, characters: &mut Peekable<Chars>) -> Result<Option<(Token, LexerMode)>> {
+    if !c.is_whitespace() {
+        return match c {
+            &'!' => {
+                characters.next();
+                Ok(Some((Token::BangBegin(*c), LexerMode::BangIdentifier)))
+            }
+            _ => Err(Error::LexerUnexpectedCharacter(*c, LexerMode::Bang)),
+        };
+    }
+    characters.next();
+    Ok(None)
+}
+
+fn match_bang_identifier(
+    c: &char,
+    characters: &mut Peekable<Chars>,
+) -> Result<Option<(Token, LexerMode)>> {
+    if c.is_alphanumeric() {
+        let mut bang_identifier: String = String::from("");
+        while let Some(c) = characters.peek().cloned() {
+            if c.is_alphanumeric() {
+                bang_identifier.push(c);
+                characters.next();
+            } else {
+                break;
+            }
+        }
+        let token = Token::BangIdentifier(bang_identifier);
+        Ok(Some((token, LexerMode::ArgumentEdge)))
+    } else if c.is_whitespace() {
+        characters.next();
+        Ok(None)
+    } else {
+        return Err(Error::LexerUnexpectedCharacter(
+            *c,
+            LexerMode::BangIdentifier,
+        ));
+    }
+}
+
+fn match_argument_edge(
+    c: &char,
+    characters: &mut Peekable<Chars>,
+) -> Result<Option<(Token, LexerMode)>> {
+    if c.is_whitespace() {
+        characters.next();
+        Ok(None)
+    } else {
+        let token = match c {
+            &'|' => Some((Token::LogicalOperator('|'), LexerMode::Bang)),
+            &'&' => Some((Token::LogicalOperator('&'), LexerMode::Bang)),
+            &'{' => Some((Token::ArgumentBegin, LexerMode::Argument)),
+            &'}' => Some((Token::ArgumentEnd, LexerMode::ArgumentEdge)),
+            _ => return Err(Error::LexerUnexpectedCharacter(*c, LexerMode::ArgumentEdge)),
+        };
+        characters.next();
+        Ok(token)
+    }
+}
+
+fn match_argument(
+    c: &char,
+    characters: &mut Peekable<Chars>,
+) -> Result<Option<(Token, LexerMode)>> {
+    let mut argument: String = String::from("");
+    while let Some(c) = characters.peek().cloned() {
+        if c.is_alphanumeric() {
+            argument.push(c);
+            characters.next();
+        } else {
+            break;
+        }
+    }
+    let token = Token::Argument(argument);
+    Ok(Some((token, LexerMode::ArgumentEdge)))
+}
+
+pub fn lex_query(query: &str) -> Result<Vec<Token>> {
+    let mut tokens = Vec::<Token>::new();
+    let mut mode = LexerMode::Bang;
+
+    let query = query.to_owned();
+    let mut characters = query.chars().peekable();
+
+    while let Some(c) = characters.peek().cloned() {
+        let result = match mode {
+            LexerMode::Bang => match_bang(&c, &mut characters),
+            LexerMode::BangIdentifier => match_bang_identifier(&c, &mut characters),
+            LexerMode::ArgumentEdge => match_argument_edge(&c, &mut characters),
+            LexerMode::Argument => match_argument(&c, &mut characters),
+            _ => Ok(None),
+        };
+        match result {
+            Ok(some) => match some {
+                Some(token) => {
+                    mode = token.1;
+                    tokens.push(token.0);
+                    println!("{:?}", tokens)
+                }
+                None => (),
+            },
+            Err(err) => return Err(err),
+        }
+    }
+
+    Ok(tokens)
 }
