@@ -3,11 +3,16 @@ extern crate quick_error;
 
 #[macro_use]
 extern crate lazy_static;
+
+#[macro_use]
+extern crate itertools;
+
 extern crate notify;
 extern crate serde_json;
 extern crate tree_magic;
 extern crate rusqlite;
 extern crate regex;
+
 
 use std::path::PathBuf;
 use std::thread;

@@ -1,13 +1,17 @@
+extern crate itertools;
 extern crate lazy_static;
 extern crate regex;
 
-use std::iter::Peekable;
 use std::str::Chars;
 use regex::{Match, Regex};
 
 use error::{Error, Result};
 use std::str::FromStr;
 use track::TrackFileType;
+
+use itertools::Itertools;
+use itertools::multipeek;
+use itertools::MultiPeek;
 
 trait ArgumentConverter<'a> {
     fn as_string(&self) -> String;
@@ -184,12 +188,11 @@ pub enum Token {
 pub enum LexerMode {
     Bang,
     BangIdentifier,
-    Group,
     ArgumentEdge,
     Argument,
 }
 
-fn match_bang(c: &char, characters: &mut Peekable<Chars>) -> Result<Option<(Token, LexerMode)>> {
+fn match_bang(c: &char, characters: &mut MultiPeek<Chars>) -> Result<Option<(Token, LexerMode)>> {
     if !c.is_whitespace() {
         return match c {
             &'!' => {
@@ -205,20 +208,18 @@ fn match_bang(c: &char, characters: &mut Peekable<Chars>) -> Result<Option<(Toke
 
 fn match_bang_identifier(
     c: &char,
-    characters: &mut Peekable<Chars>,
+    characters: &mut MultiPeek<Chars>,
 ) -> Result<Option<(Token, LexerMode)>> {
     if c.is_alphanumeric() {
-        let mut bang_identifier: String = String::from("");
-        while let Some(c) = characters.peek().cloned() {
-            if c.is_alphanumeric() {
-                bang_identifier.push(c);
-                characters.next();
-            } else {
-                break;
-            }
-        }
-        let token = Token::BangIdentifier(bang_identifier);
+        let token = Token::BangIdentifier(
+            characters
+                .take_while_ref(|&c| c.is_alphanumeric())
+                .collect(),
+        );
         Ok(Some((token, LexerMode::ArgumentEdge)))
+    } else if c == &'!' {
+        characters.next();
+        Ok(Some((Token::BangIdentifier(String::from("!")), LexerMode::ArgumentEdge)))
     } else if c.is_whitespace() {
         characters.next();
         Ok(None)
@@ -232,7 +233,7 @@ fn match_bang_identifier(
 
 fn match_argument_edge(
     c: &char,
-    characters: &mut Peekable<Chars>,
+    characters: &mut MultiPeek<Chars>
 ) -> Result<Option<(Token, LexerMode)>> {
     if c.is_whitespace() {
         characters.next();
@@ -252,19 +253,37 @@ fn match_argument_edge(
 
 fn match_argument(
     c: &char,
-    characters: &mut Peekable<Chars>,
+    characters: &mut MultiPeek<Chars>,
+    tokens: &Vec<Token>
 ) -> Result<Option<(Token, LexerMode)>> {
-    let mut argument: String = String::from("");
-    while let Some(c) = characters.peek().cloned() {
-        if c.is_alphanumeric() {
-            argument.push(c);
-            characters.next();
-        } else {
-            break;
+    if c == &'!' {
+        let token = &tokens.iter().rev().nth(1);
+        match token {
+            &Some(ref token) => {
+                match token {
+                    &&Token::BangIdentifier(ref token) => match token.as_ref() {
+                        "!" => return match_bang(c, characters),
+                        _ => ()
+                    }
+                    _ => ()
+                }
+            }
+            &None => return Err(Error::LexerUnexpectedCharacter(*c, LexerMode::Argument)),
         }
-    }
-    let token = Token::Argument(argument);
-    Ok(Some((token, LexerMode::ArgumentEdge)))
+    };
+
+    Ok(Some((
+        // todo: replace with more complex logic allowing for } between args.
+        Token::Argument(
+            characters
+                .take_while_ref(|&c| match c {
+                    '}' => false,
+                    _ => true,
+                })
+                .collect(),
+        ),
+        LexerMode::ArgumentEdge,
+    )))
 }
 
 pub fn lex_query(query: &str) -> Result<Vec<Token>> {
@@ -272,22 +291,21 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
     let mut mode = LexerMode::Bang;
 
     let query = query.to_owned();
-    let mut characters = query.chars().peekable();
+    let mut characters = multipeek(query.chars());
 
     while let Some(c) = characters.peek().cloned() {
         let result = match mode {
             LexerMode::Bang => match_bang(&c, &mut characters),
             LexerMode::BangIdentifier => match_bang_identifier(&c, &mut characters),
             LexerMode::ArgumentEdge => match_argument_edge(&c, &mut characters),
-            LexerMode::Argument => match_argument(&c, &mut characters),
+            LexerMode::Argument => match_argument(&c, &mut characters, &tokens),
             _ => Ok(None),
         };
         match result {
             Ok(some) => match some {
                 Some(token) => {
                     mode = token.1;
-                    tokens.push(token.0);
-                    println!("{:?}", tokens)
+                    tokens.push(token.0)
                 }
                 None => (),
             },

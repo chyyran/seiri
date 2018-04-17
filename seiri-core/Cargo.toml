@@ -11,6 +11,7 @@ quick-error = "1.2.1"
 tree_magic = "0.2.0"
 regex = "0.2.10"
 lazy_static = "1.0.0"
+itertools = "0.7.8"
 
 [dependencies.rusqlite]
 version = "0.13.0"
