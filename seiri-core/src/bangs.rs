@@ -219,10 +219,10 @@ fn match_bang_identifier(
         Ok(Some((token, LexerMode::ArgumentEdge)))
     } else if c == &'!' {
         characters.next();
-        Ok(Some((Token::BangIdentifier(String::from("!")), LexerMode::ArgumentEdge)))
-    } else if c.is_whitespace() {
-        characters.next();
-        Ok(None)
+        Ok(Some((
+            Token::BangIdentifier(String::from("!")),
+            LexerMode::ArgumentEdge,
+        )))
     } else {
         return Err(Error::LexerUnexpectedCharacter(
             *c,
@@ -233,7 +233,7 @@ fn match_bang_identifier(
 
 fn match_argument_edge(
     c: &char,
-    characters: &mut MultiPeek<Chars>
+    characters: &mut MultiPeek<Chars>,
 ) -> Result<Option<(Token, LexerMode)>> {
     if c.is_whitespace() {
         characters.next();
@@ -251,39 +251,213 @@ fn match_argument_edge(
     }
 }
 
+/// Searches a multipeek for the next character not equal to the specified character.
+/// Advances the peek cursor.
+fn next_non_character(ignore: char, chars: &mut MultiPeek<Chars>) -> Result<(char, usize)> {
+    let mut index: usize = 0;
+    while let Some(c) = chars.peek().cloned() {
+        match c {
+            _ if c == ignore => index += 1,
+            _ => return Ok((c, index)),
+        }
+    }
+    Err(Error::LexerUnexpectedEndOfInput)
+}
+
+fn remaining(chars: &mut MultiPeek<Chars>) -> usize {
+    let mut index: usize = 0;
+    while let Some(c) = chars.peek().cloned() {
+        index += 1;
+    }
+    chars.reset_peek();
+    index
+}
+/// Counts the amount of mismatched braces current.
+fn brace_counter(tokens: &Vec<Token>) -> usize {
+    let mut counter: usize = 0;
+
+    for token in tokens {
+        match token {
+            &Token::ArgumentBegin => counter += 1,
+            &Token::ArgumentEnd => counter -= 1,
+            _ => continue,
+        };
+    }
+    counter
+}
+
 fn match_argument(
     c: &char,
     characters: &mut MultiPeek<Chars>,
-    tokens: &Vec<Token>
+    tokens: &Vec<Token>,
 ) -> Result<Option<(Token, LexerMode)>> {
-    if c == &'!' {
-        let token = &tokens.iter().rev().nth(1);
+    if let &Some(ref token) = &tokens.iter().rev().nth(1) {
         match token {
-            &Some(ref token) => {
-                match token {
-                    &&Token::BangIdentifier(ref token) => match token.as_ref() {
-                        "!" => return match_bang(c, characters),
-                        _ => ()
-                    }
-                    _ => ()
-                }
-            }
-            &None => return Err(Error::LexerUnexpectedCharacter(*c, LexerMode::Argument)),
+            &&Token::BangIdentifier(ref token) => match token.as_ref() {
+                "!" => return match_bang(c, characters),
+                _ => (),
+            },
+            _ => (),
         }
     };
 
-    Ok(Some((
-        // todo: replace with more complex logic allowing for } between args.
-        Token::Argument(
-            characters
-                .take_while_ref(|&c| match c {
-                    '}' => false,
-                    _ => true,
-                })
-                .collect(),
-        ),
-        LexerMode::ArgumentEdge,
-    )))
+    let mut argument = String::new();
+    characters.reset_peek(); // Reset the peek to right before entering this fn.
+                             // Note that 'c' in this scope now is now invalid.
+
+    while let Some(c) = characters.peek().cloned() {
+        match c {
+            '}' => {
+                // We need to determine if this bracket is a closing.
+                if let Ok(bracket_after) = next_non_character(' ', characters) {
+                    match bracket_after.0 {
+                        '|' | '&' => {
+                            // Need to see if the next non space character is a bang.
+                            // If so, drop this '}' and switch immediately to edge
+                            // mode.
+                            match next_non_character(' ', characters) {
+                                Ok(next_character) => {
+                                    match next_character.0 {
+                                        '!' => {
+                                            // We found a bang!
+                                            characters.reset_peek();
+                                            return Ok(Some((
+                                                Token::Argument(argument),
+                                                LexerMode::ArgumentEdge,
+                                            )));
+                                        }
+                                        _ => {
+                                            // Consume this '}'
+                                            characters.next();
+                                            characters.reset_peek();
+                                            argument.push(c);
+                                        }
+                                    }
+                                }
+                                Err(err) => return Err(err),
+                            };
+                        }
+                        '}' => {
+                            // Need to see if the next non '}' character is a logical operator.
+                            // If so, count braces and switch to edge detection once braces match.
+                            // Otherwise, consume this '}'
+                            match next_non_character('}', characters) {
+                                Ok(next_character) => {
+                                    match next_character.0 {
+                                        '|' | '&' => {
+                                            // Need to see if the next non space character is a bang.
+                                            // If so, take next_characters.0 - unmatched - 1 braces, then
+                                            // and immediately to edge mode.
+                                            match next_non_character(' ', characters) {
+                                                Ok(next_character) => {
+                                                    match next_character.0 {
+                                                        '!' => {
+                                                            // We found a bang!
+                                                            characters.reset_peek();
+                                                            let braces = brace_counter(tokens);
+
+                                                            // The operator was found after
+                                                            // n - 1 peeks (n = `next_character.1`)
+                                                            // In other words, there are n braces between
+                                                            // This '}' and the operator, with m braces,
+                                                            // where m =``braces`.
+                                                            // We will consume n - m braces.
+                                                            for _ in 0..(next_character.1 - braces)
+                                                            {
+                                                                if let Some(c) = characters.next() {
+                                                                    characters.reset_peek();
+                                                                    argument.push(c);
+                                                                } else {
+                                                                    return Err(Error::LexerUnexpectedEndOfInput);
+                                                                }
+                                                            }
+                                                            // Return the token with the proper amount of closing braces.
+                                                            return Ok(Some((
+                                                                Token::Argument(argument),
+                                                                LexerMode::ArgumentEdge,
+                                                            )));
+                                                        }
+                                                        _ => {
+                                                            // Consume this '}'
+                                                            characters.next();
+                                                            characters.reset_peek();
+                                                            argument.push(c);
+                                                        }
+                                                    }
+                                                }
+                                                Err(err) => return Err(err),
+                                            };
+                                        }
+                                        _ => {
+                                            // Consume this '}'
+                                            characters.next();
+                                            characters.reset_peek();
+                                            argument.push(c);
+                                        }
+                                    }
+                                }
+                                Err(_) => {
+                                    // We matched the end of the string,
+                                    // and have to do brace counting now.
+
+                                    characters.reset_peek(); // Include this '}'
+                                                             // Matching the end of string here means that
+                                                             // All the characters from here to the end are braces.
+                                    let length_remaining = remaining(characters);
+
+                                    // Braces to keep.
+                                    let braces = brace_counter(tokens);
+
+                                    for _ in 0..(length_remaining - braces) {
+                                        if let Some(c) = characters.next() {
+                                            characters.reset_peek();
+                                            argument.push(c);
+                                        } else {
+                                            return Err(Error::LexerUnexpectedEndOfInput);
+                                        }
+                                    }
+                                    return Ok(Some((
+                                        Token::Argument(argument),
+                                        LexerMode::ArgumentEdge,
+                                    )));
+                                }
+                            };
+                        }
+                        _ => {
+                            // Consume this '}'
+                            characters.next(); // We consume this character
+                            characters.reset_peek(); // Reset the peek to the next character.
+                            argument.push(c);
+                        }
+                    }
+                } else {
+                    // This is a closing bracket at the end of string,
+                    // and we are done parsing this argument.
+                    // Do not consume this '}'
+                    characters.reset_peek(); // Reset this peek.
+                    return Ok(Some((Token::Argument(argument), LexerMode::ArgumentEdge)));
+                };
+            }
+            // Support escapes as well.
+            '\\' => {
+                characters.next(); // Consume this '\' without adding it to the buffer.
+                if let Some(escape_after) = characters.next() {
+                    argument.push(escape_after);
+                    characters.reset_peek();
+                } else {
+                    // If we try an escape at the end of the striing
+                    return Err(Error::LexerUnexpectedEscapeCharacter(LexerMode::Argument));
+                };
+            }
+            _ => {
+                characters.next(); // We consume this character
+                characters.reset_peek(); // Reset the peek to the next character.
+                argument.push(c);
+            }
+        }
+    }
+
+    Ok(Some((Token::Argument(argument), LexerMode::ArgumentEdge)))
 }
 
 pub fn lex_query(query: &str) -> Result<Vec<Token>> {

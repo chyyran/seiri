@@ -36,5 +36,13 @@ quick_error! {
             description("Unexpected character when lexing query string.")
             display(r#"Unexpected "{}" when lexing {:?}"#, character, mode)
         }
+        LexerUnexpectedEscapeCharacter(mode: LexerMode) {
+            description("Escape character occurred at the end of the input.")
+            display(r#"Unexpected escape '\\' when lexing {:?}"#, mode)
+        }
+        LexerUnexpectedEndOfInput {
+            description("End of input?.")
+            display(r#"Input ended before argument was fully parsed."#)
+        }
     }
 }
