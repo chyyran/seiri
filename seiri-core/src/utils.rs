@@ -1,5 +1,4 @@
 use std::io;
-use bangs::Bang;
 use bangs::lex_query;
 pub fn wait_for_exit() {
     let stdin = io::stdin();

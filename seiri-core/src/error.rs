@@ -28,10 +28,6 @@ quick_error! {
             description("Track does not contain the required tag.")
             display(r#"The track "{}" does not have the required tag {}"#, file_name, tag_name)
         }
-        InvalidFormatError {
-            description("Invalid Track Format.")
-            display("Invalid Track Format.")
-        }
         LexerUnexpectedCharacter(character: char, mode: LexerMode) {
             description("Unexpected character when lexing query string.")
             display(r#"Unexpected "{}" when lexing {:?}"#, character, mode)
@@ -41,7 +37,7 @@ quick_error! {
             display(r#"Unexpected escape '\\' when lexing {:?}"#, mode)
         }
         LexerUnexpectedEndOfInput {
-            description("End of input?.")
+            description("End of input?")
             display(r#"Input ended before argument was fully parsed."#)
         }
     }
