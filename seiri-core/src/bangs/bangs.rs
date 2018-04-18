@@ -51,6 +51,7 @@ impl<'a> ArgumentConverter<'a> for Option<Match<'a>> {
 #[derive(Debug)]
 pub enum Bang {
     TitleSearch(String),
+    TItleSearchExact(String),
     FullTextSearch(String),
     FullTextSearchExact(String),
     AlbumTitle(String),

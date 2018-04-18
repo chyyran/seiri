@@ -6,13 +6,15 @@ use std::str::Chars;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Token {
+    MatchAll,
     BangBegin(char),
     BangIdentifier(String),
     ArgumentBegin,
     ArgumentEnd,
     Argument(String),
     LogicalOperator(char),
-    PreprocessTokenExpand(Vec<Token>)
+    InputEnd,
+    PreprocessTokenExpand(Vec<Token>),
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -89,7 +91,14 @@ fn match_argument_edge(
             &'&' => Some((Token::LogicalOperator('&'), LexerMode::Bang)),
             &'{' => Some((Token::ArgumentBegin, LexerMode::Argument)),
             &'}' => Some((Token::ArgumentEnd, LexerMode::ArgumentEdge)),
-            &'`' => Some((Token::PreprocessTokenExpand(vec![Token::ArgumentBegin, Token::Argument("true".to_owned()), Token::ArgumentEnd]), LexerMode::Argument)),
+            &'`' => Some((
+                Token::PreprocessTokenExpand(vec![
+                    Token::ArgumentBegin,
+                    Token::Argument("true".to_owned()),
+                    Token::ArgumentEnd,
+                ]),
+                LexerMode::Argument,
+            )),
             _ => return Err(Error::LexerUnexpectedCharacter(*c, LexerMode::ArgumentEdge)),
         };
         characters.next();
@@ -135,11 +144,7 @@ fn brace_counter(tokens: &Vec<Token>) -> usize {
     counter
 }
 
-fn match_bang_in_argument(
-    characters: &mut MultiPeek<Chars>,
-    tokens: &Vec<Token>,
-    argument: &mut String,
-) -> Result<bool> {
+fn match_bang_in_argument(characters: &mut MultiPeek<Chars>, tokens: &Vec<Token>) -> Result<bool> {
     // We found a bang!, we have to make triple sure it's a legitimet bang.
     // This is assuming that the current peek position is at the bang position.
     match characters.peek().cloned() {
@@ -174,7 +179,7 @@ fn match_argument_end(
                         match next_character.0 {
                             '!' => {
                                 // We found a bang!
-                                match match_bang_in_argument(characters, tokens, argument) {
+                                match match_bang_in_argument(characters, tokens) {
                                     Ok(is_bang) if is_bang => {
                                         characters.reset_peek();
                                         return Some(Ok(Some((
@@ -217,11 +222,7 @@ fn match_argument_end(
                                     Ok(next_character) => {
                                         match next_character.0 {
                                             '!' => {
-                                                match match_bang_in_argument(
-                                                    characters,
-                                                    tokens,
-                                                    argument,
-                                                ) {
+                                                match match_bang_in_argument(characters, tokens) {
                                                     Ok(is_bang) if is_bang => {
                                                         characters.reset_peek();
                                                         let braces = brace_counter(tokens);
@@ -382,13 +383,67 @@ fn match_argument(
     Ok(Some((Token::Argument(argument), LexerMode::ArgumentEdge)))
 }
 
+fn match_title(characters: &mut MultiPeek<Chars>,
+     tokens: &Vec<Token>,
+     query: &str) -> Option<Token> {
+    // We want the lexer to consider non bang openers as title peeks.
+    match next_non_match_character(|&c| c == ' ', characters) {
+        Ok(character) if character.0 == '!' => {
+            match match_bang_in_argument(characters, tokens) {
+                Ok(not_bang) if !not_bang => {
+                    // No bang found, return the title.
+                    characters.reset_peek();
+                    return Some(Token::PreprocessTokenExpand(vec![
+                        Token::BangBegin('!'),
+                        Token::BangIdentifier("t".to_owned()),
+                        Token::ArgumentBegin,
+                        Token::Argument(query.to_owned()),
+                        Token::ArgumentEnd,
+                        Token::InputEnd
+                    ]))
+                }
+                // There is a valid bang here, or some other weird shit. Just continue with regular parsing.
+                _ => None,
+            }
+        }
+        // No bang found, so this is a title.
+        _ => {
+            characters.reset_peek();
+            Some(Token::PreprocessTokenExpand(vec![
+                Token::BangBegin('!'),
+                Token::BangIdentifier("t".to_owned()),
+                Token::ArgumentBegin,
+                Token::Argument(query.to_owned()),
+                Token::ArgumentEnd,
+                Token::InputEnd
+            ]))
+        }
+    }
+}
+
 pub fn lex_query(query: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::<Token>::new();
     let mut mode = LexerMode::Bang;
 
+    // The empty query matches all tracks
+    if query.chars().count() == 0 {
+        tokens.push(Token::MatchAll);
+        tokens.push(Token::InputEnd);
+        return Ok(tokens);
+    };
+
     let query = query.to_owned();
     let mut characters = multipeek(query.chars());
 
+    match match_title(&mut characters, &tokens, &query) {
+        Some(Token::PreprocessTokenExpand(title)) => {
+            tokens.extend(title.into_iter());
+            return Ok(tokens);
+        },
+        _ => ()
+    }
+
+    characters.reset_peek();
     while let Some(c) = characters.peek().cloned() {
         let result = match mode {
             LexerMode::Bang => match_bang(&c, &mut characters),
@@ -401,8 +456,10 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
                 Some(token) => {
                     mode = token.1;
                     match token.0 {
-                        Token::PreprocessTokenExpand(expansion) => tokens.extend(expansion.into_iter()),
-                        _ => tokens.push(token.0)
+                        Token::PreprocessTokenExpand(expansion) => {
+                            tokens.extend(expansion.into_iter())
+                        }
+                        _ => tokens.push(token.0),
                     }
                 }
                 None => (),
@@ -411,5 +468,6 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
         }
     }
 
+    tokens.push(Token::InputEnd);
     Ok(tokens)
 }

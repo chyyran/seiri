@@ -10,7 +10,11 @@ pub fn wait_for_exit() {
             return;
         }
         if input.trim().starts_with("query") {
-            let query_str : &str = input.trim().splitn(2, " ").last().unwrap();
+            let query_str : &str = match input.trim().splitn(2, " ").nth(1) {
+                Some(query_str) => query_str,
+                None => ""
+            };
+
             match lex_query(query_str) {
                 Ok(query) => println!("{:?}", query),
                 Err(err) => println!("{}", err)
