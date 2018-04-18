@@ -78,7 +78,7 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 |`!dup`|Is a duplicate of another track (iTunes-like algorithm)|`true` or `false`|
 
 
-Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` is used to group multiple bangs together for scoping. There is also *true tick* syntax, where for bangs that take boolean values, can be written `!dup\`` as shorthand for `!dup{true}`.
+Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` is used to group multiple bangs together for scoping. There is also *true tick* syntax, where for bangs that take boolean values, can be written `!dup`` as shorthand for `!dup{true}`.
 
 ## GraphQL Query Format
 `seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
