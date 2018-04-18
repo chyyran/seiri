@@ -63,6 +63,7 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 |Bang|Description|Inputs|
 |----|-----------|------|
 ||Track Title Search|The empty bang matches all tracks in the database. In addition, a bang-less search matches track titles partially.|
+|`!!`|The group bang|Another bang expression.|
 |`!q`|Full Text Search|Matches track title, album title, artist partially.|
 |`!Q`|Exact Full Text Search|Matches track title, album title, artist exactly.|
 |`!al`|Album Title|Matches the name of the album partially.|
@@ -74,8 +75,10 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 |`!c(w\|h)[lt\|gt]`|Cover art has (width\|height) strictly \[Less Than \| Greater Than\]|Integer|
 |`!c`|Has cover art in tags|`true` or `false`|
 |`!mb`|Has [MusicBrainz](http://musicbrainz.org/) IDs in tags|`true` or `false`|
-|`!dup`|Finds duplicate tracks (iTunes-like algorithm)|No arguments|
-Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` allows you to group multiple bangs together for scoping.
+|`!dup`|Is a duplicate of another track (iTunes-like algorithm)|`true` or `false`|
+
+
+Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` is used to group multiple bangs together for scoping. There is also *true tick* syntax, where for bangs that take boolean values, can be written `!dup\`` as shorthand for `!dup{true}`.
 
 ## GraphQL Query Format
 `seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
