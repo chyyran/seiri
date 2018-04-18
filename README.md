@@ -74,8 +74,8 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 |`!c(w\|h)[lt\|gt]`|Cover art has (width\|height) strictly \[Less Than \| Greater Than\]|Integer|
 |`!c`|Has cover art in tags|`true` or `false`|
 |`!mb`|Has [MusicBrainz](http://musicbrainz.org/) IDs in tags|`true` or `false`|
-
-Bangs can be combined with the logical symbols `&&` (AND) and `||` (OR).
+|`!dup`|Finds duplicate tracks (iTunes-like algorithm)|No arguments|
+Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` allows you to group multiple bangs together for scoping.
 
 ## GraphQL Query Format
 `seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
