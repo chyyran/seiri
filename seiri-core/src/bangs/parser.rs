@@ -93,6 +93,34 @@ where
     }
 }
 
+pub fn take_until_braces_balanced<'a, 'b>(tokens: &'a mut Iter<Token>) -> Result<Vec<Token>> {
+    let mut group = Vec::<Token>::new();
+    // Assume that we have an argument begin here.
+    if let Some(&Token::ArgumentBegin) = tokens.next() {
+        let mut counter = 1;
+        while let Some(token) = tokens.next().cloned() {
+            match token {
+                Token::ArgumentBegin => counter += 1,
+                Token::ArgumentEnd => counter -= 1,
+                _ => (),
+            };
+            if counter != 0 {
+                group.push(token);
+            };
+            if counter == 0 {
+                // We need to pad the grouping with the
+                // InputEnd token, since parse_token_stream
+                // expects an InputEnd at the end.
+                group.push(Token::InputEnd);
+                return Ok(group);
+            }
+        }
+        Err(Error::LexerUnexpectedEndOfInput)
+    } else {
+        panic!("Sent the wrong token!");
+    }
+}
+
 pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
     // We're assuming that the slice begins at the
     // start of a token stream.
@@ -114,14 +142,23 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
 
     let lhs = if let Some(Token::BangIdentifier(bang_ident)) = bang_ident {
         match bang_ident.as_bang_type() {
-
             // For all bangs that aren't groupings, we can just
             // assume that it follows the sequence
             // [ArgumentBegin, Argument, ArgumentEnd]
-            BangType::TitleSearch => parse_bang(|search: String| Bang::TitleSearch(search),
-                extract_argument(tokens)),
-            BangType::Format => parse_bang(|format: TrackFileType| Bang::Format(format), 
-                extract_argument(tokens)),
+            BangType::TitleSearch => parse_bang(
+                |search: String| Bang::TitleSearch(search),
+                extract_argument(tokens),
+            ),
+            BangType::Grouping => {
+                let mut grouping_token_stream = take_until_braces_balanced(tokens)?;
+                Ok(Bang::Grouping(Box::new(parse_token_stream(
+                    &mut grouping_token_stream.iter(),
+                )?)))
+            }
+            BangType::Format => parse_bang(
+                |format: TrackFileType| Bang::Format(format),
+                extract_argument(tokens),
+            ),
             BangType::Unknown(unknown) => Err(Error::ParserUnknownBang(unknown)),
             _ => Ok(Bang::All),
         }
@@ -129,6 +166,7 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
         return Err(Error::LexerUnexpectedEndOfInput);
     };
 
+    // At this point, three tokens minimum should have been consumed.
     match tokens.next().cloned() {
         Some(Token::InputEnd) => lhs,
         Some(Token::LogicalOperator(operator)) => match operator {

@@ -28,7 +28,7 @@ pub enum Token {
 
     /// ArgumentEnd is the closing brace of the bang argument.
     /// It is always preceeded by Argument.
-    /// It can be followed by either ArgumentEnd, 
+    /// It can be followed by either ArgumentEnd,
     /// LogicalOperator, or InputEnd.
     ArgumentEnd,
 
@@ -50,7 +50,7 @@ pub enum Token {
     InputEnd,
 
     /// Used to expand a macro into a valid series of tokens during
-    /// the lexing step. 
+    /// the lexing step.
     PreprocessTokenExpand(Vec<Token>),
 }
 
@@ -182,7 +182,7 @@ fn brace_counter(tokens: &[Token]) -> usize {
 }
 
 fn match_bang_in_argument(characters: &mut MultiPeek<Chars>, tokens: &[Token]) -> Result<bool> {
-    // We found a bang!, we have to make triple sure it's a legitimet bang.
+    // We found a bang!, we have to make triple sure it's a legit bang.
     // This is assuming that the current peek position is at the bang position.
     match characters.peek().cloned() {
         // We're going to see if the next token is a bang identifier followed by
@@ -196,6 +196,74 @@ fn match_bang_in_argument(characters: &mut MultiPeek<Chars>, tokens: &[Token]) -
         }
         _ => Ok(false),
     }
+}
+
+fn match_logical_after_closing(
+    c: &char,
+    characters: &mut MultiPeek<Chars>,
+    tokens: &[Token],
+    argument: &mut String,
+) -> Option<Result<Option<(Token, LexerMode)>>> {
+    // Need to see if the next non space character is a bang.
+    // If so, take next_characters.0 - unmatched - 1 braces, then
+    // and immediately to edge mode.
+    match next_non_match_character(|&c| c == ' ', characters) {
+        Ok(next_character) => {
+            match next_character.0 {
+                '!' => {
+                    println!("{:?}", next_character);
+                    match match_bang_in_argument(characters, tokens) {
+                        Ok(is_bang) if is_bang => {
+                            characters.reset_peek();
+                            let braces = brace_counter(tokens);
+                            // The operator was found after
+                            // n - 1 peeks (n = `next_character.1`)
+                            // In other words, there are n braces between
+                            // This '}' and the operator, with m braces,
+                            // where m =``braces`.
+                            // We will consume n - m braces.
+
+                            if let Some(braces) = next_character.1.checked_sub(braces) {
+                                for _ in 0..braces {
+                                    if let Some(c) = characters.next() {
+                                        characters.reset_peek();
+                                        argument.push(c);
+                                    } else {
+                                        return Some(Err(Error::LexerUnexpectedEndOfInput));
+                                    }
+                                }
+                                // Return the token with the proper amount of closing braces.
+                                return Some(Ok(Some((
+                                    Token::Argument(argument.to_owned()),
+                                    LexerMode::ArgumentEdge,
+                                ))));
+                            } else {
+                                return Some(Ok(Some((
+                                    Token::Argument(argument.to_owned()),
+                                    LexerMode::ArgumentEdge,
+                                ))));
+                            }
+                        }
+                        Ok(_) => {
+                            // Consume this '}'
+                            characters.next();
+                            characters.reset_peek();
+                            argument.push(*c);
+                        }
+                        Err(err) => return Some(Err(err)),
+                    }
+                }
+                _ => {
+                    // Consume this '}'
+                    characters.next();
+                    characters.reset_peek();
+                    argument.push(*c);
+                }
+            }
+        }
+        Err(err) => return Some(Err(err)),
+    };
+    None
 }
 
 fn match_argument_end(
@@ -252,67 +320,33 @@ fn match_argument_end(
                     Ok(next_character) => {
                         match next_character.0 {
                             '|' | '&' => {
-                                // Need to see if the next non space character is a bang.
-                                // If so, take next_characters.0 - unmatched - 1 braces, then
-                                // and immediately to edge mode.
+                                match match_logical_after_closing(c, characters, tokens, argument) {
+                                    Some(result) => return Some(result),
+                                    None => (),
+                                }
+                            }
+                            ' ' => {
                                 match next_non_match_character(|&c| c == ' ', characters) {
-                                    Ok(next_character) => {
-                                        match next_character.0 {
-                                            '!' => {
-                                                match match_bang_in_argument(characters, tokens) {
-                                                    Ok(is_bang) if is_bang => {
-                                                        characters.reset_peek();
-                                                        let braces = brace_counter(tokens);
-                                                        // The operator was found after
-                                                        // n - 1 peeks (n = `next_character.1`)
-                                                        // In other words, there are n braces between
-                                                        // This '}' and the operator, with m braces,
-                                                        // where m =``braces`.
-                                                        // We will consume n - m braces.
-
-                                                        if let Some(braces) =
-                                                            next_character.1.checked_sub(braces)
-                                                        {
-                                                            for _ in 0..braces {
-                                                                if let Some(c) = characters.next() {
-                                                                    characters.reset_peek();
-                                                                    argument.push(c);
-                                                                } else {
-                                                                    return Some(Err(Error::LexerUnexpectedEndOfInput));
-                                                                }
-                                                            }
-                                                            // Return the token with the proper amount of closing braces.
-                                                            return Some(Ok(Some((
-                                                                Token::Argument(
-                                                                    argument.to_owned(),
-                                                                ),
-                                                                LexerMode::ArgumentEdge,
-                                                            ))));
-                                                        } else {
-                                                            return Some(Err(
-                                                                Error::LexerUnexpectedEndOfInput,
-                                                            ));
-                                                        }
-                                                    }
-                                                    Ok(_) => {
-                                                        // Consume this '}'
-                                                        characters.next();
-                                                        characters.reset_peek();
-                                                        argument.push(*c);
-                                                    }
-                                                    Err(err) => return Some(Err(err)),
-                                                }
-                                            }
-                                            _ => {
-                                                // Consume this '}'
-                                                characters.next();
-                                                characters.reset_peek();
-                                                argument.push(*c);
-                                            }
+                                    Ok(next_character)
+                                        if next_character.0 == '&' || next_character.0 == '|' =>
+                                    {
+                                        match match_logical_after_closing(
+                                            c,
+                                            characters,
+                                            tokens,
+                                            argument,
+                                        ) {
+                                            Some(result) => return Some(result),
+                                            None => (),
                                         }
                                     }
-                                    Err(err) => return Some(Err(err)),
-                                };
+                                    _ => {
+                                        // Consume this '}'
+                                        characters.next();
+                                        characters.reset_peek();
+                                        argument.push(*c);
+                                    }
+                                }
                             }
                             _ => {
                                 // Consume this '}'
@@ -420,9 +454,7 @@ fn match_argument(
     Ok(Some((Token::Argument(argument), LexerMode::ArgumentEdge)))
 }
 
-fn match_title(characters: &mut MultiPeek<Chars>,
-     tokens: &[Token],
-     query: &str) -> Option<Token> {
+fn match_title(characters: &mut MultiPeek<Chars>, tokens: &[Token], query: &str) -> Option<Token> {
     // We want the lexer to consider non bang openers as title peeks.
     match next_non_match_character(|&c| c == ' ', characters) {
         Ok(character) if character.0 == '!' => {
@@ -436,8 +468,8 @@ fn match_title(characters: &mut MultiPeek<Chars>,
                         Token::ArgumentBegin,
                         Token::Argument(query.to_owned()),
                         Token::ArgumentEnd,
-                        Token::InputEnd
-                    ]))
+                        Token::InputEnd,
+                    ]));
                 }
                 // There is a valid bang here, or some other weird shit. Just continue with regular parsing.
                 _ => None,
@@ -452,22 +484,39 @@ fn match_title(characters: &mut MultiPeek<Chars>,
                 Token::ArgumentBegin,
                 Token::Argument(query.to_owned()),
                 Token::ArgumentEnd,
-                Token::InputEnd
+                Token::InputEnd,
             ]))
         }
     }
 }
 
+fn ensure_balanced_braces(tokens: &Vec<Token>) -> bool {
+    let mut argument_begin = 0;
+    let mut argument_end = 0;
+    let mut bang_prefix = 0;
+    let mut bang_ident = 0;
+    for token in tokens {
+        match token {
+            &Token::ArgumentBegin => argument_begin += 1,
+            &Token::ArgumentEnd => argument_end += 1,
+            &Token::BangPrefix(_) => bang_prefix += 1,
+            &Token::BangIdentifier(_) => bang_ident += 1,
+            _ => (),
+        }
+    }
+
+    ((argument_begin == argument_end) && (bang_prefix == bang_ident) && (bang_prefix == argument_begin))
+}
 /// Lexes the given query string, and
 /// returns an ordered vector of tokens.
-/// 
-/// The lexer is guaranteed to either error or 
-/// return a valid token stream. 
-/// 
+///
+/// The lexer is guaranteed to either error or
+/// return a valid token stream.
+///
 /// A valid token stream is either [MatchAll, InputEnd],
-/// or starts with [BangPrefix, BangIdentifier, ArgumentBegin, ...], 
+/// or starts with [BangPrefix, BangIdentifier, ArgumentBegin, ...],
 /// and ends with [..., ArgumentEnd, InputEnd].
-/// 
+///
 /// The lexer also handles desugaring of bang-less title searches
 /// and the true tick sugar ` -> {true}
 pub fn lex_query(query: &str) -> Result<Vec<Token>> {
@@ -488,8 +537,8 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
         Some(Token::PreprocessTokenExpand(title)) => {
             tokens.extend(title.into_iter());
             return Ok(tokens);
-        },
-        _ => ()
+        }
+        _ => (),
     }
 
     characters.reset_peek();
@@ -515,12 +564,14 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
             },
             Err(err) => return Err(err),
         }
+        characters.reset_peek();
     }
 
-    if let Some(&Token::ArgumentEnd) = tokens.last() {
+    if ensure_balanced_braces(&tokens) {
         tokens.push(Token::InputEnd);
         Ok(tokens)
     } else {
         Err(Error::LexerUnexpectedEndOfInput)
     }
+    //Ok(tokens)
 }
