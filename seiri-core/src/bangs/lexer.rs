@@ -211,7 +211,7 @@ fn match_logical_after_closing(
         Ok(next_character) => {
             match next_character.0 {
                 '!' => {
-                    println!("{:?}", next_character);
+//                    println!("{:?}", next_character);
                     match match_bang_in_argument(characters, tokens) {
                         Ok(is_bang) if is_bang => {
                             characters.reset_peek();

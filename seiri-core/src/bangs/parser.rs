@@ -15,7 +15,7 @@ impl BangIdentifier for str {
     fn as_bang_type(&self) -> BangType {
         match self {
             "t" => BangType::TitleSearch,
-            "T" => BangType::TItleSearchExact,
+            "T" => BangType::TitleSearchExact,
             "q" => BangType::FullTextSearch,
             "Q" => BangType::FullTextSearchExact,
             "al" => BangType::AlbumTitle,
@@ -24,6 +24,7 @@ impl BangIdentifier for str {
             "ALAR" => BangType::AlbumArtistsExact,
             "ar" => BangType::Artist,
             "AR" => BangType::ArtistExact,
+            "s" => BangType::Source,
             "f" => BangType::Format,
             "brlt" => BangType::BitrateLessThan,
             "brgt" => BangType::BitrateGreaterThan,
@@ -33,7 +34,7 @@ impl BangIdentifier for str {
             "chgt" => BangType::CoverArtHeightGreaterThan,
             "c" => BangType::HasCoverArt,
             "mb" => BangType::HasMusicbrainzId,
-            "dup" => BangType::Duplicates,
+            "dup" => BangType::HasDuplicates,
             "!" => BangType::Grouping,
             unknown => BangType::Unknown(unknown.to_owned()),
         }
@@ -42,7 +43,7 @@ impl BangIdentifier for str {
 
 enum BangType {
     TitleSearch,
-    TItleSearchExact,
+    TitleSearchExact,
     FullTextSearch,
     FullTextSearchExact,
     AlbumTitle,
@@ -51,6 +52,7 @@ enum BangType {
     AlbumArtistsExact,
     Artist,
     ArtistExact,
+    Source,
     Format,
     BitrateLessThan,
     BitrateGreaterThan,
@@ -60,7 +62,7 @@ enum BangType {
     CoverArtHeightGreaterThan,
     HasCoverArt,
     HasMusicbrainzId,
-    Duplicates,
+    HasDuplicates,
     Grouping,
     Unknown(String),
 }
@@ -149,18 +151,93 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
                 |search: String| Bang::TitleSearch(search),
                 extract_argument(tokens),
             ),
+            BangType::TitleSearchExact => parse_bang(
+                |search: String| Bang::TitleSearchExact(search),
+                extract_argument(tokens),
+            ),
+            BangType::FullTextSearch => parse_bang(
+                |search: String| Bang::FullTextSearch(search),
+                extract_argument(tokens),
+            ),
+            BangType::FullTextSearchExact => parse_bang(
+                |search: String| Bang::FullTextSearchExact(search),
+                extract_argument(tokens),
+            ),
+            BangType::AlbumTitle => parse_bang(
+                |search: String| Bang::AlbumTitle(search),
+                extract_argument(tokens),
+            ),
+            BangType::AlbumTitleExact => parse_bang(
+                |search: String| Bang::AlbumTitleExact(search),
+                extract_argument(tokens),
+            ),
+            BangType::AlbumArtists => parse_bang(
+                |search: String| Bang::AlbumArtists(search),
+                extract_argument(tokens),
+            ),
+            BangType::AlbumArtistsExact => parse_bang(
+                |search: String| Bang::AlbumArtistsExact(search),
+                extract_argument(tokens),
+            ),
+            BangType::Artist => parse_bang(
+                |search: String| Bang::Artist(search),
+                extract_argument(tokens),
+            ),
+            BangType::ArtistExact => parse_bang(
+                |search: String| Bang::ArtistExact(search),
+                extract_argument(tokens),
+            ),
+            BangType::Source => parse_bang(
+                |search: String| Bang::Source(search),
+                extract_argument(tokens),
+            ),
+            BangType::Format => parse_bang(
+                |format: TrackFileType| Bang::Format(format),
+                extract_argument(tokens),
+            ),
+            BangType::BitrateLessThan => parse_bang(
+                |bitrate: i64| Bang::BitrateLessThan(bitrate),
+                extract_argument(tokens),
+            ),
+            BangType::BitrateGreaterThan => parse_bang(
+                |bitrate: i64| Bang::BitrateGreaterThan(bitrate),
+                extract_argument(tokens),
+            ),
+            BangType::CoverArtWidthLessThan => parse_bang(
+                |cw: i64| Bang::CoverArtWidthLessThan(cw),
+                extract_argument(tokens),
+            ),
+            BangType::CoverArtWidthGreaterThan => parse_bang(
+                |cw: i64| Bang::CoverArtWidthGreaterThan(cw),
+                extract_argument(tokens),
+            ),
+            BangType::CoverArtHeightLessThan => parse_bang(
+                |ch: i64| Bang::CoverArtHeightLessThan(ch),
+                extract_argument(tokens),
+            ),
+            BangType::CoverArtHeightGreaterThan => parse_bang(
+                |ch: i64| Bang::CoverArtHeightGreaterThan(ch),
+                extract_argument(tokens),
+            ),
+            BangType::HasCoverArt => {
+                parse_bang(|c: bool| Bang::HasCoverArt(c), extract_argument(tokens))
+            }
+            BangType::HasMusicbrainzId => parse_bang(
+                |mb: bool| Bang::HasMusicbrainzId(mb),
+                extract_argument(tokens),
+            ),
+            BangType::HasDuplicates => parse_bang(
+                |dup: bool| Bang::HasDuplicates(dup),
+                extract_argument(tokens),
+            ),
             BangType::Grouping => {
                 let mut grouping_token_stream = take_until_braces_balanced(tokens)?;
                 Ok(Bang::Grouping(Box::new(parse_token_stream(
                     &mut grouping_token_stream.iter(),
                 )?)))
             }
-            BangType::Format => parse_bang(
-                |format: TrackFileType| Bang::Format(format),
-                extract_argument(tokens),
-            ),
-            BangType::Unknown(unknown) => Err(Error::ParserUnknownBang(unknown)),
-            _ => Ok(Bang::All),
+
+            BangType::Unknown(unknown) => return Err(Error::ParserUnknownBang(unknown)),
         }
     } else {
         return Err(Error::LexerUnexpectedEndOfInput);

@@ -1,6 +1,6 @@
 use std::io;
-use bangs::lex_query;
-use bangs::parse_token_stream;
+use bangs::Bang;
+
 pub fn wait_for_exit() {
     let stdin = io::stdin();
     println!("Type 'exit' to exit");
@@ -11,23 +11,14 @@ pub fn wait_for_exit() {
             return;
         }
         if input.trim().starts_with("query") {
-            let query_str : &str = match input.trim().splitn(2, " ").nth(1) {
+            let query_str: &str = match input.trim().splitn(2, " ").nth(1) {
                 Some(query_str) => query_str,
-                None => ""
+                None => "",
             };
 
-            match lex_query(query_str) {
-                Ok(query) => { 
-                    println!("{:?}", query);
-                    let parsed_bang = parse_token_stream(&mut query.iter());
-                    match parsed_bang {
-                        Ok(parsed) => {
-                            println!("{:?}", parsed)
-                        },
-                        Err(err) => println!("{}", err)
-                    }
-                },
-                Err(err) => println!("{}", err)
+            match Bang::new(query_str) {
+                Ok(bang) => println!("{:?}", bang),
+                Err(err) => println!("{:?}", err),
             }
         }
         input.clear();
