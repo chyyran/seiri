@@ -4,15 +4,12 @@ extern crate quick_error;
 #[macro_use]
 extern crate lazy_static;
 
-#[macro_use]
 extern crate itertools;
-
 extern crate notify;
+extern crate regex;
+extern crate rusqlite;
 extern crate serde_json;
 extern crate tree_magic;
-extern crate rusqlite;
-extern crate regex;
-
 
 use std::path::PathBuf;
 use std::thread;
@@ -36,7 +33,9 @@ fn process(path: &PathBuf) {
         ),
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
-            Error::MissingRequiredTag(file_name, tag) => println!("Found track {} but missing tag {}", file_name, tag),
+            Error::MissingRequiredTag(file_name, tag) => {
+                println!("Found track {} but missing tag {}", file_name, tag)
+            }
             Error::HelperNotFound => println!("Katatsuki TagLib helper not found."),
             _ => {}
         },
