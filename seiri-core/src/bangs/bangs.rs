@@ -27,6 +27,8 @@ pub enum Bang {
     CoverArtWidthGreaterThan(i64),
     CoverArtHeightLessThan(i64),
     CoverArtHeightGreaterThan(i64),
+    DurationLessThan(i64),
+    DurationGreaterThan(i64),
     HasCoverArt(bool),
     HasMusicbrainzId(bool),
     HasDuplicates(bool),

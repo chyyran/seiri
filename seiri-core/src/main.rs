@@ -4,6 +4,7 @@ extern crate quick_error;
 #[macro_use]
 extern crate lazy_static;
 
+extern crate humantime;
 extern crate itertools;
 extern crate notify;
 extern crate regex;

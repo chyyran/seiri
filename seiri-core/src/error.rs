@@ -49,7 +49,7 @@ quick_error! {
             description("Unknown bang during parsing of query token stream.")
             display(r#"Unknown bang !"{:?}" when parsing query"#, b)
         }
-         ParserInvalidInput(input: String) {
+        ParserInvalidInput(input: String) {
             description("Invalid input when parsing bang argument")
             display(r#"Invalid input "{}" when parsing bang"#, input)
         }

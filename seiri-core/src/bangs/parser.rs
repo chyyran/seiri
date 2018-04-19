@@ -6,6 +6,8 @@ use track::TrackFileType;
 use error::{Error, Result};
 use itertools::multipeek;
 use itertools::MultiPeek;
+use humantime::Duration;
+use super::time::*;
 
 trait BangIdentifier {
     fn as_bang_type(&self) -> BangType;
@@ -26,6 +28,8 @@ impl BangIdentifier for str {
             "AR" => BangType::ArtistExact,
             "s" => BangType::Source,
             "f" => BangType::Format,
+            "dlt" => BangType::DurationLessThan,
+            "dgt" => BangType::DurationGreaterThan,
             "brlt" => BangType::BitrateLessThan,
             "brgt" => BangType::BitrateGreaterThan,
             "cwlt" => BangType::CoverArtWidthLessThan,
@@ -56,6 +60,8 @@ enum BangType {
     Format,
     BitrateLessThan,
     BitrateGreaterThan,
+    DurationLessThan,
+    DurationGreaterThan,
     CoverArtWidthLessThan,
     CoverArtWidthGreaterThan,
     CoverArtHeightLessThan,
@@ -193,6 +199,14 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
             ),
             BangType::Format => parse_bang(
                 |format: TrackFileType| Bang::Format(format),
+                extract_argument(tokens),
+            ),
+            BangType::DurationLessThan => parse_bang(
+                |duration: Duration| Bang::DurationLessThan(duration.to_ticks()),
+                extract_argument(tokens),
+            ),
+            BangType::DurationGreaterThan => parse_bang(
+                |duration: Duration| Bang::DurationGreaterThan(duration.to_ticks()),
                 extract_argument(tokens),
             ),
             BangType::BitrateLessThan => parse_bang(
