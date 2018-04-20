@@ -21,7 +21,7 @@ pub enum Bang {
     ArtistExact(String),
     Source(String),
     Format(TrackFileType),
-    BitrateLessThan(i64),
+    BitrateLessThan(i64), 
     BitrateGreaterThan(i64),
     CoverArtWidthLessThan(i64),
     CoverArtWidthGreaterThan(i64),
