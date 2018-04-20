@@ -4,6 +4,7 @@ extern crate quick_error;
 #[macro_use]
 extern crate lazy_static;
 
+extern crate rand;
 extern crate humantime;
 extern crate itertools;
 extern crate notify;
@@ -12,11 +13,13 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate tree_magic;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::thread;
+use std::env;
 
 use error::Error;
-
+use rusqlite::Connection;
+use rusqlite::OpenFlags;
 mod utils;
 mod watcher;
 mod track;
@@ -50,6 +53,9 @@ fn main() {
             println!("{}", e);
         }
     });
-
-    utils::wait_for_exit();
+    let mut path = env::current_dir().unwrap();
+    path.push("tracks.db");
+    println!("{:?}", path);
+    let conn = Connection::open_with_flags(path.as_path(), OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    utils::wait_for_exit(&conn);
 }

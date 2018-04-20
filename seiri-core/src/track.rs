@@ -48,6 +48,28 @@ impl TrackFileType {
     }
 }
 
+impl From<u32> for TrackFileType {
+    fn from(i: u32) -> Self {
+        match i {
+            1 => TrackFileType::Flac,
+            2 => TrackFileType::Flac4,
+            3 => TrackFileType::Flac8,
+            4 => TrackFileType::Flac16,
+            5 => TrackFileType::Flac24,
+            6 => TrackFileType::Flac32,
+            7 => TrackFileType::Alac,
+            8 => TrackFileType::Mp3Cbr,
+            9 => TrackFileType::Mp3Vbr,
+            10 => TrackFileType::Aac,
+            11 => TrackFileType::Vorbis,
+            12 => TrackFileType::Opus,
+            13 => TrackFileType::Wavpack,
+            14 => TrackFileType::MonkeysAudio,
+            _ => TrackFileType::Unknown,
+        }
+    }
+}
+
 impl fmt::Display for TrackFileType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let format_name = match *self {
@@ -90,11 +112,12 @@ impl str::FromStr for TrackFileType {
             "opus" => Ok(TrackFileType::Opus),
             "wavpack" => Ok(TrackFileType::Wavpack),
             "ape" => Ok(TrackFileType::MonkeysAudio),
-            _ => Ok(TrackFileType::Unknown)
+            _ => Ok(TrackFileType::Unknown),
         }
     }
 }
 
+#[derive(Debug)]
 pub struct Track {
     pub file_path: String,
     pub title: String,

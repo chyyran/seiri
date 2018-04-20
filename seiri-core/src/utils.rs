@@ -1,7 +1,9 @@
 use std::io;
 use bangs::Bang;
+use database::query_tracks;
+use rusqlite::Connection;
 
-pub fn wait_for_exit() {
+pub fn wait_for_exit(conn: &Connection) {
     let stdin = io::stdin();
     println!("Type 'exit' to exit");
 
@@ -17,7 +19,12 @@ pub fn wait_for_exit() {
             };
 
             match Bang::new(query_str) {
-                Ok(bang) => println!("{:?}", bang),
+                Ok(bang) => {
+                    println!("{:?}", bang);
+                  //  println!("Compiles to... -------------");
+                    let tracks = query_tracks(bang, conn);
+                    println!("{:?}", tracks)
+                },
                 Err(err) => println!("{:?}", err),
             }
         }
