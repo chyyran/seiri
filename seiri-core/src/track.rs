@@ -126,7 +126,7 @@ pub struct Track {
     pub album: String,
     pub year: i64,
     pub track_number: i64,
-    pub musicbrainz_track_id: String,
+    pub musicbrainz_track_id: Option<String>,
     pub has_front_cover: bool,
     pub front_cover_height: i64,
     pub front_cover_width: i64,
@@ -153,7 +153,7 @@ impl Track {
         let album: &Value = &v["Album"];
         let year: &Value = &v["Year"];
         let track_number: &Value = &v["TrackNumber"];
-        let musicbrainz_track_id: &Value = &v["MusicBrainzTrackId"];
+        let musicbrainz_track_id: &Value =  &v["MusicBrainzTrackId"];
         let has_front_cover: &Value = &v["HasFrontCover"];
         let front_cover_height: &Value = &v["FrontCoverHeight"];
         let front_cover_width: &Value = &v["FrontCoverWidth"];
@@ -224,7 +224,11 @@ impl Track {
             album: album,
             year: year.as_i64().unwrap_or(0).to_owned(),
             track_number: track_number.as_i64().unwrap_or(0).to_owned(),
-            musicbrainz_track_id: musicbrainz_track_id.as_str().unwrap_or("").to_owned(),
+            musicbrainz_track_id: if let &Value::String(ref string) = musicbrainz_track_id {
+                Some(string.to_owned())
+            } else {
+                None
+            },
             has_front_cover: has_front_cover.as_bool().unwrap().to_owned(),
             front_cover_height: front_cover_height.as_i64().unwrap_or(0).to_owned(),
             front_cover_width: front_cover_width.as_i64().unwrap_or(0).to_owned(),

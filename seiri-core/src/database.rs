@@ -67,7 +67,7 @@ pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
             album: row.get_checked(4)?,
             year: row.get_checked(5)?,
             track_number: row.get_checked(6)?,
-            musicbrainz_track_id: row.get_checked(7).ok().unwrap_or("None".to_owned()),
+            musicbrainz_track_id: row.get_checked(7).ok(),
             has_front_cover: row.get_checked(8)?,
             front_cover_width: row.get_checked(9).ok().unwrap_or(0),
             front_cover_height: row.get_checked(10).ok().unwrap_or(0),
