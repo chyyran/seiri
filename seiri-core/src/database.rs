@@ -74,13 +74,13 @@ pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
             bitrate: row.get_checked(11)?,
             sample_rate: row.get_checked(12)?,
             source: row.get_checked(13).ok().unwrap_or("None".to_owned()),
-             //Skip DiscNumber
+            //Skip DiscNumber
             duration: row.get_checked(15)?,
-            file_type: TrackFileType::from(row.get_checked::<_, u32>(16)?)
+            file_type: TrackFileType::from(row.get_checked::<_, u32>(16)?),
         };
         tracks.push(track)
     }
-  
+
     Ok(tracks)
 }
 
@@ -94,7 +94,7 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
         Bang::TitleSearch(title) => {
             let param_name = get_rand_param();
             let format = format!("(Title LIKE {})", param_name);
-            params.push((param_name, format!("%{}%",title)));
+            params.push((param_name, format!("%{}%", title)));
             format
         }
         Bang::TitleSearchExact(title) => {
@@ -103,10 +103,134 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             params.push((param_name, title));
             format
         }
+        Bang::AlbumTitle(title) => {
+            let param_name = get_rand_param();
+            let format = format!("(Album LIKE {})", param_name);
+            params.push((param_name, format!("%{}%", title)));
+            format
+        }
+        Bang::AlbumTitleExact(title) => {
+            let param_name = get_rand_param();
+            let format = format!("(Album = {})", param_name);
+            params.push((param_name, title));
+            format
+        }
         Bang::Artist(artist) => {
             let param_name = get_rand_param();
             let format = format!("(Artist LIKE {})", param_name);
-            params.push((param_name, format!("%{}%",artist)));
+            params.push((param_name, format!("%{}%", artist)));
+            format
+        }
+        Bang::ArtistExact(artist) => {
+            let param_name = get_rand_param();
+            let format = format!("(Artist = {})", param_name);
+            params.push((param_name, format!("{}", artist)));
+            format
+        }
+        // todo: (Might want to make this smarter?)
+        Bang::AlbumArtists(artist) => {
+            let param_name = get_rand_param();
+            let format = format!("(AlbumArtists LIKE {})", param_name);
+            params.push((param_name, format!("%{}%", artist)));
+            format
+        }
+        Bang::AlbumArtistsExact(artist) => {
+            let param_name = get_rand_param();
+            let format = format!("(AlbumArtists = {})", param_name);
+            params.push((param_name, format!("{}", artist)));
+            format
+        }
+        Bang::Source(source) => {
+            let param_name = get_rand_param();
+            let format = format!("(Source = {} COLLATE NOCASE)", param_name);
+            params.push((param_name, format!("{}", source)));
+            format
+        }
+        Bang::Format(filetype) => {
+            let param_name = get_rand_param();
+            let format = format!("(FileType = {})", param_name);
+            params.push((param_name, format!("{}", filetype.value())));
+            format
+        }
+        Bang::BitrateLessThan(bitrate) => {
+            let param_name = get_rand_param();
+            let format = format!("(Bitrate < {})", param_name);
+            params.push((param_name, format!("{}", bitrate)));
+            format
+        }
+        Bang::BitrateGreaterThan(bitrate) => {
+            let param_name = get_rand_param();
+            let format = format!("(Bitrate > {})", param_name);
+            params.push((param_name, format!("{}", bitrate)));
+            format
+        }
+        Bang::CoverArtWidthGreaterThan(width) => {
+            let param_name = get_rand_param();
+            let format = format!("(FrontCoverWidth > {})", param_name);
+            params.push((param_name, format!("{}", width)));
+            format
+        }
+        Bang::CoverArtWidthLessThan(width) => {
+            let param_name = get_rand_param();
+            let format = format!("(FrontCoverWidth < {})", param_name);
+            params.push((param_name, format!("{}", width)));
+            format
+        }
+        Bang::CoverArtHeightGreaterThan(height) => {
+            let param_name = get_rand_param();
+            let format = format!("(FrontCoverHeight > {})", param_name);
+            params.push((param_name, format!("{}", height)));
+            format
+        }
+        Bang::CoverArtHeightLessThan(height) => {
+            let param_name = get_rand_param();
+            let format = format!("(FrontCoverHeight < {})", param_name);
+            params.push((param_name, format!("{}", height)));
+            format
+        }
+        Bang::DurationGreaterThan(duration) => {
+            let param_name = get_rand_param();
+            let format = format!("(Duration > {})", param_name);
+            params.push((param_name, format!("{}", duration)));
+            format
+        }
+        Bang::DurationLessThan(duration) => {
+            let param_name = get_rand_param();
+            let format = format!("(Duration < {})", param_name);
+            params.push((param_name, format!("{}", duration)));
+            format
+        }
+        Bang::HasCoverArt(has) => {
+            let param_name = get_rand_param();
+            let format = format!("(HasFrontCover = {})", param_name);
+            params.push((param_name, format!("{}", has)));
+            format
+        }
+        Bang::HasMusicbrainzId(has) => (if has {
+            "(MusicBrainzTrackId IS NOT NULL)"
+        } else {
+            "(MusicBrainzTrackId IS NULL)"
+        }).to_owned(),
+        Bang::HasDuplicates(has) => (if has {
+            "(Title, AlbumArtists) in (select Title, AlbumArtists from tracks group by Title, AlbumArtists having count(*) > 1)"
+        } else {
+            "(Title, AlbumArtists) not in (select Title, AlbumArtists from tracks group by Title, AlbumArtists having count(*) > 1)"
+        }).to_owned(),
+        //Todo: use stored procedure to split AlbumArtist into multiple.
+        Bang::FullTextSearch(search) => {
+            let param_name = get_rand_param();
+            let format = format!("(Title LIKE {} OR Album LIKE {} OR Artist LIKE {} OR AlbumArtists LIKE {} COLLATE NOCASE)", 
+                param_name, param_name, param_name, param_name);
+            params.push((param_name, format!("%{}%", search)));
+            format
+        }
+        Bang::FullTextSearchExact(search) => {
+            let param_name = get_rand_param();
+            let format = format!(
+                "(Title = {} OR Album = {} OR Artist = {} OR AlbumArtists = {} COLLATE NOCASE)",
+                param_name, param_name, param_name, param_name
+            );
+            params.push((param_name, format!("{}", search)));
             format
         }
         Bang::LogicalAnd(lhs, rhs) => {
@@ -123,7 +247,9 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             let bang = to_query_string(*bang, params);
             format!("({})", bang)
         }
-        _ => "".to_string(),
+        // This should never happen, but we'll just give it a vacuous condition
+        // To satisfy the compiler.
+        Bang::All => "(FilePath = FilePath)".to_owned(),
     }
 }
 
