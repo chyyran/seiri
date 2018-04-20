@@ -239,7 +239,7 @@ fn match_title(query: &str, characters: &mut MultiPeek<Chars>) -> Option<Token> 
                     characters.reset_peek();
                     return Some(Token::PreprocessTokenExpand(vec![
                         Token::BangPrefix('!'),
-                        Token::BangIdentifier("t".to_owned()),
+                        Token::BangIdentifier("q".to_owned()),
                         Token::ArgumentBegin,
                         Token::Argument(query.to_owned()),
                         Token::ArgumentEnd,
@@ -255,7 +255,7 @@ fn match_title(query: &str, characters: &mut MultiPeek<Chars>) -> Option<Token> 
             characters.reset_peek();
             Some(Token::PreprocessTokenExpand(vec![
                 Token::BangPrefix('!'),
-                Token::BangIdentifier("t".to_owned()),
+                Token::BangIdentifier("q".to_owned()),
                 Token::ArgumentBegin,
                 Token::Argument(query.to_owned()),
                 Token::ArgumentEnd,
