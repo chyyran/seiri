@@ -38,7 +38,7 @@ namespace taglibsharp_katatsuki
                 this.SampleRate = file.Properties.AudioSampleRate;
                 this.Bitrate = file.Properties.AudioBitrate;
                 this.Album = file.Tag.Album;
-                this.AlbumArtists = file.Tag.AlbumArtists.ToList();
+                this.AlbumArtists = file.Tag.AlbumArtists.Select(s => s.Trim()).ToList();
                 this.Artist = file.Tag.FirstPerformer;
                 this.TrackNumber = file.Tag.Track;
                 this.Year = file.Tag.Year;
