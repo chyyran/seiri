@@ -78,7 +78,9 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 |`!dup`|Is a duplicate of another track (iTunes-like algorithm)|`true` or `false`|
 
 
-Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` is used to group multiple bangs together for scoping. There is also *true tick* syntax, where for bangs that take boolean values, can be written ``!dup` `` as shorthand for `!dup{true}`.
+Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group bang `!!` is used to group multiple bangs together for scoping. There is also *true tick* syntax, where for bangs that take boolean values, can be written ``!dup` `` as shorthand for `!dup{true}`. If for some reason a closing brace `}` or backslash '\' occurs in your search, bangs support escape characters `\}` and `\\`.
+
+Bangs are parsed and transpiled into SQLite statements, which are then executed on the library database for fast results.
 
 ## GraphQL Query Format
 `seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
@@ -155,3 +157,12 @@ type Query {
   refresh(files: [String]): [Track]
 }
 ```
+
+## Building
+
+*seiri* consists of 3 components
+ - *seiri-core* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs.
+ - *taglibsharp-katatsuki* handles parsing of track file data, written in C#. We need this because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size).
+ - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well asn automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. 
+ 
+ Building seiri requires that you build all three components. Read *build.md* for more information about setting up the environment.
