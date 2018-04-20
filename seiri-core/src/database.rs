@@ -2,11 +2,43 @@ extern crate rusqlite;
 
 use track::TrackFileType;
 use rusqlite::types::ToSql;
-use rusqlite::Connection;
 use track::Track;
 use bangs::Bang;
 use rand::{thread_rng, Rng};
-use rusqlite::Result;
+use rusqlite::{Connection, Error, Result};
+use std::collections::HashMap;
+use regex::Regex;
+
+
+pub fn add_regexp_function(db: &Connection) -> Result<()> {
+    let mut cached_regexes = HashMap::new();
+    db.create_scalar_function("regexp", 2, true, move |ctx| {
+        let regex_s = ctx.get::<String>(0)?;
+        let text = ctx.get::<String>(1)?;
+        let entry = cached_regexes.entry(regex_s.clone());
+        let regex = {
+            use std::collections::hash_map::Entry::{Occupied, Vacant};
+            match entry {
+                Occupied(occ) => occ.into_mut(),
+                Vacant(vac) => {
+                    match Regex::new(&regex_s) {
+                        Ok(r) => vac.insert(r),
+                        Err(err) => { 
+                            println!("{}", err);
+                            return Err(Error::UserFunctionError(Box::new(err)));
+                        },
+                    }
+                }
+            }
+        };
+
+        let captures = regex.captures(&text);
+        let capture_ok = captures.and_then(|capture| capture.get(1))
+            .and_then(|m| Some(m.end() > 0)).unwrap_or(false);
+        Ok(capture_ok)
+    })
+}
+
 
 pub fn create_database(conn: &Connection) {
     conn.execute(
@@ -130,14 +162,14 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
         // todo: (Might want to make this smarter?)
         Bang::AlbumArtists(artist) => {
             let param_name = get_rand_param();
-            let format = format!("(AlbumArtists LIKE {})", param_name);
-            params.push((param_name, format!("%{}%", artist)));
+            let format = format!("(AlbumArtists REGEXP {})", param_name);
+            params.push((param_name, format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", artist)));
             format
         }
         Bang::AlbumArtistsExact(artist) => {
             let param_name = get_rand_param();
-            let format = format!("(AlbumArtists = {})", param_name);
-            params.push((param_name, format!("{}", artist)));
+            let format = format!("(AlbumArtists REGEXP {})", param_name);
+            params.push((param_name, format!("(?:^|;)({})(?:;|$)", artist)));
             format
         }
         Bang::Source(source) => {
@@ -216,21 +248,26 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
         } else {
             "(Title, AlbumArtists) not in (select Title, AlbumArtists from tracks group by Title, AlbumArtists having count(*) > 1)"
         }).to_owned(),
-        //Todo: use stored procedure to split AlbumArtist into multiple.
         Bang::FullTextSearch(search) => {
             let param_name = get_rand_param();
-            let format = format!("(Title LIKE {} OR Album LIKE {} OR Artist LIKE {} OR AlbumArtists LIKE {} COLLATE NOCASE)", 
-                param_name, param_name, param_name, param_name);
+            let album_artists_param = get_rand_param();
+            let format = format!("(Title LIKE {} OR Album LIKE {} OR Artist LIKE {} OR AlbumArtists REGEXP {} COLLATE NOCASE)", 
+                param_name, param_name, param_name, album_artists_param);
             params.push((param_name, format!("%{}%", search)));
+            params.push((album_artists_param, format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", search)));
+
             format
         }
         Bang::FullTextSearchExact(search) => {
             let param_name = get_rand_param();
+            let album_artists_param = get_rand_param();
+
             let format = format!(
-                "(Title = {} OR Album = {} OR Artist = {} OR AlbumArtists = {} COLLATE NOCASE)",
-                param_name, param_name, param_name, param_name
+                "(Title = {} OR Album = {} OR Artist = {} OR AlbumArtists REGEXP {} COLLATE NOCASE)",
+                param_name, param_name, param_name, album_artists_param
             );
             params.push((param_name, format!("{}", search)));
+            params.push((album_artists_param, format!("(?:^|;)({})(?:;|$)", search)));
             format
         }
         Bang::LogicalAnd(lhs, rhs) => {

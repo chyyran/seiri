@@ -54,5 +54,6 @@ fn main() {
     path.push("tracks.db");
     println!("{:?}", path);
     let conn = Connection::open_with_flags(path.as_path(), OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    database::add_regexp_function(&conn).unwrap();
     utils::wait_for_exit(&conn);
 }
