@@ -159,7 +159,7 @@ where
     Err(Error::LexerUnexpectedEndOfInput)
 }
 
-fn confirm_bang_sequence(characters: &mut MultiPeek<Chars>, tokens: &[Token]) -> Result<bool> {
+fn confirm_bang_sequence(characters: &mut MultiPeek<Chars>) -> Result<bool> {
     // We found a bang!, we have to make triple sure it's a legit bang.
     // This is assuming that the current peek position is at the bang position.
     match characters.peek().cloned() {
@@ -229,11 +229,11 @@ fn match_argument(
     Ok(Some((Token::Argument(argument), LexerMode::ArgumentEdge)))
 }
 
-fn match_title(characters: &mut MultiPeek<Chars>, tokens: &[Token], query: &str) -> Option<Token> {
+fn match_title(query: &str, characters: &mut MultiPeek<Chars>) -> Option<Token> {
     // We want the lexer to consider non bang openers as title peeks.
     match next_non_match_character(|&c| c == ' ', characters) {
         Ok(character) if character.0 == '!' => {
-            match confirm_bang_sequence(characters, tokens) {
+            match confirm_bang_sequence(characters) {
                 Ok(not_bang) if !not_bang => {
                     // No bang found, return the title.
                     characters.reset_peek();
@@ -309,7 +309,7 @@ pub fn lex_query(query: &str) -> Result<Vec<Token>> {
     let query = query.to_owned();
     let mut characters = multipeek(query.chars());
 
-    match match_title(&mut characters, &tokens, &query) {
+    match match_title(&query, &mut characters) {
         Some(Token::PreprocessTokenExpand(title)) => {
             tokens.extend(title.into_iter());
             return Ok(tokens);

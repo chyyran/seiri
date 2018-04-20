@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate quick_error;
 
-#[macro_use]
-extern crate lazy_static;
-
 extern crate rand;
 extern crate humantime;
 extern crate itertools;
@@ -13,7 +10,7 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate tree_magic;
 
-use std::path::{PathBuf, Path};
+use std::path::{PathBuf};
 use std::thread;
 use std::env;
 

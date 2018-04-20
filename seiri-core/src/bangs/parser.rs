@@ -1,11 +1,9 @@
 use std::str::FromStr;
 use std::slice::Iter;
-use super::lexer::{lex_query, Token};
+use super::lexer::Token;
 use super::bangs::Bang;
 use track::TrackFileType;
 use error::{Error, Result};
-use itertools::multipeek;
-use itertools::MultiPeek;
 use humantime::Duration;
 use super::time::*;
 
