@@ -24,6 +24,7 @@ namespace taglibsharp_katatsuki
         public int FrontCoverWidth { get; set; } = 0;
         public int Bitrate { get; set; }
         public int SampleRate { get; set; }
+		public uint DiscNumber { get; }
         public long Duration { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
@@ -44,6 +45,7 @@ namespace taglibsharp_katatsuki
                 this.Year = file.Tag.Year;
                 this.MusicBrainzTrackId = file.Tag.MusicBrainzTrackId;
                 this.Title = file.Tag.Title;
+				this.DiscNumber = file.Tag.Disc;
                 var frontAlbum = from picture in file.Tag.Pictures
                                  where picture.Type == TagLib.PictureType.FrontCover
                                  select picture;

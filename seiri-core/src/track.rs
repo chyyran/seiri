@@ -133,6 +133,7 @@ pub struct Track {
     pub bitrate: i64,
     pub sample_rate: i64,
     pub source: String,
+    pub disc_number: i64,
     pub duration: i64,
     pub file_type: TrackFileType,
 }
@@ -140,7 +141,7 @@ pub struct Track {
 impl Track {
     pub fn new(file_path: &PathBuf, source: Option<String>) -> Result<Track> {
         let json_data = taglibsharp::call_helper(file_path.to_str().unwrap());
-
+        
         if let Err(err) = json_data {
             return Err(err);
         }
@@ -153,6 +154,7 @@ impl Track {
         let album: &Value = &v["Album"];
         let year: &Value = &v["Year"];
         let track_number: &Value = &v["TrackNumber"];
+        let disc_number: &Value = &v["DiscNumber"];
         let musicbrainz_track_id: &Value =  &v["MusicBrainzTrackId"];
         let has_front_cover: &Value = &v["HasFrontCover"];
         let front_cover_height: &Value = &v["FrontCoverHeight"];
@@ -224,6 +226,7 @@ impl Track {
             album: album,
             year: year.as_i64().unwrap_or(0).to_owned(),
             track_number: track_number.as_i64().unwrap_or(0).to_owned(),
+            disc_number: disc_number.as_i64().unwrap_or(0).to_owned(),
             musicbrainz_track_id: if let &Value::String(ref string) = musicbrainz_track_id {
                 Some(string.to_owned())
             } else {

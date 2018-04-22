@@ -17,6 +17,14 @@ quick_error! {
             description("The file could not be found")
             display(r#"The file "{}" could not be found"#, file_name)
         }
+        UnableToMove(file_name: String) {
+            description("The file could not be moved")
+            display(r#"The file {} could not be moved."#, file_name)
+        }
+        UnableToCreateDirectory(directory_name: String) {
+            description("The directory could not be created")
+            display(r#"The directory {} could not be created."#, directory_name)
+        }
         UnsupportedOS {
             description("The operating system is unuspported.")
             display("The operating system is unsupported.")

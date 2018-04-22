@@ -111,7 +111,7 @@ pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
             bitrate: row.get_checked(11)?,
             sample_rate: row.get_checked(12)?,
             source: row.get_checked(13).ok().unwrap_or("None".to_owned()),
-            //Skip DiscNumber
+            disc_number: row.get_checked(14)?,
             duration: row.get_checked(15)?,
             file_type: TrackFileType::from(row.get_checked::<_, u32>(16)?),
         };
@@ -339,7 +339,7 @@ pub fn add_track(track: &Track, conn: &Connection) {
             &track.bitrate,
             &track.sample_rate,
             &track.source,
-            &0,
+            &track.disc_number,
             &track.duration,
             &track.file_type.value(),
         ],
