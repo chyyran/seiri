@@ -17,6 +17,7 @@ fn locate_helper() -> Result<PathBuf> {
         }
         return Ok(path);
     }
+    
     return Err(Error::UnsupportedOS);
 }
 

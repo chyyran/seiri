@@ -1,11 +1,10 @@
 use app_dirs::*;
-use config::Config;
 use database::{add_regexp_function, create_database, enable_wal_mode};
 use error::{Error, Result};
 use rusqlite::Connection;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
-use toml;
 use track::Track;
 
 trait InvalidChar {
@@ -40,24 +39,6 @@ pub fn get_appdata_path() -> PathBuf {
     appdata_path
 }
 
-fn write_default_config(path: &Path) -> Option<()> {
-    let default_config = toml::to_string(&Config::default()).unwrap();
-    fs::write(path.to_str().unwrap(), default_config).ok()
-}
-
-pub fn get_config() -> Config {
-    let mut config_path = get_appdata_path();
-    config_path.push("config.toml");
-    if !config_path.exists() {
-        if let None = write_default_config(config_path.as_path()) {
-            panic!("Unable to write default configuration. Using default configuration.");
-        }
-    }
-    let config_string = fs::read_to_string(config_path).unwrap();
-    let config: Config = toml::from_str(&config_string).unwrap();
-    config
-}
-
 pub fn get_database_connection() -> Connection {
     let mut database_path = get_appdata_path();
     database_path.push("tracks.db");
@@ -68,7 +49,7 @@ pub fn get_database_connection() -> Connection {
     conn
 }
 
-pub fn ensure_music_folder(folder_path: &str) -> (PathBuf, PathBuf) {
+pub fn ensure_music_folder(folder_path: &str) -> io::Result<(PathBuf, PathBuf)> {
     // Todo: handle these unwraps properly.
     let music_folder = Path::new(folder_path);
     let music_folder = PathBuf::from(music_folder);
@@ -76,9 +57,9 @@ pub fn ensure_music_folder(folder_path: &str) -> (PathBuf, PathBuf) {
     music_folder.clone_into(&mut auto_add_folder);
     auto_add_folder.pop();
     auto_add_folder.push("Automatically Add to Library");
-    fs::create_dir_all(music_folder.as_path()).unwrap();
-    fs::create_dir_all(auto_add_folder.as_path()).unwrap();
-    (music_folder, auto_add_folder)
+    fs::create_dir_all(music_folder.as_path())?;
+    fs::create_dir_all(auto_add_folder.as_path())?;
+    Ok((music_folder, auto_add_folder))
 }
 
 fn sanitize_file_name(path: &str) -> String {
@@ -135,24 +116,40 @@ fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
     }
 }
 
+/// Moves the given track to its proper destination in the library, relative
+/// to the Automatically Add to Library path.
 pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
+   
+    // get the track file extension
     let track_ext = Path::new(&track.file_path)
         .extension()
         .and_then(|s| s.to_str())
         .unwrap_or("");
 
+    // The new filename of the track, from the track metadata.
     let track_file_name = get_track_filename(&track);
+
+    // The original path where the track was found.
     let original_path = Path::new(&track.file_path);
+
+    // The name of the first subfolder from the Automatically Add to Library path
+    // and marks it as the source.
     let source = get_source(original_path, auto_add_path);
+
+    // The new directory of the track in the library, from track metadata
     let track_folder = get_track_directory(&track, &library_path);
+
+    // Ensure the new directory
     if let Err(err) = fs::create_dir_all(&track_folder) {
-        println!("Couldn't create track destination! {}", err);
-        panic!("Couldn't create track destination! {}", err);
+        return Err(Error::UnableToCreateDirectory(track_folder.to_string_lossy().into_owned()))
     }
+
+    // Make sure not to overwrite any files. 
     let new_file_name = get_iterative_filename(&track_file_name, &track_ext, &track_folder);
 
+    // Do the move. 
     if let Err(_) = fs::rename(original_path, &new_file_name) {
-        Err(Error::UnableToMove(new_file_name.to_str().unwrap().to_owned()))
+        Err(Error::UnableToMove(new_file_name.to_string_lossy().into_owned()))
     } else {
         Track::new(&new_file_name, Some(source))
     }

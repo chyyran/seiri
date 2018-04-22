@@ -1,6 +1,10 @@
 use std::env::home_dir;
 use std::default::Default;
-use serde_derive;
+use std::path::Path;
+use paths::*;
+use std::fs;
+use toml;
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
@@ -13,5 +17,29 @@ impl Default for Config {
         home_dir.push("Music");
         home_dir.push("seiri");
         Config { music_folder: home_dir.to_str().unwrap().to_owned() }
+    }
+}
+
+fn write_default_config(path: &Path) -> Option<()> {
+    let default_config = toml::to_string(&Config::default()).unwrap();
+    fs::write(path.to_string_lossy().into_owned(), default_config).ok()
+}
+
+pub fn get_config() -> Config {
+    let mut config_path = get_appdata_path();
+    config_path.push("config.toml");
+    if !config_path.exists() {
+        if let None = write_default_config(config_path.as_path()) {
+            panic!("Unable to write default configuration.");
+        }
+    }
+
+    // Should be safe to unwrap since 
+    let config_string = fs::read_to_string(config_path).unwrap();
+    let config = toml::from_str(&config_string);
+    if let Ok(config) = config {
+        config
+    } else {
+        panic!("Configuration file is in invalid format!");
     }
 }

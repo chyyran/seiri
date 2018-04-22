@@ -20,6 +20,7 @@ extern crate tree_magic;
 
 use std::path::PathBuf;
 use std::thread;
+use std::time::{Instant, Duration};
 
 mod bangs;
 mod config;
@@ -31,17 +32,19 @@ mod track;
 mod utils;
 mod watcher;
 
+use config::Config;
 use error::Error;
 
-fn process(path: &PathBuf) {
+fn process(path: &PathBuf, config: &Config) {
     let track = track::Track::new(path, None);
     match track {
-        Ok(track) => {
-            let config = paths::get_config();
-            let library_path = paths::ensure_music_folder(&config.music_folder);
-            let tagdata = paths::move_track(&track, &library_path.0, &library_path.1);
-            println!("{:?}", tagdata);
-        }
+        Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
+            Ok(library_path) => {
+                let track = paths::move_track(&track, &library_path.0, &library_path.1);
+                println!("{:?}", track);
+            }
+            Err(err) => println!("Error {} ocurred when attempting to move track.", err),
+        },
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
             Error::MissingRequiredTag(file_name, tag) => {
@@ -55,18 +58,22 @@ fn process(path: &PathBuf) {
 
 fn main() {
     thread::spawn(move || {
-        let config = paths::get_config();
-        let auto_paths = paths::ensure_music_folder(&config.music_folder);
+        let config = config::get_config();
+        println!("Waiting for folder {}...", &config.music_folder);
+        let wait_time = Duration::from_secs(5);
+        while let Err(_) = paths::ensure_music_folder(&config.music_folder) {
+            thread::park_timeout(wait_time);
+        }
+        println!("Successfully ensured folder {}", &config.music_folder);
+        let auto_paths = paths::ensure_music_folder(&config.music_folder).unwrap();
         let watch_path = &auto_paths.1.to_str().unwrap();
         println!("Watching {}", watch_path);
-        watcher::list(watch_path, process);
-        if let Err(e) = watcher::watch(watch_path, process) {
+        watcher::list(watch_path, &config, process);
+        if let Err(e) = watcher::watch(watch_path, &config, process) {
             println!("{}", e);
         }
     });
     let appdata_path = paths::get_appdata_path();
-    let config = paths::get_config();
-    println!("{:?}", config);
     println!("{:?}", appdata_path);
     let conn = paths::get_database_connection();
     utils::wait_for_exit(&conn);

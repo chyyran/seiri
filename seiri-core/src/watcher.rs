@@ -1,12 +1,13 @@
 extern crate notify;
 
-use std::path::PathBuf;
-use std::fs::OpenOptions;
-use std::fs;
+use config::Config;
+use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use std::fs;
+use std::fs::OpenOptions;
+use std::path::PathBuf;
 use std::sync::mpsc::channel;
 use std::time::Duration;
-use notify::DebouncedEvent;
 
 fn check_idle(path: &PathBuf) -> bool {
     return match OpenOptions::new()
@@ -21,22 +22,23 @@ fn check_idle(path: &PathBuf) -> bool {
     };
 }
 
-pub fn list<F>(watch_dir: &str, process: F) -> ()
+pub fn list<F>(watch_dir: &str, config: &Config, process: F) -> ()
 where
-    F: Fn(&PathBuf) -> (),
+    F: Fn(&PathBuf, &Config) -> (),
 {
+    // todo: use walk_dir to read this recursively.
     if let Ok(paths) = fs::read_dir(watch_dir) {
         for result in paths {
             if let Ok(path) = result {
-                process(&path.path());
+                process(&path.path(), config);
             }
         }
     }
 }
 
-pub fn watch<F>(watch_dir: &str, process: F) -> notify::Result<()>
+pub fn watch<F>(watch_dir: &str, config: &Config, process: F) -> notify::Result<()>
 where
-    F: Fn(&PathBuf) -> (),
+    F: Fn(&PathBuf, &Config) -> (),
 {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
@@ -60,12 +62,12 @@ where
                 // Otherwise, the write event will be delayed until the latest possible.
                 if let DebouncedEvent::Write(ref path) = event {
                     if check_idle(path) {
-                        process(path);
+                        process(path, config);
                     }
                 }
                 if let DebouncedEvent::Create(ref path) = event {
                     if check_idle(path) {
-                        process(path);
+                        process(path, config);
                     }
                 }
             }
