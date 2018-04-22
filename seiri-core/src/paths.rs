@@ -121,7 +121,21 @@ fn get_iterative_filename(filename: &str, extension: &str, destination: &Path) -
     new_path
 }
 
-pub fn move_track(track: &Track, library_path: &Path) -> Result<Track> {
+fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
+    match track_file_path.parent().unwrap().strip_prefix(relative_to) {
+        Ok(source) if source.to_string_lossy().is_whitespace() => {
+            "None".to_owned()
+        },
+        Ok(source) => {
+            sanitize_file_name(&source.to_string_lossy()).split("_").next().unwrap_or("None").to_owned()
+        },
+        Err(_) => {
+            "None".to_owned()
+        }
+    }
+}
+
+pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
     let track_ext = Path::new(&track.file_path)
         .extension()
         .and_then(|s| s.to_str())
@@ -129,7 +143,7 @@ pub fn move_track(track: &Track, library_path: &Path) -> Result<Track> {
 
     let track_file_name = get_track_filename(&track);
     let original_path = Path::new(&track.file_path);
-
+    let source = get_source(original_path, auto_add_path);
     let track_folder = get_track_directory(&track, &library_path);
     if let Err(err) = fs::create_dir_all(&track_folder) {
         println!("Couldn't create track destination! {}", err);
@@ -140,6 +154,6 @@ pub fn move_track(track: &Track, library_path: &Path) -> Result<Track> {
     if let Err(_) = fs::rename(original_path, &new_file_name) {
         Err(Error::UnableToMove(new_file_name.to_str().unwrap().to_owned()))
     } else {
-        Track::new(&new_file_name, None)
+        Track::new(&new_file_name, Some(source))
     }
 }

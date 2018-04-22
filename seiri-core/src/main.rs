@@ -38,8 +38,9 @@ fn process(path: &PathBuf) {
     match track {
         Ok(track) => {
             let config = paths::get_config();
-            let library_path = paths::ensure_music_folder(&config.music_folder).0;
-            let tagdata = paths::move_track(&track, &library_path);
+            let library_path = paths::ensure_music_folder(&config.music_folder);
+            let tagdata = paths::move_track(&track, &library_path.0, &library_path.1);
+            println!("{:?}", tagdata);
         }
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
