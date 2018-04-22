@@ -65,6 +65,11 @@ pub fn create_database(conn: &Connection) {
     ).unwrap();
 }
 
+pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
+    let mut statement = conn.prepare("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
+    statement.query(&[])?;
+    Ok(())
+}
 pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
     let mut params = Vec::<(String, String)>::new();
     let query = if let Bang::All = bang {
