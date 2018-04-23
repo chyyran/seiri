@@ -1,5 +1,6 @@
 #![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
+#![feature(mpsc_select)]
 
 #[macro_use]
 extern crate quick_error;
@@ -20,6 +21,7 @@ extern crate tree_magic;
 extern crate walkdir;
 
 use std::path::{Path, PathBuf};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
@@ -35,6 +37,7 @@ mod watcher;
 
 use config::Config;
 use error::Error;
+use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config) {
     let track = track::Track::new(path, None);
@@ -74,15 +77,53 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     println!("Successfully ensured folder {}", folder);
     paths::ensure_music_folder(folder).unwrap()
 }
+
+fn begin_watch(config: &Config, rx: Receiver<WatchStatus>) {
+    let auto_paths = wait_for_watch_root_available(&config.music_folder);
+    let watch_path = &auto_paths.1.to_str().unwrap();
+    println!("Watching {}", watch_path);
+    watcher::list(&watch_path, &config, process);
+    // Create a channel to receive the events.
+    if let Err(e) = watcher::watch(&watch_path, &config, process, rx) {
+        println!("{}", e);
+    }
+}
 fn main() {
     thread::spawn(move || {
+        let (tx, rx) = channel();
+        let mut tx = tx;
         let config = config::get_config();
-        let auto_paths = wait_for_watch_root_available(&config.music_folder);
-        let watch_path = &auto_paths.1.to_str().unwrap();
-        println!("Watching {}", watch_path);
-        watcher::list(&watch_path, &config, process);
-        if let Err(e) = watcher::watch(&watch_path, &config, process) {
-            println!("{}", e);
+        wait_for_watch_root_available(&config.music_folder);
+        let mut watch_thread = thread::Builder::new()
+            .name("WatchThread".to_string())
+            .spawn(move || {
+                let config = config::get_config();
+                begin_watch(&config, rx)
+            })
+            .unwrap();
+
+        let wait_time = Duration::from_secs(5);
+        loop {
+            thread::park_timeout(wait_time);
+            let music_folder = paths::ensure_music_folder(&config.music_folder);
+            if let Err(_) = music_folder {
+                println!("Lost access to {}", &config.music_folder);
+                wait_for_watch_root_available(&config.music_folder);
+                let (new_tx, rx) = channel();
+                tx.send(WatchStatus::Exit).unwrap();
+                tx = new_tx.clone();
+                watch_thread = thread::Builder::new()
+                    .name("WatchThread".to_string())
+                    .spawn(move || {
+                        let config = config::get_config();
+                        begin_watch(&config, rx)
+                    })
+                    .unwrap();
+            } else {
+                if let Err(err) = tx.send(WatchStatus::KeepAlive) {
+                    println!("{}", err);
+                }
+            }
         }
     });
     let appdata_path = paths::get_appdata_path();

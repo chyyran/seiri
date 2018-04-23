@@ -8,7 +8,7 @@ use paths::is_in_hidden_path;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
 use walkdir::{DirEntry, WalkDir};
 
@@ -49,18 +49,27 @@ where
     let walker = WalkDir::new(watch_dir).into_iter();
     for entry in walker.filter_entry(|e| !is_hidden(e)) {
         if let Ok(entry) = entry {
-             if entry.file_type().is_file() {
-                 process(entry.path(), config);
-             }
+            if entry.file_type().is_file() {
+                process(entry.path(), config);
+            }
         }
     }
 }
 
-pub fn watch<F>(watch_dir: &str, config: &Config, process: F) -> notify::Result<()>
+pub enum WatchStatus {
+    KeepAlive,
+    Exit
+}
+
+pub fn watch<F>(
+    watch_dir: &str,
+    config: &Config,
+    process: F,
+    quit_rx: Receiver<WatchStatus>,
+) -> notify::Result<()>
 where
     F: Fn(&Path, &Config) -> (),
 {
-    // Create a channel to receive the events.
     let (tx, rx) = channel();
 
     // Automatically select the best implementation for your platform.
@@ -73,26 +82,33 @@ where
 
     // This is a simple loop, but you may want to use more complex logic here,
     // for example to handle I/O.
-
     let watch_dir = Path::new(watch_dir);
     loop {
-        match rx.recv() {
-            Ok(event) => {
-                // We only want to process events when the file is idle.
-                // However, if the write finishes before the delay, only the create event is fired.
-                // Otherwise, the write event will be delayed until the latest possible.
-                if let DebouncedEvent::Write(ref path) = event {
-                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                        process(path, config);
+        select! {
+            event = rx.recv() => match event {
+                Ok(event) => {
+                    // We only want to process events when the file is idle.
+                    // However, if the write finishes before the delay, only the create event is fired.
+                    // Otherwise, the write event will be delayed until the latest possible.
+                    if let DebouncedEvent::Write(ref path) = event {
+                        if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
+                            process(path, config);
+                        }
+                    }
+                    if let DebouncedEvent::Create(ref path) = event {
+                        if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
+                            process(path, config);
+                        }
                     }
                 }
-                if let DebouncedEvent::Create(ref path) = event {
-                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                        process(path, config);
-                    }
-                }
+                Err(e) => println!("watch error: {:?}", e),
+            },
+            keepalive = quit_rx.recv() => match keepalive {
+                Ok(WatchStatus::KeepAlive) => (),
+                Ok(WatchStatus::Exit) => break,
+                Err(_) => break,
             }
-            Err(e) => println!("watch error: {:?}", e),
         }
     }
+    Ok(())
 }
