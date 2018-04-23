@@ -28,7 +28,7 @@ pub fn call_helper(file_path: &str) -> Result<String> {
     }
     let mimetype = tree_magic::from_filepath(pathbuf.as_path());
     if !mimetype.starts_with("audio") {
-        return Err(Error::UnsupportedFile(file_path.to_owned()));
+        return Err(Error::UnsupportedFile(pathbuf));
     } 
     let helper = locate_helper();
     match helper {
@@ -41,7 +41,7 @@ pub fn call_helper(file_path: &str) -> Result<String> {
                         let result = String::from_utf8(output.stdout).unwrap();
                         Ok(result)
                     } else {
-                        Err(Error::UnsupportedFile(file_path.to_owned()))
+                        Err(Error::UnsupportedFile(pathbuf))
                     }
                 }
                 Err(_) => Err(Error::HelperNotFound),

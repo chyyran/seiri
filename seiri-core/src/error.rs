@@ -3,15 +3,16 @@ extern crate quick_error;
 use bangs::LexerMode;
 use bangs::Token;
 use std::result;
+use std::path::PathBuf;
 
 pub type Result<T> = result::Result<T, Error>;
 
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        UnsupportedFile(file_name: String) {
+        UnsupportedFile(file_name: PathBuf) {
             description("File is not supported or is not a music file.")
-            display(r#"The file "{}" is not supported or is not a music file"#, file_name)
+            display(r#"The file "{:?}" is not supported or is not a music file"#, file_name)
         }
         FileNotFound(file_name: String) {
             description("The file could not be found")

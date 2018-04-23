@@ -2,11 +2,11 @@ use app_dirs::*;
 use database::{add_regexp_function, create_database, enable_wal_mode};
 use error::{Error, Result};
 use rusqlite::Connection;
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use track::Track;
-
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
 }
@@ -108,22 +108,46 @@ pub fn is_in_hidden_path(file_path: &Path, relative_to: &Path) -> bool {
 
 fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
     match track_file_path.parent().unwrap().strip_prefix(relative_to) {
-        Ok(source) if source.to_string_lossy().is_whitespace() => {
-            "None".to_owned()
-        },
-        Ok(source) => {
-            sanitize_file_name(&source.to_string_lossy()).split("_").next().unwrap_or("None").to_owned()
-        },
-        Err(_) => {
-            "None".to_owned()
+        Ok(source) if source.to_string_lossy().is_whitespace() => "None".to_owned(),
+        Ok(source) => sanitize_file_name(&source.to_string_lossy())
+            .split("_")
+            .next()
+            .unwrap_or("None")
+            .to_owned(),
+        Err(_) => "None".to_owned(),
+    }
+}
+
+fn ensure_not_added(auto_add_path: &Path) -> io::Result<PathBuf> {
+    let mut not_added = PathBuf::from(auto_add_path);
+    not_added.push(".notadded");
+    match fs::create_dir_all(&not_added) {
+        Ok(_) => Ok(not_added),
+        Err(err) => Err(err),
+    }
+}
+
+pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
+    if let Ok(notadded) = ensure_not_added(auto_add_path) {
+        let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+        let filename = path.file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unnamed file");
+        let new_file_name = get_iterative_filename(filename, ext, &notadded);
+        if let Err(_) = fs::rename(path, &new_file_name) {
+            return Err(Error::UnableToMove(
+                new_file_name.to_string_lossy().into_owned(),
+            ))
+        } else {
+            return Ok(())
         }
     }
+    Err(Error::UnableToMove("not added folder".to_owned()))
 }
 
 /// Moves the given track to its proper destination in the library, relative
 /// to the Automatically Add to Library path.
 pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
-   
     // get the track file extension
     let track_ext = Path::new(&track.file_path)
         .extension()
@@ -145,15 +169,19 @@ pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> R
 
     // Ensure the new directory
     if let Err(err) = fs::create_dir_all(&track_folder) {
-        return Err(Error::UnableToCreateDirectory(track_folder.to_string_lossy().into_owned()))
+        return Err(Error::UnableToCreateDirectory(
+            track_folder.to_string_lossy().into_owned(),
+        ));
     }
 
-    // Make sure not to overwrite any files. 
+    // Make sure not to overwrite any files.
     let new_file_name = get_iterative_filename(&track_file_name, &track_ext, &track_folder);
 
-    // Do the move. 
+    // Do the move.
     if let Err(_) = fs::rename(original_path, &new_file_name) {
-        Err(Error::UnableToMove(new_file_name.to_string_lossy().into_owned()))
+        Err(Error::UnableToMove(
+            new_file_name.to_string_lossy().into_owned(),
+        ))
     } else {
         Track::new(&new_file_name, Some(source))
     }

@@ -47,7 +47,15 @@ fn process(path: &Path, config: &Config) {
             Err(err) => println!("Error {} ocurred when attempting to move track.", err),
         },
         Err(err) => match err {
-            Error::UnsupportedFile(file_name) => println!("Found non-track item {}", file_name),
+            Error::UnsupportedFile(file_name) => {
+                match paths::ensure_music_folder(&config.music_folder) {
+                    Ok(library_path) => {
+                        paths::move_non_track(&file_name, &library_path.1).unwrap();
+                        println!("Found and moved non-track item {:?}", file_name)
+                    }
+                    Err(err) => println!("Error {} ocurred when attempting to move track.", err),
+                };
+            },
             Error::MissingRequiredTag(file_name, tag) => {
                 println!("Found track {} but missing tag {}", file_name, tag)
             }
