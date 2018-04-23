@@ -8,7 +8,7 @@ use paths::is_in_hidden_path;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
 use walkdir::{DirEntry, WalkDir};
 
@@ -58,7 +58,7 @@ where
 
 pub enum WatchStatus {
     KeepAlive,
-    Exit
+    Exit,
 }
 
 pub fn watch<F>(

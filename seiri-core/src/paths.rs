@@ -1,12 +1,13 @@
 use app_dirs::*;
+use chrono::prelude::*;
 use database::{add_regexp_function, create_database, enable_wal_mode};
 use error::{Error, Result};
 use rusqlite::Connection;
-use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use track::Track;
+
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
 }
@@ -120,7 +121,9 @@ fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
 
 fn ensure_not_added(auto_add_path: &Path) -> io::Result<PathBuf> {
     let mut not_added = PathBuf::from(auto_add_path);
+    let local: DateTime<Local> = Local::now(); 
     not_added.push(".notadded");
+    not_added.push(local.format("%Y-%m-%d").to_string());
     match fs::create_dir_all(&not_added) {
         Ok(_) => Ok(not_added),
         Err(err) => Err(err),

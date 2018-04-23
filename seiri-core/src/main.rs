@@ -9,6 +9,7 @@ extern crate quick_error;
 extern crate serde_derive;
 
 extern crate app_dirs;
+extern crate chrono;
 extern crate humantime;
 extern crate itertools;
 extern crate notify;
