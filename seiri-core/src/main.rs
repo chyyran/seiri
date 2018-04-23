@@ -20,6 +20,7 @@ extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
 
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
@@ -88,46 +89,48 @@ fn begin_watch(config: &Config, rx: Receiver<WatchStatus>) {
         println!("{}", e);
     }
 }
-fn main() {
+
+fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandle<()>> {
+    thread::Builder::new()
+        .name("WatchThread".to_string())
+        .spawn(move || {
+            let config = config::get_config();
+            begin_watch(&config, rx)
+        })
+}
+
+fn start_watcher_watchdog(wait_time: Duration) {
     thread::spawn(move || {
         let (tx, rx) = channel();
         let mut tx = tx;
         let config = config::get_config();
         wait_for_watch_root_available(&config.music_folder);
-        let mut watch_thread = thread::Builder::new()
-            .name("WatchThread".to_string())
-            .spawn(move || {
-                let config = config::get_config();
-                begin_watch(&config, rx)
-            })
-            .unwrap();
-
-        let wait_time = Duration::from_secs(5);
+        let mut _watch_thread = get_watcher_thread(rx).unwrap();
         loop {
             thread::park_timeout(wait_time);
+            if let Err(_) = tx.send(WatchStatus::KeepAlive) {
+                println!("Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
+                let (new_tx, rx) = channel();
+                tx = new_tx.clone();
+                _watch_thread = get_watcher_thread(rx).unwrap();
+            }
+
             let music_folder = paths::ensure_music_folder(&config.music_folder);
             if let Err(_) = music_folder {
                 println!("Lost access to {}", &config.music_folder);
                 wait_for_watch_root_available(&config.music_folder);
                 let (new_tx, rx) = channel();
                 tx.send(WatchStatus::Exit).unwrap();
+                println!("Requested watcher thread exit. Restarting Watcher Thread...");
                 tx = new_tx.clone();
-                watch_thread = thread::Builder::new()
-                    .name("WatchThread".to_string())
-                    .spawn(move || {
-                        let config = config::get_config();
-                        begin_watch(&config, rx)
-                    })
-                    .unwrap();
-            } else {
-                if let Err(err) = tx.send(WatchStatus::KeepAlive) {
-                    println!("{}", err);
-                }
+                _watch_thread = get_watcher_thread(rx).unwrap();
             }
         }
     });
-    let appdata_path = paths::get_appdata_path();
-    println!("{:?}", appdata_path);
+}
+fn main() {
+    let wait_time = Duration::from_secs(5);
+    start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();
     utils::wait_for_exit(&conn);
 }
