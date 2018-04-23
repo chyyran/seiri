@@ -19,9 +19,9 @@ extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
 
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 use std::thread;
-use std::time::{Duration};
+use std::time::Duration;
 
 mod bangs;
 mod config;
@@ -55,7 +55,7 @@ fn process(path: &Path, config: &Config) {
                     }
                     Err(err) => println!("Error {} ocurred when attempting to move track.", err),
                 };
-            },
+            }
             Error::MissingRequiredTag(file_name, tag) => {
                 println!("Found track {} but missing tag {}", file_name, tag)
             }
@@ -65,16 +65,19 @@ fn process(path: &Path, config: &Config) {
     }
 }
 
+fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
+    println!("Waiting for folder {}...", folder);
+    let wait_time = Duration::from_secs(5);
+    while let Err(_) = paths::ensure_music_folder(folder) {
+        thread::park_timeout(wait_time);
+    }
+    println!("Successfully ensured folder {}", folder);
+    paths::ensure_music_folder(folder).unwrap()
+}
 fn main() {
     thread::spawn(move || {
         let config = config::get_config();
-        println!("Waiting for folder {}...", &config.music_folder);
-        let wait_time = Duration::from_secs(5);
-        while let Err(_) = paths::ensure_music_folder(&config.music_folder) {
-            thread::park_timeout(wait_time);
-        }
-        println!("Successfully ensured folder {}", &config.music_folder);
-        let auto_paths = paths::ensure_music_folder(&config.music_folder).unwrap();
+        let auto_paths = wait_for_watch_root_available(&config.music_folder);
         let watch_path = &auto_paths.1.to_str().unwrap();
         println!("Watching {}", watch_path);
         watcher::list(&watch_path, &config, process);

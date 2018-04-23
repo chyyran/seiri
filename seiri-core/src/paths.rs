@@ -137,9 +137,9 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
         if let Err(_) = fs::rename(path, &new_file_name) {
             return Err(Error::UnableToMove(
                 new_file_name.to_string_lossy().into_owned(),
-            ))
+            ));
         } else {
-            return Ok(())
+            return Ok(());
         }
     }
     Err(Error::UnableToMove("not added folder".to_owned()))
@@ -148,11 +148,31 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
 /// Moves the given track to its proper destination in the library, relative
 /// to the Automatically Add to Library path.
 pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
+    let track_file_path = Path::new(&track.file_path);
+
     // get the track file extension
-    let track_ext = Path::new(&track.file_path)
-        .extension()
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
+    let track_ext = {
+        if !track_file_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or(".")
+            .starts_with(".")
+        {
+            Path::new(&track.file_path)
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_owned()
+        } else {
+            // Handle dotfiles.
+            track_file_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap()
+                .trim_left_matches('.')
+                .to_owned()
+        }
+    };
 
     // The new filename of the track, from the track metadata.
     let track_file_name = get_track_filename(&track);

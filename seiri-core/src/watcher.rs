@@ -33,6 +33,14 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .unwrap_or(false)
 }
 
+fn is_hidden_file(entry: &PathBuf) -> bool {
+    entry
+        .file_name()
+        .and_then(|s| s.to_str())
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
+
 pub fn list<F>(watch_dir: &str, config: &Config, process: F) -> ()
 where
     F: Fn(&Path, &Config) -> (),
@@ -74,12 +82,12 @@ where
                 // However, if the write finishes before the delay, only the create event is fired.
                 // Otherwise, the write event will be delayed until the latest possible.
                 if let DebouncedEvent::Write(ref path) = event {
-                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) {
+                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
                         process(path, config);
                     }
                 }
                 if let DebouncedEvent::Create(ref path) = event {
-                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) {
+                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
                         process(path, config);
                     }
                 }
