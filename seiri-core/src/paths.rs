@@ -102,6 +102,10 @@ fn get_iterative_filename(filename: &str, extension: &str, destination: &Path) -
     new_path
 }
 
+pub fn is_in_hidden_path(file_path: &Path, relative_to: &Path) -> bool {
+    get_source(file_path, relative_to).starts_with(".")
+}
+
 fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
     match track_file_path.parent().unwrap().strip_prefix(relative_to) {
         Ok(source) if source.to_string_lossy().is_whitespace() => {

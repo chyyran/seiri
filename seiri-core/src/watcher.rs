@@ -1,13 +1,16 @@
 extern crate notify;
 
 use config::Config;
+
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use paths::is_in_hidden_path;
 use std::fs;
 use std::fs::OpenOptions;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
+use walkdir::{DirEntry, WalkDir};
 
 fn check_idle(path: &PathBuf) -> bool {
     return match OpenOptions::new()
@@ -22,23 +25,32 @@ fn check_idle(path: &PathBuf) -> bool {
     };
 }
 
+fn is_hidden(entry: &DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
+
 pub fn list<F>(watch_dir: &str, config: &Config, process: F) -> ()
 where
-    F: Fn(&PathBuf, &Config) -> (),
+    F: Fn(&Path, &Config) -> (),
 {
-    // todo: use walk_dir to read this recursively.
-    if let Ok(paths) = fs::read_dir(watch_dir) {
-        for result in paths {
-            if let Ok(path) = result {
-                process(&path.path(), config);
-            }
+    let watch_dir = Path::new(watch_dir);
+    let walker = WalkDir::new(watch_dir).into_iter();
+    for entry in walker.filter_entry(|e| !is_hidden(e)) {
+        if let Ok(entry) = entry {
+             if entry.file_type().is_file() {
+                 process(entry.path(), config);
+             }
         }
     }
 }
 
 pub fn watch<F>(watch_dir: &str, config: &Config, process: F) -> notify::Result<()>
 where
-    F: Fn(&PathBuf, &Config) -> (),
+    F: Fn(&Path, &Config) -> (),
 {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
@@ -54,6 +66,7 @@ where
     // This is a simple loop, but you may want to use more complex logic here,
     // for example to handle I/O.
 
+    let watch_dir = Path::new(watch_dir);
     loop {
         match rx.recv() {
             Ok(event) => {
@@ -61,12 +74,12 @@ where
                 // However, if the write finishes before the delay, only the create event is fired.
                 // Otherwise, the write event will be delayed until the latest possible.
                 if let DebouncedEvent::Write(ref path) = event {
-                    if check_idle(path) {
+                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) {
                         process(path, config);
                     }
                 }
                 if let DebouncedEvent::Create(ref path) = event {
-                    if check_idle(path) {
+                    if check_idle(path) && !is_in_hidden_path(path, watch_dir) {
                         process(path, config);
                     }
                 }

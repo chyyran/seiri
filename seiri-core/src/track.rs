@@ -2,7 +2,7 @@ extern crate serde_json;
 
 use error::{Error, Result};
 use taglibsharp;
-use std::path::PathBuf;
+use std::path::Path;
 use serde_json::value::Value;
 use std::fmt;
 use std::str;
@@ -139,7 +139,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(file_path: &PathBuf, source: Option<String>) -> Result<Track> {
+    pub fn new(file_path: &Path, source: Option<String>) -> Result<Track> {
         let json_data = taglibsharp::call_helper(file_path.to_str().unwrap());
         
         if let Err(err) = json_data {

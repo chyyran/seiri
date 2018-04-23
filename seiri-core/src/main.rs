@@ -17,10 +17,11 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate toml;
 extern crate tree_magic;
+extern crate walkdir;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::thread;
-use std::time::{Instant, Duration};
+use std::time::{Duration};
 
 mod bangs;
 mod config;
@@ -35,7 +36,7 @@ mod watcher;
 use config::Config;
 use error::Error;
 
-fn process(path: &PathBuf, config: &Config) {
+fn process(path: &Path, config: &Config) {
     let track = track::Track::new(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
@@ -68,8 +69,8 @@ fn main() {
         let auto_paths = paths::ensure_music_folder(&config.music_folder).unwrap();
         let watch_path = &auto_paths.1.to_str().unwrap();
         println!("Watching {}", watch_path);
-        watcher::list(watch_path, &config, process);
-        if let Err(e) = watcher::watch(watch_path, &config, process) {
+        watcher::list(&watch_path, &config, process);
+        if let Err(e) = watcher::watch(&watch_path, &config, process) {
             println!("{}", e);
         }
     });
