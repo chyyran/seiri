@@ -2,13 +2,13 @@ use app_dirs::*;
 use chrono::prelude::*;
 use database::{add_regexp_function, create_database, enable_wal_mode};
 use error::{Error, Result};
+use r2d2::{CustomizeConnection, Pool};
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, Error as SqliteError, Result as SqliteResult};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use track::Track;
-use r2d2_sqlite::SqliteConnectionManager;
-use r2d2::{Pool, CustomizeConnection};
 
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
@@ -25,8 +25,7 @@ impl InvalidChar for char {
 
 #[derive(Copy, Clone, Debug)]
 struct SeiriConnectionCustomizer;
-impl CustomizeConnection<Connection, SqliteError> for SeiriConnectionCustomizer 
-{
+impl CustomizeConnection<Connection, SqliteError> for SeiriConnectionCustomizer {
     fn on_acquire(&self, conn: &mut Connection) -> SqliteResult<()> {
         enable_wal_mode(conn).unwrap();
         add_regexp_function(conn).unwrap();
@@ -146,7 +145,7 @@ fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
 
 fn ensure_not_added(auto_add_path: &Path) -> io::Result<PathBuf> {
     let mut not_added = PathBuf::from(auto_add_path);
-    let local: DateTime<Local> = Local::now(); 
+    let local: DateTime<Local> = Local::now();
     not_added.push(".notadded");
     not_added.push(local.format("%Y-%m-%d").to_string());
     match fs::create_dir_all(&not_added) {
@@ -171,6 +170,40 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
         }
     }
     Err(Error::UnableToMove("not added folder".to_owned()))
+}
+
+/// Reconsider the location of a track.
+/// If the file is gone or deleted, returns Ok(None).
+/// Otherwise, returns a new Track that has a new
+/// or same location, depending if its properties have changed.
+pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Track>> {
+    let track_file_path = Path::new(&track.file_path);
+    if let Ok(reconsidered) = Track::new(track_file_path, Some(&track.source)) {
+        // The new directory of the track in the library, from track metadata
+        let mut reconsidered_location = get_track_directory(&reconsidered, &library_path);
+        reconsidered_location.push(
+            track_file_path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned(),
+        );
+
+        if track_file_path == &reconsidered_location {
+            Ok(Some(reconsidered))
+        } else {
+            if let Err(_) = fs::rename(track_file_path, &reconsidered_location) {
+                Err(Error::UnableToMove(
+                    reconsidered_location.to_string_lossy().into_owned(),
+                ))
+            } else {
+                Ok(Track::new(&reconsidered_location, Some(&track.source)).ok())
+            }
+        }
+    } else {
+        // Delete this.
+        Ok(None)
+    }
 }
 
 /// Moves the given track to its proper destination in the library, relative
@@ -231,6 +264,6 @@ pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> R
             new_file_name.to_string_lossy().into_owned(),
         ))
     } else {
-        Track::new(&new_file_name, Some(source))
+        Track::new(&new_file_name, Some(&source))
     }
 }

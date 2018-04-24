@@ -141,7 +141,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(file_path: &Path, source: Option<String>) -> Result<Track> {
+    pub fn new(file_path: &Path, source: Option<&str>) -> Result<Track> {
         let json_data = taglibsharp::call_helper(file_path.to_str().unwrap());
         
         if let Err(err) = json_data {
@@ -218,7 +218,7 @@ impl Track {
         }
         let track = Track {
             file_path: file_path.to_str().unwrap().to_owned(),
-            source: source.unwrap_or(String::from("None")),
+            source: source.unwrap_or("None").to_owned(),
             title: title,
             artist: artist,
             album_artists: album_artists_unwrapped
@@ -246,3 +246,4 @@ impl Track {
         Ok(track)
     }
 }
+

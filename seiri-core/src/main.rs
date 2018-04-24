@@ -35,6 +35,8 @@ extern crate r2d2_sqlite;
 
 use rocket::response::content;
 use rocket::State;
+use rocket::Config as RocketConfig;
+use rocket::config::Environment;
 
 use juniper::{EmptyMutation, RootNode};
 
@@ -168,7 +170,12 @@ fn main() {
     start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();
     thread::spawn(move || {
-        rocket::ignite().manage(graphql::Context::new())
+        let config = RocketConfig::build(Environment::Development)
+        .address("localhost")
+        .port(9234)
+        .finalize()
+        .unwrap();
+        rocket::custom(config, true).manage(graphql::Context::new())
         .manage(Schema::new(
             graphql::Query::new(),
             EmptyMutation::<graphql::Context>::new(),
