@@ -1,7 +1,6 @@
 <h1>
   <ruby>
-    整 <rt>せい</rt>
-    理 <rt>り</rt>
+    整理 <rt>せいり</rt>
   </ruby>
   <em>seiri</em>
 </h1>
