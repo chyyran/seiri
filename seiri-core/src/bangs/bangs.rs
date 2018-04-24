@@ -34,7 +34,7 @@ pub enum Bang {
     HasDuplicates(bool),
     LogicalAnd(Box<Bang>, Box<Bang>),
     LogicalOr(Box<Bang>, Box<Bang>),
-    Grouping(Box<Bang>),
+    Grouping(Box<Bang>)
 }
 
 impl Bang {

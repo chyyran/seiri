@@ -39,6 +39,9 @@ use rocket::Config as RocketConfig;
 use rocket::config::Environment;
 
 use juniper::{EmptyMutation, RootNode};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::Connection;
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -61,13 +64,16 @@ use config::Config;
 use error::Error;
 use watcher::WatchStatus;
 
-fn process(path: &Path, config: &Config) {
+fn process(path: &Path, config: &Config, conn: &Connection) {
     let track = track::Track::new(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
                 let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
-                println!("{:?}", track);
+                if let Ok(track) = track { 
+                    database::add_track(&track, conn);
+                    println!("Added {:?} to database", track);
+                }
             }
             Err(err) => println!("Error {} ocurred when attempting to move track.", err),
         },
@@ -100,13 +106,14 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: &Config, rx: Receiver<WatchStatus>) {
+fn begin_watch(config: &Config, pool: &Pool<SqliteConnectionManager>,
+ rx: Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
-    watcher::list(&watch_path, &config, process);
+    watcher::list(&watch_path, &config, &pool, process);
     // Create a channel to receive the events.
-    if let Err(e) = watcher::watch(&watch_path, &config, process, rx) {
+    if let Err(e) = watcher::watch(&watch_path, &config, &pool, process, rx) {
         println!("{}", e);
     }
 }
@@ -116,7 +123,8 @@ fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandl
         .name("WatchThread".to_string())
         .spawn(move || {
             let config = config::get_config();
-            begin_watch(&config, rx)
+            let pool = paths::get_connection_pool();
+            begin_watch(&config, &pool, rx)
         })
 }
 

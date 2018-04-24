@@ -5,6 +5,9 @@ use config::Config;
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use paths::is_in_hidden_path;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::Connection;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
@@ -41,16 +44,21 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
         .unwrap_or(false)
 }
 
-pub fn list<F>(watch_dir: &str, config: &Config, process: F) -> ()
+pub fn list<F>(
+    watch_dir: &str,
+    config: &Config,
+    pool: &Pool<SqliteConnectionManager>,
+    process: F,
+) -> ()
 where
-    F: Fn(&Path, &Config) -> (),
+    F: Fn(&Path, &Config, &Connection) -> (),
 {
     let watch_dir = Path::new(watch_dir);
     let walker = WalkDir::new(watch_dir).into_iter();
     for entry in walker.filter_entry(|e| !is_hidden(e)) {
         if let Ok(entry) = entry {
             if entry.file_type().is_file() {
-                process(entry.path(), config);
+                process(entry.path(), config, &pool.get().unwrap());
             }
         }
     }
@@ -64,11 +72,12 @@ pub enum WatchStatus {
 pub fn watch<F>(
     watch_dir: &str,
     config: &Config,
+    pool: &Pool<SqliteConnectionManager>,
     process: F,
     quit_rx: Receiver<WatchStatus>,
 ) -> notify::Result<()>
 where
-    F: Fn(&Path, &Config) -> (),
+    F: Fn(&Path, &Config, &Connection) -> (),
 {
     let (tx, rx) = channel();
 
@@ -92,12 +101,12 @@ where
                     // Otherwise, the write event will be delayed until the latest possible.
                     if let DebouncedEvent::Write(ref path) = event {
                         if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            process(path, config);
+                            process(path, config, &pool.get().unwrap());
                         }
                     }
                     if let DebouncedEvent::Create(ref path) = event {
                         if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            process(path, config);
+                            process(path, config, &pool.get().unwrap());
                         }
                     }
                 }
