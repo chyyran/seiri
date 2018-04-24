@@ -33,18 +33,18 @@ graphql_object!(Query: Context |&self| {
 
     field all_tracks(&executor) -> FieldResult<Vec<Track>> {
         let conn = executor.context().pool.get().unwrap();
-        match query_tracks(Bang::All, &conn) {
+        match query_tracks(Bang::All, &conn, None, None) {
             Ok(tracks) => Ok(tracks),
             Err(err) => Err(FieldError::from(err))
         }
     }
 
 
-    field query_tracks(&executor, query: String) -> FieldResult<Vec<Track>> {
+    field query_tracks(&executor, query: String, first: Option<i32>, after: Option<i32>) -> FieldResult<Vec<Track>> {
         let conn = executor.context().pool.get().unwrap();
         match Bang::new(&query) {
             Ok(bang) => {
-             match query_tracks(bang, &conn) {
+             match query_tracks(bang, &conn, first, after) {
                     Ok(tracks) => Ok(tracks),
                     Err(err) => Err(FieldError::from(err))
                 }

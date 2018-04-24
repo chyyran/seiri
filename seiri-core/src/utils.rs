@@ -22,7 +22,7 @@ pub fn wait_for_exit(conn: &Connection) {
                 Ok(bang) => {
                     println!("{:?}", bang);
                   //  println!("Compiles to... -------------");
-                    let tracks = query_tracks(bang, conn);
+                    let tracks = query_tracks(bang, conn, None, None);
                     println!("{:?}", tracks)
                 },
                 Err(err) => println!("{:?}", err),

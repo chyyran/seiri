@@ -71,9 +71,10 @@ pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     statement.query(&[])?;
     Ok(())
 }
-pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
+
+pub fn query_tracks(bang: Bang, conn: &Connection, limit: Option<i32>, offset: Option<i32>) -> Result<Vec<Track>> {
     let mut params = Vec::<(String, String)>::new();
-    let query = if let Bang::All = bang {
+    let mut query = if let Bang::All = bang {
         "SELECT * FROM tracks".to_string()
     } else {
         format!(
@@ -81,6 +82,16 @@ pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
             to_query_string(bang, &mut params)
         )
     };
+
+    if let Some(limit) = limit {
+        query.push_str(&format!(" LIMIT {}", limit));
+    }
+
+    if let Some(offset) = offset {
+        query.push_str(&format!(" OFFSET {}", offset));
+    }
+
+    query.push_str(" ORDER BY CASE WHEN AlbumArtists = 'Various Artists' THEN 1 END, AlbumArtists,Album,TrackNumber");
 
     let mut tracks = Vec::<Track>::new();
     println!("Executing query: {:?}", query);

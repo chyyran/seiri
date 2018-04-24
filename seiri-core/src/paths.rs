@@ -176,6 +176,7 @@ fn track_warrants_move(track_as_saved: &Track, track_as_read: &Track) -> bool {
     !(track_as_saved.title == track_as_read.title 
         && track_as_saved.album == track_as_read.album
         && track_as_saved.artist == track_as_read.artist
+        && track_as_saved.track_number == track_as_read.track_number
         && track_as_saved.album_artists == track_as_read.album_artists)
 }
 
