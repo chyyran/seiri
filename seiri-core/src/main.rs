@@ -1,6 +1,8 @@
 #![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
 #![feature(mpsc_select)]
+#![feature(plugin)]
+#![plugin(rocket_codegen)]
 
 #[macro_use]
 extern crate quick_error;
@@ -8,18 +10,33 @@ extern crate quick_error;
 #[macro_use]
 extern crate serde_derive;
 
+#[macro_use]
+extern crate juniper_codegen;
+#[macro_use]
+extern crate juniper;
+extern crate juniper_rocket;
+
 extern crate app_dirs;
 extern crate chrono;
 extern crate humantime;
 extern crate itertools;
+
 extern crate notify;
 extern crate rand;
 extern crate regex;
+extern crate rocket;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
+extern crate r2d2;
+extern crate r2d2_sqlite;
+
+use rocket::response::content;
+use rocket::State;
+
+use juniper::{EmptyMutation, RootNode};
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -36,6 +53,7 @@ mod taglibsharp;
 mod track;
 mod utils;
 mod watcher;
+mod graphql;
 
 use config::Config;
 use error::Error;
@@ -129,9 +147,33 @@ fn start_watcher_watchdog(wait_time: Duration) {
         }
     });
 }
+
+#[get("/")]
+fn graphiql() -> content::Html<String> {
+    juniper_rocket::graphiql_source("/graphql")
+}
+type Schema = juniper::RootNode<'static, graphql::Query, EmptyMutation<graphql::Context>>;
+
+#[post("/graphql", data = "<request>")]
+fn post_graphql_handler(
+    context: State<graphql::Context>,
+    request: juniper_rocket::GraphQLRequest,
+    schema: State<Schema>,
+) -> juniper_rocket::GraphQLResponse {
+    request.execute(&schema, &context)
+}
+
 fn main() {
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();
+    thread::spawn(move || {
+        rocket::ignite().manage(graphql::Context::new())
+        .manage(Schema::new(
+            graphql::Query::new(),
+            EmptyMutation::<graphql::Context>::new(),
+        )).mount("/", routes![graphiql, post_graphql_handler]).launch();
+    });
+
     utils::wait_for_exit(&conn);
 }

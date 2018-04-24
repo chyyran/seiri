@@ -208,27 +208,27 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
                 extract_argument(tokens),
             ),
             BangType::BitrateLessThan => parse_bang(
-                |bitrate: i64| Bang::BitrateLessThan(bitrate),
+                |bitrate: i32| Bang::BitrateLessThan(bitrate),
                 extract_argument(tokens),
             ),
             BangType::BitrateGreaterThan => parse_bang(
-                |bitrate: i64| Bang::BitrateGreaterThan(bitrate),
+                |bitrate: i32| Bang::BitrateGreaterThan(bitrate),
                 extract_argument(tokens),
             ),
             BangType::CoverArtWidthLessThan => parse_bang(
-                |cw: i64| Bang::CoverArtWidthLessThan(cw),
+                |cw: i32| Bang::CoverArtWidthLessThan(cw),
                 extract_argument(tokens),
             ),
             BangType::CoverArtWidthGreaterThan => parse_bang(
-                |cw: i64| Bang::CoverArtWidthGreaterThan(cw),
+                |cw: i32| Bang::CoverArtWidthGreaterThan(cw),
                 extract_argument(tokens),
             ),
             BangType::CoverArtHeightLessThan => parse_bang(
-                |ch: i64| Bang::CoverArtHeightLessThan(ch),
+                |ch: i32| Bang::CoverArtHeightLessThan(ch),
                 extract_argument(tokens),
             ),
             BangType::CoverArtHeightGreaterThan => parse_bang(
-                |ch: i64| Bang::CoverArtHeightGreaterThan(ch),
+                |ch: i32| Bang::CoverArtHeightGreaterThan(ch),
                 extract_argument(tokens),
             ),
             BangType::HasCoverArt => {

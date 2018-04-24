@@ -8,7 +8,8 @@ use rand::{thread_rng, Rng};
 use rusqlite::{Connection, Error, Result};
 use std::collections::HashMap;
 use regex::Regex;
-
+use bangs::ms_to_ticks;
+use bangs::ticks_to_ms;
 
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
     let mut cached_regexes = HashMap::new();
@@ -112,8 +113,8 @@ pub fn query_tracks(bang: Bang, conn: &Connection) -> Result<Vec<Track>> {
             sample_rate: row.get_checked(12)?,
             source: row.get_checked(13).ok().unwrap_or("None".to_owned()),
             disc_number: row.get_checked(14)?,
-            duration: row.get_checked(15)?,
-            file_type: TrackFileType::from(row.get_checked::<_, u32>(16)?),
+            duration: ticks_to_ms(row.get_checked(15)?),
+            file_type: TrackFileType::from(row.get_checked::<_, i32>(16)?),
         };
         tracks.push(track)
     }
@@ -340,7 +341,7 @@ pub fn add_track(track: &Track, conn: &Connection) {
             &track.sample_rate,
             &track.source,
             &track.disc_number,
-            &track.duration,
+            &ms_to_ticks(track.duration),
             &track.file_type.value(),
         ],
     ).unwrap();

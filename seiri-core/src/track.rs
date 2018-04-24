@@ -3,11 +3,13 @@ extern crate serde_json;
 use error::{Error, Result};
 use taglibsharp;
 use std::path::Path;
+use std::time::Duration;
 use serde_json::value::Value;
 use std::fmt;
 use std::str;
+use bangs::ticks_to_ms;
 
-#[derive(Debug)]
+#[derive(Debug, GraphQLEnum)]
 pub enum TrackFileType {
     Flac,
     Flac4,
@@ -27,7 +29,7 @@ pub enum TrackFileType {
 }
 
 impl TrackFileType {
-    pub fn value(&self) -> u32 {
+    pub fn value(&self) -> i32 {
         match *self {
             TrackFileType::Flac => 1,
             TrackFileType::Flac4 => 2,
@@ -48,8 +50,8 @@ impl TrackFileType {
     }
 }
 
-impl From<u32> for TrackFileType {
-    fn from(i: u32) -> Self {
+impl From<i32> for TrackFileType {
+    fn from(i: i32) -> Self {
         match i {
             1 => TrackFileType::Flac,
             2 => TrackFileType::Flac4,
@@ -117,24 +119,24 @@ impl str::FromStr for TrackFileType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, GraphQLObject)]
 pub struct Track {
     pub file_path: String,
     pub title: String,
     pub artist: String,
     pub album_artists: Vec<String>,
     pub album: String,
-    pub year: i64,
-    pub track_number: i64,
+    pub year: i32,
+    pub track_number: i32,
     pub musicbrainz_track_id: Option<String>,
     pub has_front_cover: bool,
-    pub front_cover_height: i64,
-    pub front_cover_width: i64,
-    pub bitrate: i64,
-    pub sample_rate: i64,
+    pub front_cover_height: i32,
+    pub front_cover_width: i32,
+    pub bitrate: i32,
+    pub sample_rate: i32,
     pub source: String,
-    pub disc_number: i64,
-    pub duration: i64,
+    pub disc_number: i32,
+    pub duration: i32,
     pub file_type: TrackFileType,
 }
 
@@ -224,20 +226,20 @@ impl Track {
                 .map(|val| val.as_str().unwrap().to_owned())
                 .collect::<Vec<String>>(),
             album: album,
-            year: year.as_i64().unwrap_or(0).to_owned(),
-            track_number: track_number.as_i64().unwrap_or(0).to_owned(),
-            disc_number: disc_number.as_i64().unwrap_or(0).to_owned(),
+            year: year.as_i64().and_then(|i| Some(i as i32)).unwrap_or(0).to_owned(),
+            track_number: track_number.as_i64().and_then(|i| Some(i as i32)).unwrap_or(0).to_owned(),
+            disc_number: disc_number.as_i64().and_then(|i| Some(i as i32)).unwrap_or(0).to_owned(),
             musicbrainz_track_id: if let &Value::String(ref string) = musicbrainz_track_id {
                 Some(string.to_owned())
             } else {
                 None
             },
             has_front_cover: has_front_cover.as_bool().unwrap().to_owned(),
-            front_cover_height: front_cover_height.as_i64().unwrap_or(0).to_owned(),
-            front_cover_width: front_cover_width.as_i64().unwrap_or(0).to_owned(),
-            bitrate: bitrate.as_i64().unwrap().to_owned(),
-            sample_rate: sample_rate.as_i64().unwrap().to_owned(),
-            duration: duration.as_i64().unwrap().to_owned(),
+            front_cover_height: front_cover_height.as_i64().and_then(|i| Some(i as i32)).unwrap_or(0).to_owned(),
+            front_cover_width: front_cover_width.as_i64().and_then(|i| Some(i as i32)).unwrap_or(0).to_owned(),
+            bitrate: bitrate.as_i64().and_then(|i| Some(i as i32)).unwrap().to_owned(),
+            sample_rate: sample_rate.as_i64().and_then(|i| Some(i as i32)).unwrap().to_owned(),
+            duration: ticks_to_ms(duration.as_i64().unwrap().to_owned()),
             file_type: file_type,
         };
 

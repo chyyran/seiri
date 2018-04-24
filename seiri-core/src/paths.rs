@@ -2,11 +2,13 @@ use app_dirs::*;
 use chrono::prelude::*;
 use database::{add_regexp_function, create_database, enable_wal_mode};
 use error::{Error, Result};
-use rusqlite::Connection;
+use rusqlite::{Connection, Error as SqliteError, Result as SqliteResult};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use track::Track;
+use r2d2_sqlite::SqliteConnectionManager;
+use r2d2::{Pool, CustomizeConnection};
 
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
@@ -18,6 +20,18 @@ impl InvalidChar for char {
             '\"' | '<' | '>' | '|' | '\0' | ':' | '*' | '?' | '\\' | '/' => true,
             _ => false,
         }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+struct SeiriConnectionCustomizer;
+impl CustomizeConnection<Connection, SqliteError> for SeiriConnectionCustomizer 
+{
+    fn on_acquire(&self, conn: &mut Connection) -> SqliteResult<()> {
+        enable_wal_mode(conn).unwrap();
+        add_regexp_function(conn).unwrap();
+        create_database(conn);
+        Ok(())
     }
 }
 
@@ -48,6 +62,17 @@ pub fn get_database_connection() -> Connection {
     add_regexp_function(&conn).unwrap();
     create_database(&conn);
     conn
+}
+
+pub fn get_connection_pool() -> Pool<SqliteConnectionManager> {
+    let mut database_path = get_appdata_path();
+    database_path.push("tracks.db");
+    let manager = SqliteConnectionManager::file(&database_path);
+    let pool = Pool::builder()
+        .connection_customizer(Box::new(SeiriConnectionCustomizer))
+        .build(manager)
+        .unwrap();
+    pool
 }
 
 pub fn ensure_music_folder(folder_path: &str) -> io::Result<(PathBuf, PathBuf)> {
