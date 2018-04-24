@@ -66,7 +66,7 @@ fn process(path: &Path, config: &Config) {
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
-                let track = paths::move_track(&track, &library_path.0, &library_path.1);
+                let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
                 println!("{:?}", track);
             }
             Err(err) => println!("Error {} ocurred when attempting to move track.", err),

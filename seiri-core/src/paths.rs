@@ -172,6 +172,13 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
     Err(Error::UnableToMove("not added folder".to_owned()))
 }
 
+fn track_warrants_move(track_as_saved: &Track, track_as_read: &Track) -> bool {
+    !(track_as_saved.title == track_as_read.title 
+        && track_as_saved.album == track_as_read.album
+        && track_as_saved.artist == track_as_read.artist
+        && track_as_saved.album_artists == track_as_read.album_artists)
+}
+
 /// Reconsider the location of a track.
 /// If the file is gone or deleted, returns Ok(None).
 /// Otherwise, returns a new Track that has a new
@@ -179,66 +186,48 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
 pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Track>> {
     let track_file_path = Path::new(&track.file_path);
     if !track_file_path.exists() {
-        return Ok(None)
+        return Ok(None);
     }
-    // get the track file extension
-    let track_ext = {
-        if !track_file_path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or(".")
-            .starts_with(".")
-        {
-            Path::new(&track.file_path)
-                .extension()
-                .and_then(|s| s.to_str())
-                .unwrap_or("")
-                .to_owned()
-        } else {
-            // Handle dotfiles.
-            track_file_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap()
-                .trim_left_matches('.')
-                .to_owned()
+
+    if let Ok(track_as_read) = Track::new(track_file_path, Some(&track.source)) {
+        if !track_warrants_move(track, &track_as_read) {
+            return Ok(Some(track_as_read));
         }
-    };
-
-    if let Ok(reconsidered) = Track::new(track_file_path, Some(&track.source)) {
-        // The new directory of the track in the library, from track metadata
-        let mut reconsidered_location = get_track_directory(&reconsidered, &library_path);
-        let reconsidered_file_name = get_track_filename(&reconsidered);
-        reconsidered_location.push(format!("{}.{}", reconsidered_file_name, track_ext));
-
-        if track_file_path == &reconsidered_location {
-            Ok(Some(reconsidered))
-        } else {
-            if let Err(_) = fs::rename(track_file_path, &reconsidered_location) {
-                Err(Error::UnableToMove(
-                    reconsidered_location.to_string_lossy().into_owned(),
-                ))
-            } else {
+        match move_track(&track_as_read, library_path, &track_as_read.source) {
+            Ok(track) => {
+                //  Cleanup
                 if let Some(old_dir) = &track_file_path.parent() {
-                    // If the directory is empty, simply remove it. 
+                    // If the directory is empty, simply remove it.
                     fs::remove_dir(old_dir).unwrap_or(());
                     if let Some(old_dir) = old_dir.parent() {
                         // Cleanup after the artist as well.
                         fs::remove_dir(old_dir).unwrap_or(());
                     }
                 }
-                Ok(Track::new(&reconsidered_location, Some(&track.source)).ok())
+                Ok(Some(track))
             }
+            Err(err) => Err(err),
         }
     } else {
-        // Either the file didn't exist, or the tags have become corrupted.
         Ok(None)
     }
 }
 
 /// Moves the given track to its proper destination in the library, relative
 /// to the Automatically Add to Library path.
-pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
+pub fn move_new_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> Result<Track> {
+    // The original path where the track was found.
+    let original_path = Path::new(&track.file_path);
+
+    // The name of the first subfolder from the Automatically Add to Library path
+    // and marks it as the source.
+    let source = get_source(original_path, auto_add_path);
+
+    move_track(track, library_path, &source)
+}
+
+/// Moves a track to its proper position in the library, with the given source.
+pub fn move_track(track: &Track, library_path: &Path, source: &str) -> Result<Track> {
     let track_file_path = Path::new(&track.file_path);
 
     // get the track file extension
@@ -268,18 +257,11 @@ pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> R
     // The new filename of the track, from the track metadata.
     let track_file_name = get_track_filename(&track);
 
-    // The original path where the track was found.
-    let original_path = Path::new(&track.file_path);
-
-    // The name of the first subfolder from the Automatically Add to Library path
-    // and marks it as the source.
-    let source = get_source(original_path, auto_add_path);
-
     // The new directory of the track in the library, from track metadata
     let track_folder = get_track_directory(&track, &library_path);
 
     // Ensure the new directory
-    if let Err(err) = fs::create_dir_all(&track_folder) {
+    if let Err(_) = fs::create_dir_all(&track_folder) {
         return Err(Error::UnableToCreateDirectory(
             track_folder.to_string_lossy().into_owned(),
         ));
@@ -289,7 +271,7 @@ pub fn move_track(track: &Track, library_path: &Path, auto_add_path: &Path) -> R
     let new_file_name = get_iterative_filename(&track_file_name, &track_ext, &track_folder);
 
     // Do the move.
-    if let Err(_) = fs::rename(original_path, &new_file_name) {
+    if let Err(_) = fs::rename(track_file_path, &new_file_name) {
         Err(Error::UnableToMove(
             new_file_name.to_string_lossy().into_owned(),
         ))
