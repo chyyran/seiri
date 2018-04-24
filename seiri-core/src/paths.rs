@@ -178,6 +178,10 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
 /// or same location, depending if its properties have changed.
 pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Track>> {
     let track_file_path = Path::new(&track.file_path);
+    if !track_file_path.exists() {
+        return Ok(None)
+    }
+
     if let Ok(reconsidered) = Track::new(track_file_path, Some(&track.source)) {
         // The new directory of the track in the library, from track metadata
         let mut reconsidered_location = get_track_directory(&reconsidered, &library_path);
@@ -197,11 +201,19 @@ pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Tra
                     reconsidered_location.to_string_lossy().into_owned(),
                 ))
             } else {
+                if let Some(old_dir) = &track_file_path.parent() {
+                    // If the directory is empty, simply remove it. 
+                    fs::remove_dir(old_dir).unwrap_or(());
+                    if let Some(old_dir) = old_dir.parent() {
+                        // Cleanup after the artist as well.
+                        fs::remove_dir(old_dir).unwrap_or(());
+                    }
+                }
                 Ok(Track::new(&reconsidered_location, Some(&track.source)).ok())
             }
         }
     } else {
-        // Delete this.
+        // Either the file didn't exist, or the tags have become corrupted.
         Ok(None)
     }
 }
