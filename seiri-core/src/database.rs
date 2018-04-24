@@ -1,15 +1,15 @@
 extern crate rusqlite;
 
-use track::TrackFileType;
-use rusqlite::types::ToSql;
-use track::Track;
-use bangs::Bang;
-use rand::{thread_rng, Rng};
-use rusqlite::{Connection, Error, Result};
-use std::collections::HashMap;
-use regex::Regex;
 use bangs::ms_to_ticks;
 use bangs::ticks_to_ms;
+use bangs::Bang;
+use rand::{thread_rng, Rng};
+use regex::Regex;
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, Error, Result};
+use std::collections::HashMap;
+use track::Track;
+use track::TrackFileType;
 
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
     let mut cached_regexes = HashMap::new();
@@ -21,25 +21,24 @@ pub fn add_regexp_function(db: &Connection) -> Result<()> {
             use std::collections::hash_map::Entry::{Occupied, Vacant};
             match entry {
                 Occupied(occ) => occ.into_mut(),
-                Vacant(vac) => {
-                    match Regex::new(&regex_s) {
-                        Ok(r) => vac.insert(r),
-                        Err(err) => { 
-                            println!("{}", err);
-                            return Err(Error::UserFunctionError(Box::new(err)));
-                        },
+                Vacant(vac) => match Regex::new(&regex_s) {
+                    Ok(r) => vac.insert(r),
+                    Err(err) => {
+                        println!("{}", err);
+                        return Err(Error::UserFunctionError(Box::new(err)));
                     }
-                }
+                },
             }
         };
 
         let captures = regex.captures(&text);
-        let capture_ok = captures.and_then(|capture| capture.get(1))
-            .and_then(|m| Some(m.end() > 0)).unwrap_or(false);
+        let capture_ok = captures
+            .and_then(|capture| capture.get(1))
+            .and_then(|m| Some(m.end() > 0))
+            .unwrap_or(false);
         Ok(capture_ok)
     })
 }
-
 
 pub fn create_database(conn: &Connection) {
     conn.execute(
@@ -72,7 +71,12 @@ pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-pub fn query_tracks(bang: Bang, conn: &Connection, limit: Option<i32>, offset: Option<i32>) -> Result<Vec<Track>> {
+pub fn query_tracks(
+    bang: Bang,
+    conn: &Connection,
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<Vec<Track>> {
     let mut params = Vec::<(String, String)>::new();
     let mut query = if let Bang::All = bang {
         "SELECT * FROM tracks".to_string()
@@ -140,6 +144,12 @@ fn get_rand_param() -> String {
 
 fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
     match bang {
+        Bang::FilePath(path) => {
+            let param_name = get_rand_param();
+            let format = format!("(FilePath = {})", param_name);
+            params.push((param_name, format!("{}", path)));
+            format
+        }
         Bang::TitleSearch(title) => {
             let param_name = get_rand_param();
             let format = format!("(Title LIKE {})", param_name);
@@ -180,7 +190,10 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
         Bang::AlbumArtists(artist) => {
             let param_name = get_rand_param();
             let format = format!("(AlbumArtists REGEXP {})", param_name);
-            params.push((param_name, format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", artist)));
+            params.push((
+                param_name,
+                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", artist),
+            ));
             format
         }
         Bang::AlbumArtistsExact(artist) => {
@@ -271,7 +284,10 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             let format = format!("(Title LIKE {} OR Album LIKE {} OR Artist LIKE {} OR AlbumArtists REGEXP {} COLLATE NOCASE)", 
                 param_name, param_name, param_name, album_artists_param);
             params.push((param_name, format!("%{}%", search)));
-            params.push((album_artists_param, format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", search)));
+            params.push((
+                album_artists_param,
+                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", search),
+            ));
 
             format
         }

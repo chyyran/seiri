@@ -3,12 +3,14 @@ use database::query_tracks;
 use juniper;
 use juniper::{FieldError, FieldResult};
 use paths::get_connection_pool;
-use track::Track;
-use r2d2_sqlite::SqliteConnectionManager;
 use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rayon::prelude::*;
+use std::path::Path;
+use track::Track;
 
 pub struct Context {
-    pub pool: Pool<SqliteConnectionManager>
+    pub pool: Pool<SqliteConnectionManager>,
 }
 // To make our context usable by Juniper, we have to implement a marker trait.
 impl juniper::Context for Context {}
@@ -16,7 +18,7 @@ impl juniper::Context for Context {}
 impl Context {
     pub fn new() -> Context {
         Context {
-            pool: get_connection_pool()
+            pool: get_connection_pool(),
         }
     }
 }
@@ -39,6 +41,19 @@ graphql_object!(Query: Context |&self| {
         }
     }
 
+     field refresh_tracks(&executor, tracks: Vec<String>) -> FieldResult<Vec<Option<Track>>> {
+       Ok(tracks.into_par_iter()
+        .map(|track| {
+        let conn = executor.context().pool.get().unwrap();
+           match query_tracks(Bang::from(Path::new(&track)), &conn, None, None) {
+                Ok(tracks) => tracks.into_iter().next(),
+                Err(err) => None
+           }
+        })
+        .filter(|track| !track.is_none())
+        .collect::<Vec<Option<Track>>>())
+    }
+
 
     field query_tracks(&executor, query: String, first: Option<i32>, after: Option<i32>) -> FieldResult<Vec<Track>> {
         let conn = executor.context().pool.get().unwrap();
@@ -52,4 +67,6 @@ graphql_object!(Query: Context |&self| {
             Err(err) => Err(FieldError::from(err))
         }
     }
+
+   
 });

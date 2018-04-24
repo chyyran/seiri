@@ -32,6 +32,7 @@ extern crate tree_magic;
 extern crate walkdir;
 extern crate r2d2;
 extern crate r2d2_sqlite;
+extern crate rayon;
 
 use rocket::response::content;
 use rocket::State;
