@@ -181,17 +181,35 @@ pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Tra
     if !track_file_path.exists() {
         return Ok(None)
     }
+    // get the track file extension
+    let track_ext = {
+        if !track_file_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or(".")
+            .starts_with(".")
+        {
+            Path::new(&track.file_path)
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_owned()
+        } else {
+            // Handle dotfiles.
+            track_file_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap()
+                .trim_left_matches('.')
+                .to_owned()
+        }
+    };
 
     if let Ok(reconsidered) = Track::new(track_file_path, Some(&track.source)) {
         // The new directory of the track in the library, from track metadata
         let mut reconsidered_location = get_track_directory(&reconsidered, &library_path);
-        reconsidered_location.push(
-            track_file_path
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .into_owned(),
-        );
+        let reconsidered_file_name = get_track_filename(&reconsidered);
+        reconsidered_location.push(format!("{}.{}", reconsidered_file_name, track_ext));
 
         if track_file_path == &reconsidered_location {
             Ok(Some(reconsidered))
