@@ -8,7 +8,6 @@ use paths::is_in_hidden_path;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
-use std::fs;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};

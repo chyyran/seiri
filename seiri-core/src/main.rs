@@ -11,8 +11,6 @@ extern crate quick_error;
 extern crate serde_derive;
 
 #[macro_use]
-extern crate juniper_codegen;
-#[macro_use]
 extern crate juniper;
 extern crate juniper_rocket;
 
@@ -39,18 +37,17 @@ use rocket::State;
 use rocket::Config as RocketConfig;
 use rocket::config::Environment;
 
-use juniper::{EmptyMutation, RootNode};
+use juniper::{EmptyMutation};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
 
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
 use std::net::TcpListener;
-use std::process::exit;
 
 mod bangs;
 mod config;
@@ -190,8 +187,8 @@ fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
  
 
 fn main() {
-    let lock = ensure_port(9235).expect("Unable to acquire lock");
-    
+    let _lock = ensure_port(9235).expect("Unable to acquire lock");
+
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();
