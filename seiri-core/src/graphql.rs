@@ -36,15 +36,7 @@ impl Query {
 
 graphql_object!(Query: Context |&self| {
 
-    field all_tracks(&executor) -> FieldResult<Vec<Track>> {
-        let conn = executor.context().pool.get().unwrap();
-        match query_tracks(Bang::All, &conn, None, None) {
-            Ok(tracks) => Ok(tracks),
-            Err(err) => Err(FieldError::from(err))
-        }
-    }
-
-     field refresh_tracks(&executor, tracks: Vec<String>) -> FieldResult<Vec<Option<Track>>> {
+     field refresh(&executor, tracks: Vec<String>) -> FieldResult<Vec<Option<Track>>> {
        Ok(tracks.into_par_iter()
         .map(|track| {
         let conn = executor.context().pool.get().unwrap();
@@ -77,7 +69,7 @@ graphql_object!(Query: Context |&self| {
     }
 
 
-    field query_tracks(&executor, query: String, first: Option<i32>, after: Option<i32>) -> FieldResult<Vec<Track>> {
+    field tracks(&executor, query: String, first: Option<i32>, after: Option<i32>) -> FieldResult<Vec<Track>> {
         let conn = executor.context().pool.get().unwrap();
         match Bang::new(&query) {
             Ok(bang) => {
@@ -90,5 +82,18 @@ graphql_object!(Query: Context |&self| {
         }
     }
 
-   
+    field count(&executor, query: String, first: Option<i32>, after: Option<i32>) -> FieldResult<i32> {
+        let conn = executor.context().pool.get().unwrap();
+        match Bang::new(&query) {
+            Ok(bang) => {
+             match query_tracks(bang, &conn, first, after) {
+                    Ok(tracks) => Ok(tracks.len() as i32),
+                    Err(err) => Err(FieldError::from(err))
+                }
+            },
+            Err(err) => Err(FieldError::from(err))
+        }
+    }
+    
+
 });

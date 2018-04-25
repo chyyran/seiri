@@ -49,6 +49,8 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::Duration;
+use std::net::TcpListener;
+use std::process::exit;
 
 mod bangs;
 mod config;
@@ -174,7 +176,22 @@ fn post_graphql_handler(
     request.execute(&schema, &context)
 }
 
+ 
+fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
+    match TcpListener::bind(("localhost", port)) {
+        Ok(socket) => {
+            Ok(socket)
+        },
+        Err(err) => {
+            Err(err)
+        }
+    }
+}
+ 
+
 fn main() {
+    let lock = ensure_port(9235).expect("Unable to acquire lock");
+    
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();

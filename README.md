@@ -89,11 +89,11 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 ```graphql
 enum FileType {
         FLAC,
-        FLAC_4,
-        FLAC_8,
-        FLAC_16,
-        FLAC_24,
-        FLAC_32,
+        FLAC4,
+        FLAC8,
+        FLAC16,
+        FLAC24,
+        FLAC32,
         ALAC,
         MP3_CBR,
         MP3_VBR,
@@ -103,17 +103,6 @@ enum FileType {
         WAVPACK,
         APE
         UNKNOWN
-}
-
-type PageInfo {
-  # When paginating forwards, are there more items?
-  hasNextPage: Boolean!
-  # When paginating backwards, are there more items?
-  hasPreviousPage: Boolean!
-  # When paginating backwards, the cursor to continue.
-  startCursor: String
-  # When paginating forwards, the cursor to continue.
-  endCursor: String
 }
 
 type Track {
@@ -136,26 +125,19 @@ type Track {
   fileType: FileType!
 }
 
-type TrackEdge {
-  cursor: String!
-  node: Track!
-}
-
-type TrackConnection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [TrackEdge]!
-  items: [Track]!
-}
-
 type Query {
   # Gets the tracks as a connection for the following query.
-  tracks(query: String!, after: String, first: Int!): TrackConnection
+  tracks(query: String!, first: Int, after: Int): [Track]
   
+  # Gets the number of results that would be returned for the given query.
+  count(query: String!, first: Int, after: Int): Int
+
   # Refresh the tracks with the given file path, and return the new tracks.
   refresh(files: [String]): [Track]
 }
 ```
+
+*seiri* does not have a Relay 'Connections' API due to Rust ownership concerns and the realtime nature of the application. Instead, we recommend heavily caching results, invalidation using the 'count' endpoint, and diffing results. In *seiri-client*, we achieve this using *service workers* to fetch and cache the application state periodically in the background.
 
 ## Building
 
