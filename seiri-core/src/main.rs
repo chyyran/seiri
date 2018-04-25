@@ -20,7 +20,10 @@ extern crate humantime;
 extern crate itertools;
 
 extern crate notify;
+extern crate r2d2;
+extern crate r2d2_sqlite;
 extern crate rand;
+extern crate rayon;
 extern crate regex;
 extern crate rocket;
 extern crate rusqlite;
@@ -28,37 +31,38 @@ extern crate serde_json;
 extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
-extern crate r2d2;
-extern crate r2d2_sqlite;
-extern crate rayon;
+extern crate rocket_cors;
 
-use rocket::response::content;
-use rocket::State;
-use rocket::Config as RocketConfig;
+use rocket::http::Method;
+use rocket_cors::{AllowedOrigins, AllowedHeaders};
+
 use rocket::config::Environment;
+use rocket::response::content;
+use rocket::Config as RocketConfig;
+use rocket::State;
 
-use juniper::{EmptyMutation};
+use juniper::EmptyMutation;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
 
 use std::io;
+use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
-use std::net::TcpListener;
 
 mod bangs;
 mod config;
 mod database;
 mod error;
+mod graphql;
 mod paths;
 mod taglibsharp;
 mod track;
 mod utils;
 mod watcher;
-mod graphql;
 
 use config::Config;
 use error::Error;
@@ -70,7 +74,7 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
                 let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
-                if let Ok(track) = track { 
+                if let Ok(track) = track {
                     database::add_track(&track, conn);
                     println!("Added {:?} to database", track);
                 }
@@ -106,8 +110,7 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: &Config, pool: &Pool<SqliteConnectionManager>,
- rx: Receiver<WatchStatus>) {
+fn begin_watch(config: &Config, pool: &Pool<SqliteConnectionManager>, rx: Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
@@ -173,36 +176,45 @@ fn post_graphql_handler(
     request.execute(&schema, &context)
 }
 
- 
 fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
     match TcpListener::bind(("localhost", port)) {
-        Ok(socket) => {
-            Ok(socket)
-        },
-        Err(err) => {
-            Err(err)
-        }
+        Ok(socket) => Ok(socket),
+        Err(err) => Err(err),
     }
 }
- 
 
 fn main() {
     let _lock = ensure_port(9235).expect("Unable to acquire lock");
 
+    // You can also deserialize this
+    let options = rocket_cors::Cors {
+        allowed_origins:  AllowedOrigins::all(),
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::all(),
+        allow_credentials: true,
+        ..Default::default()
+    };
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
     let conn = paths::get_database_connection();
     thread::spawn(move || {
         let config = RocketConfig::build(Environment::Development)
-        .address("localhost")
-        .port(9234)
-        .finalize()
-        .unwrap();
-        rocket::custom(config, true).manage(graphql::Context::new())
-        .manage(Schema::new(
-            graphql::Query::new(),
-            EmptyMutation::<graphql::Context>::new(),
-        )).mount("/", routes![graphiql, post_graphql_handler]).launch();
+            .address("localhost")
+            .port(9234)
+            .finalize()
+            .unwrap();
+        rocket::custom(config, true)
+            .manage(graphql::Context::new())
+            .manage(Schema::new(
+                graphql::Query::new(),
+                EmptyMutation::<graphql::Context>::new(),
+            ))
+            .mount("/", routes![graphiql, post_graphql_handler])
+            .attach(options)
+            .launch();
     });
 
     utils::wait_for_exit(&conn);
