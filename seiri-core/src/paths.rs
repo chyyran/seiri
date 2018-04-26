@@ -93,7 +93,6 @@ fn sanitize_file_name(path: &str) -> String {
 
 pub fn get_track_directory(track: &Track, library_path: &Path) -> PathBuf {
     let mut track_path = PathBuf::from(library_path);
-    println!("{:?}", library_path);
 
     let artist_folder = if track.album_artists.len() > 0 {
         track.album_artists.join(", ")

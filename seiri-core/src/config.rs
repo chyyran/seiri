@@ -30,7 +30,8 @@ pub fn get_config() -> Config {
     config_path.push("config.toml");
     if !config_path.exists() {
         if let None = write_default_config(config_path.as_path()) {
-            panic!("Unable to write default configuration.");
+            eprintln!("CONFIGWRITEERR~Unable to write default configuration.");
+            panic!("CONFIGWRITEERR~Unable to write default configuration.");
         }
     }
 
@@ -40,6 +41,7 @@ pub fn get_config() -> Config {
     if let Ok(config) = config {
         config
     } else {
-        panic!("Configuration file is in invalid format!");
+        eprintln!("CONFIGINVALID~Configuration file is in invalid format!");
+        panic!("CONFIGWRITEERR~Unable to write default configuration.");
     }
 }

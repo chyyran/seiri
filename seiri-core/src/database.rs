@@ -24,7 +24,6 @@ pub fn add_regexp_function(db: &Connection) -> Result<()> {
                 Vacant(vac) => match Regex::new(&regex_s) {
                     Ok(r) => vac.insert(r),
                     Err(err) => {
-                        println!("{}", err);
                         return Err(Error::UserFunctionError(Box::new(err)));
                     }
                 },

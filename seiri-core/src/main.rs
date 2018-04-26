@@ -76,25 +76,25 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                 let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
                 if let Ok(track) = track {
                     database::add_track(&track, conn);
-                    println!("Added {:?} to database", track);
+                    eprintln!("TRACKADDED~{:?}:Added {:?} to database", track.title, track);
                 }
             }
-            Err(err) => println!("Error {} ocurred when attempting to move track.", err),
+            Err(err) => eprintln!("LIBRARYNOTFOUND~The library path was not found."),
         },
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => {
                 match paths::ensure_music_folder(&config.music_folder) {
                     Ok(library_path) => {
                         paths::move_non_track(&file_name, &library_path.1).unwrap();
-                        println!("Found and moved non-track item {:?}", file_name)
+                        eprintln!("NONTRACK~{:?}:Found and moved non-track item {:?}", file_name, file_name)
                     }
-                    Err(err) => println!("Error {} ocurred when attempting to move track.", err),
+                    Err(err) => eprintln!("TRACKMOVEERROR~{:?}:Error {} ocurred when attempting to move track.", file_name, err),
                 };
             }
             Error::MissingRequiredTag(file_name, tag) => {
-                println!("Found track {} but missing tag {}", file_name, tag)
+                eprintln!("MISSINGTAG~Found track {} but missing tag {}.", file_name, tag)
             }
-            Error::HelperNotFound => println!("Katatsuki TagLib helper not found."),
+            Error::HelperNotFound => eprintln!("HELPERNOTFOUND~Katatsuki TagLib helper not found."),
             _ => {}
         },
     }
@@ -141,7 +141,7 @@ fn start_watcher_watchdog(wait_time: Duration) {
         loop {
             thread::park_timeout(wait_time);
             if let Err(_) = tx.send(WatchStatus::KeepAlive) {
-                println!("Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
+                eprintln!("WATCHERKEEPALIVEFAIL~Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
                 let (new_tx, rx) = channel();
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
@@ -149,11 +149,11 @@ fn start_watcher_watchdog(wait_time: Duration) {
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
             if let Err(_) = music_folder {
-                println!("Lost access to {}", &config.music_folder);
+                eprintln!("WATCHERFOLDERACCESSLOST~Lost access to {}", &config.music_folder);
                 wait_for_watch_root_available(&config.music_folder);
                 let (new_tx, rx) = channel();
                 tx.send(WatchStatus::Exit).unwrap();
-                println!("Requested watcher thread exit. Restarting Watcher Thread...");
+                eprintln!("WATCHERRESTART~Requested watcher thread exit. Restarting Watcher Thread...");
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
             }

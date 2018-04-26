@@ -184,7 +184,17 @@ impl Track {
         };
 
         let album_artists_unwrapped = match album_artists.as_array() {
-            Some(arr) => arr,
+            Some(arr) =>  { 
+                if arr.len() != 0 {
+                    arr
+                } else {
+                    return Err(Error::MissingRequiredTag(
+                        file_path.to_str().unwrap().to_owned(),
+                        "AlbumArtist",
+                    ))
+                }
+                
+            },
             None => {
                 return Err(Error::MissingRequiredTag(
                     file_path.to_str().unwrap().to_owned(),

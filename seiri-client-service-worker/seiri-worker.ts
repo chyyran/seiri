@@ -99,32 +99,34 @@ self.trackCache = {
 
 self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting()); // Activate worker immediately
+  console.log("Service Worker Installed.");
+
+  self.setInterval(async () => {
+    await updateAllTracks();
+  }, 1000);
+  self.setInterval(async () => {
+    await updateQueryTracks();
+  }, 1000);
 });
 
 self.addEventListener("activate", function(event) {
   event.waitUntil(self.clients.claim()); // Become available to all pages
-  self.setInterval(async () => {
-    await seedCache("");
-  }, 1000);
-  self.setInterval(async () => {
-    await seedCache(self.trackCache.latestQueryString);
-  }, 1000);
+  console.log("Service Worker Activated.");
 });
 
 self.addEventListener("message", event => {
+  event.waitUntil(self.clients.claim()); // Become available to all pages
   let data = event.data as TrackMessage;
-  self.setTimeout(async () => {
-    await seedCache(data.query || "");
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage(self.trackCache);
-      });
-    });
-  }, 0);
+  self.trackCache.latestQueryString = data.query || "";
+  if (self.trackCache.latestQueryString === "") {
+    broadcast(getActiveState(self.trackCache.latestQueryString), "state-all")
+  } else {
+    broadcast(getActiveState(self.trackCache.latestQueryString), "state-query")
+  }
   console.log("Sent requested tracks cache.");
 });
 
-const seedCache = async (query: String) => {
+const queryTracks = async (query: String) => {
   let result = await client.query<TracksQuery>({
     query: gql`
       query TracksQuery($query: String!) {
@@ -136,28 +138,41 @@ const seedCache = async (query: String) => {
     `,
     variables: {
       query: query
-    }
+    },
+    fetchPolicy: "network-only"
   });
+  return result.data.tracks;
+};
 
-  let compare =
-    query === ""
-      ? self.trackCache.allTracks
-      : self.trackCache.latestQueryTracks;
+const getActiveState = (query: String) => {
+  if (query === "") {
+    return self.trackCache.allTracks;
+  }
+  return self.trackCache.latestQueryTracks;
+};
 
-  let arrayDiff = diff.diff(compare, result.data.tracks);
-
-  if (arrayDiff) {
-    if (!query || query === "") {
-      self.trackCache.allTracks = result.data.tracks;
-    } else {
-      self.trackCache.latestQueryTracks = result.data.tracks;
-      self.trackCache.latestQueryString = query;
-    }
-    console.log("New entries detected for diff.");
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage(self.trackCache);
-      });
+const broadcast = (payload: any, type: String) => {
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: type, payload: payload });
     });
+  });
+};
+
+const updateAllTracks = async () => {
+  let tracks = await queryTracks("");
+  let arrayDiff = diff.diff(self.trackCache.allTracks, tracks);
+  if (arrayDiff) {
+    self.trackCache.allTracks = tracks;
+    broadcast(arrayDiff, "diff-all");
   }
 };
+
+const updateQueryTracks = async () => {
+  let tracks = await queryTracks(self.trackCache.latestQueryString);
+  let arrayDiff = diff.diff(self.trackCache.latestQueryTracks, tracks);
+  if (arrayDiff) {
+    self.trackCache.latestQueryTracks = tracks;
+    broadcast(arrayDiff, "diff-query");
+  }
+}
