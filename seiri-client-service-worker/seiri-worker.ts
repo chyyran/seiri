@@ -100,13 +100,13 @@ self.trackCache = {
 self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting()); // Activate worker immediately
   console.log("Service Worker Installed.");
-
+  self.setTimeout(async() => updateAllTracks(), 0);
   self.setInterval(async () => {
     await updateAllTracks();
-  }, 1000);
+  }, 30000);
   self.setInterval(async () => {
     await updateQueryTracks();
-  }, 1000);
+  }, 5000);
 });
 
 self.addEventListener("activate", function(event) {
@@ -121,7 +121,12 @@ self.addEventListener("message", event => {
   if (self.trackCache.latestQueryString === "") {
     broadcast(getActiveState(self.trackCache.latestQueryString), "state-all")
   } else {
-    broadcast(getActiveState(self.trackCache.latestQueryString), "state-query")
+    updateQueryTracks(false)
+    .then((send) => {
+      if (send) {
+        broadcast(getActiveState(self.trackCache.latestQueryString), "state-query")
+      }
+    })
   }
   console.log("Sent requested tracks cache.");
 });
@@ -160,19 +165,32 @@ const broadcast = (payload: any, type: String) => {
 };
 
 const updateAllTracks = async () => {
-  let tracks = await queryTracks("");
-  let arrayDiff = diff.diff(self.trackCache.allTracks, tracks);
-  if (arrayDiff) {
-    self.trackCache.allTracks = tracks;
-    broadcast(arrayDiff, "diff-all");
+  try {
+    let tracks = await queryTracks("");
+    let arrayDiff = diff.diff(self.trackCache.allTracks, tracks);
+    if (arrayDiff) {
+      self.trackCache.allTracks = tracks;
+      broadcast(arrayDiff, "diff-all");
+    }
+  } catch (err) {
+    broadcast(err.message, "error-all")
   }
 };
 
-const updateQueryTracks = async () => {
-  let tracks = await queryTracks(self.trackCache.latestQueryString);
-  let arrayDiff = diff.diff(self.trackCache.latestQueryTracks, tracks);
-  if (arrayDiff) {
-    self.trackCache.latestQueryTracks = tracks;
-    broadcast(arrayDiff, "diff-query");
+const updateQueryTracks = async (sendDiff: boolean) : Promise<boolean> => {
+  try {
+    if (self.trackCache.latestQueryString === "") return;
+    let tracks = await queryTracks(self.trackCache.latestQueryString);
+    let arrayDiff = diff.diff(self.trackCache.latestQueryTracks, tracks);
+    if (arrayDiff) {
+      self.trackCache.latestQueryTracks = tracks;
+      if (sendDiff) {
+        broadcast(arrayDiff, "diff-query");
+      }
+      return true
+    }
+  } catch(err) {
+    broadcast(err.message, "error-query");
+    return false
   }
 }

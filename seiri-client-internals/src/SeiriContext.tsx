@@ -1,48 +1,12 @@
 import * as diff from "deep-diff";
 import * as React from "react";
-
-enum TrackFileType {
-  FLAC,
-  FLAC4,
-  FLAC8,
-  FLAC16,
-  FLAC24,
-  FLAC32,
-  ALAC,
-  MP3_CBR,
-  MP3_VBR,
-  AAC,
-  VORBIS,
-  OPUS,
-  WAVPACK,
-  MONKEYS_AUDIO,
-  UNKNOWN
-}
-
-interface ITrack {
-  filePath: string;
-  title: string;
-  artist: string;
-  albumArtists: string[];
-  album: string;
-  year: number;
-  tracknumber: number;
-  musicbrainzTrackId: string;
-  hasFrontCover: boolean;
-  frontCoverHeight: number;
-  frontCoverWidth: number;
-  bitrate: number;
-  sampleRate: number;
-  source: string;
-  discnumber: number;
-  duration: number;
-  fileType: TrackFileType;
-}
+import { ITrack } from "./types";
 
 interface ITrackCache {
   allTracks: ITrack[];
   latestQueryString: string;
   latestQueryTracks: ITrack[];
+  updateQuery?: (query: string) => void;
 }
 
 interface IWorkerResponse {
@@ -62,13 +26,23 @@ class SeiriProvider extends React.Component<{}, ITrackCache> {
     this.state = {
       allTracks: [],
       latestQueryString: "",
-      latestQueryTracks: []
+      latestQueryTracks: [],
+      updateQuery: this.updateQuery.bind(this)
     };
     navigator.serviceWorker.addEventListener("message", event => {
       // tslint:disable-next-line:no-console
       console.log("Received message from service worker.");
       this.updateFromServiceWorker(event.data);
     });
+  }
+
+  public updateQuery(query: string) {
+    this.setState({ latestQueryString: query });
+    if (query !== "") {
+      navigator.serviceWorker.controller!.postMessage({ query });
+    } else {
+        this.setState({latestQueryTracks: []})
+    }
   }
 
   public updateFromServiceWorker(data: IWorkerResponse) {
@@ -78,31 +52,43 @@ class SeiriProvider extends React.Component<{}, ITrackCache> {
       // tslint:disable-next-line:no-console
       console.log("Received new diff-all.");
       const allTracks = this.state.allTracks;
-      for (const trackDiff of data.payload as deepDiff.IDiff[]) {
-        diff.applyChange(allTracks, {}, trackDiff);
-      }
-      this.setState({
-        allTracks
-      });
+      window.setTimeout(() => {
+        for (const trackDiff of data.payload as deepDiff.IDiff[]) {
+          diff.applyChange(allTracks, {}, trackDiff);
+        }
+        this.setState({
+          allTracks
+        });
+      }, 0);
     }
 
     if (data.type === "diff-query") {
-        // tslint:disable-next-line:no-console
-        console.log("Received new diff-query.");
-        const latestQueryTracks = this.state.latestQueryTracks;
+      // tslint:disable-next-line:no-console
+      console.log("Received new diff-query.");
+      const latestQueryTracks = this.state.latestQueryTracks;
+      window.setTimeout(() => {
         for (const trackDiff of data.payload as deepDiff.IDiff[]) {
           diff.applyChange(latestQueryTracks, {}, trackDiff);
         }
         this.setState({
           latestQueryTracks
         });
-      }
+      }, 0);
+    }
 
     if (data.type === "state-all") {
       // tslint:disable-next-line:no-console
       console.log("Received new State.");
       this.setState({
         allTracks: data.payload as ITrack[]
+      });
+    }
+
+    if (data.type === "state-query") {
+      // tslint:disable-next-line:no-console
+      console.log("Received new State.");
+      this.setState({
+        latestQueryTracks: data.payload as ITrack[]
       });
     }
   }

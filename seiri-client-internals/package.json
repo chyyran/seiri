@@ -5,7 +5,12 @@
   "dependencies": {
     "deep-diff": "^1.0.0",
     "react": "^16.3.2",
-    "react-dom": "^16.3.2"
+    "react-debounce-input": "^3.2.0",
+    "react-debounced-input": "^0.4.0",
+    "react-dom": "^16.3.2",
+    "react-redux": "^5.0.7",
+    "redux": "^3",
+    "redux-thunk": "^2.2.0"
   },
   "devDependencies": {
     "@types/deep-diff": "^0.0.31",
@@ -13,8 +18,10 @@
     "@types/node": "^9.6.6",
     "@types/react": "^16.3.12",
     "@types/react-dom": "^16.0.5",
+    "@types/react-redux": "^5.0.18",
     "cra-append-sw": "^2.3.0",
     "react-scripts-ts": "2.15.1",
+    "redux-devtools-extension": "^2.13.2",
     "typescript": "^2.8.3"
   },
   "scripts": {
