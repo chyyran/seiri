@@ -10,7 +10,10 @@
   "author": "Ronny Chan",
   "license": "MPL-2.0",
   "dependencies": {
+    "@types/deep-diff": "0.0.31",
     "apollo-boost": "^0.1.4",
+    "deep-diff": "^1.0.0",
+    "fast-array-diff": "^0.2.0",
     "graphql": "^0.13.2",
     "graphql-tag": "^2.9.1"
   },
