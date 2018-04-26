@@ -15,7 +15,8 @@
     "deep-diff": "^1.0.0",
     "fast-array-diff": "^0.2.0",
     "graphql": "^0.13.2",
-    "graphql-tag": "^2.9.1"
+    "graphql-tag": "^2.9.1",
+    "localforage": "^1.7.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.46",

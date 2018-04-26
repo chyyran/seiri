@@ -40,9 +40,8 @@ class SeiriProvider extends React.Component<{}, ITrackCache> {
     this.setState({ latestQueryString: query });
     if (query !== "") {
       navigator.serviceWorker.controller!.postMessage({ query });
-    } else {
-        this.setState({latestQueryTracks: []})
     }
+    // Do not clear latestQueryTracks!
   }
 
   public updateFromServiceWorker(data: IWorkerResponse) {

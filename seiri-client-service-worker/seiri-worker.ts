@@ -1,6 +1,7 @@
 import ApolloClient from "apollo-boost";
 import gql from "graphql-tag";
 import * as diff from "deep-diff";
+import * as localforage from "localforage";
 import {} from ".";
 
 interface GlobalScope extends ServiceWorkerGlobalScope {
@@ -97,15 +98,22 @@ self.trackCache = {
   allTracks: []
 };
 
+
+self.setTimeout(async () => {
+  let tracks = await localforage.getItem<Array<Track>>("allTracks");
+  console.log("Restored cache from localforage");
+  self.trackCache.allTracks = tracks;
+}, 0)
+
+
 self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting()); // Activate worker immediately
   console.log("Service Worker Installed.");
-  self.setTimeout(async() => updateAllTracks(), 0);
   self.setInterval(async () => {
     await updateAllTracks();
   }, 30000);
   self.setInterval(async () => {
-    await updateQueryTracks();
+    await updateQueryTracks(true);
   }, 5000);
 });
 
@@ -119,7 +127,8 @@ self.addEventListener("message", event => {
   let data = event.data as TrackMessage;
   self.trackCache.latestQueryString = data.query || "";
   if (self.trackCache.latestQueryString === "") {
-    broadcast(getActiveState(self.trackCache.latestQueryString), "state-all")
+    broadcast(getActiveState(""), "state-all")
+    self.setTimeout(async() => updateAllTracks(), 0)
   } else {
     updateQueryTracks(false)
     .then((send) => {
@@ -171,6 +180,8 @@ const updateAllTracks = async () => {
     if (arrayDiff) {
       self.trackCache.allTracks = tracks;
       broadcast(arrayDiff, "diff-all");
+      await localforage.setItem("allTracks", tracks);
+      console.log("Persisted cache from localforage");
     }
   } catch (err) {
     broadcast(err.message, "error-all")

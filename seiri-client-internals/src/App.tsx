@@ -12,6 +12,7 @@ class App extends React.Component {
           {val => (
             <div>
               <DebounceInput
+                style={{position: 'fixed'}}
                 minLength={1}
                 debounceTimeout={300}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => val.updateQuery!(e.target.value)}

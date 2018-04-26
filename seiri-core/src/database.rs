@@ -208,10 +208,17 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             format
         }
         Bang::Format(filetype) => {
-            let param_name = get_rand_param();
-            let format = format!("(FileType = {})", param_name);
-            params.push((param_name, format!("{}", filetype.value())));
-            format
+            if let TrackFileType::Flac = filetype {
+                let param_name = get_rand_param();
+                let format = format!("(FileType <= {})", param_name);
+                params.push((param_name, format!("{}", TrackFileType::Flac32.value())));
+                format
+            } else {
+                let param_name = get_rand_param();
+                let format = format!("(FileType = {})", param_name);
+                params.push((param_name, format!("{}", filetype.value())));
+                format
+            }
         }
         Bang::BitrateLessThan(bitrate) => {
             let param_name = get_rand_param();
