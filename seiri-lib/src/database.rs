@@ -318,13 +318,13 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
         Bang::UpdatedBefore(date) => {
             let param_name = get_rand_param();
             let format = format!("(Updated < {})", param_name);
-            params.push((param_name, format!("date({})", date)));
+            params.push((param_name, format!("{}", date)));
             format
         }
         Bang::UpdatedAfter(date) => {
             let param_name = get_rand_param();
             let format = format!("(Updated > {})", param_name);
-            params.push((param_name, format!("date({})", date)));
+            params.push((param_name, format!("{}", date)));
             format
         }
         Bang::HasCoverArt(has) => {

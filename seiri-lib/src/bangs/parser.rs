@@ -5,6 +5,7 @@ use super::bangs::Bang;
 use track::TrackFileType;
 use error::{Error, Result};
 use humantime::Duration;
+use chrono::NaiveDate;
 use super::time::*;
 
 trait BangIdentifier {
@@ -247,11 +248,11 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
                 extract_argument(tokens),
             ),
             BangType::UpdatedBefore => parse_bang(
-                |ubf: String| Bang::UpdatedBefore(ubf),
+                |ubf: NaiveDate| Bang::UpdatedBefore(ubf.format("%Y-%m-%d").to_string()),
                 extract_argument(tokens),
             ),
             BangType::UpdatedAfter => parse_bang(
-                |uaf: String| Bang::UpdatedAfter(uaf),
+                |uaf: NaiveDate| Bang::UpdatedAfter(uaf.format("%Y-%m-%d").to_string()),
                 extract_argument(tokens),
             ),
             BangType::Grouping => {
