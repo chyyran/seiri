@@ -2,34 +2,37 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 // import registerServiceWorker from './registerServiceWorker';
 import { Provider } from 'react-redux'
-import thunk from "redux-thunk"; // no changes here 😀
+import thunk from "redux-thunk";
 import App from "./App";
 import "./index.css";
 import State from "./State"
 
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
-import { SeiriAction } from "./actions";
+import { reducerWithInitialState } from 'typescript-fsa-reducers';
+import { updateQuery, updateTracks, updateTracksTick } from "./actions";
+
+const initialState: State = {
+  query: "",
+  tracks: []
+};
+
+const reducer = reducerWithInitialState(initialState)
+.case(updateTracks, (state, {tracks}) => ({
+  ...state,
+  tracks
+}))
+.case(updateQuery.async.done, (state, {params}) => ({
+  ...state,
+  query: params.query
+}))
+.case(updateTracksTick.async.done, (state) => ({
+  ...state,
+}));;
 
 
-const reducer = (state: State, action: SeiriAction): State => {
-  switch (action.type) {
-    case "UPDATE_QUERY":
-      return { ...state, query: action.query };
-    case "UPDATE_TRACKS":
-      return { ...state, tracks: action.tracks };
-    default:
-      return state;
-  }
-}
-
-
-const store = createStore(
-  reducer,
-  composeWithDevTools(
-    applyMiddleware(thunk)
-    // other store enhancers if any
-  )
+const store = createStore(reducer,
+    composeWithDevTools(applyMiddleware(thunk)),
 );
 
 ReactDOM.render(

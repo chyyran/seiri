@@ -1,6 +1,6 @@
-import { ITrack } from "./types";
+import { Track } from "./types";
 
-export default interface IState {
-    tracks: ITrack[],
+export default interface State {
+    tracks: Track[],
     query: string
 }

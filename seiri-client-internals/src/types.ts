@@ -1,5 +1,5 @@
 
-export interface ITrack {
+export interface Track {
     filePath: string;
     title: string;
     artist: string;
