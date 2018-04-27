@@ -81,10 +81,11 @@ Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group
 
 Bangs are parsed and transpiled into SQLite statements, which are then executed on the library database for fast results.
 
-## GraphQL Query Format
-`seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running.
 
-`seiri-core` exposes a GraphQL endpoint with the following schema to communicate with any clients.
+## GraphQL Query Format
+`seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running. However since GraphQL support requires upwards of 50MB of memory, the recommended way to interface with `seiri-core` is throw `stderr` notifications and `seiri-neon`.
+
+`seiri-core` exposes a GraphQL endpoint with the following schema to communicate with any clients, if built with the `use_graphql` feature.
 
 ```graphql
 enum FileType {
@@ -141,9 +142,12 @@ type Query {
 
 ## Building
 
-*seiri* consists of 3 components
+*seiri* consists of multiple components.
  - *seiri-core* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs.
  - *taglibsharp-katatsuki* handles parsing of track file data, written in C#. We need this because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size).
- - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well asn automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. 
+ - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. 
+ - *seiri-client-service-worker* handles GraphQL communication with *seiri-core*, if GraphQL support has been compiled in.
+ - *seiri-neon* is the recommended way to interface with the core. It uses node's native extension support to call into Rust natively and interface with the Tracks database.
+ - *seiri-client-internals* is the actual user interface for *seiri-client*, consisting mostly of React code. 
  
  Building seiri requires that you build all three components. Read *build.md* for more information about setting up the environment.
