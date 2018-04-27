@@ -1,13 +1,10 @@
 use app_dirs::*;
 use chrono::prelude::*;
-use r2d2::{CustomizeConnection, Pool};
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Connection, Error as SqliteError, Result as SqliteResult};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use seiri::{Error, Result, Track};
-use seiri::database::{add_regexp_function, create_database, enable_wal_mode};
+use error::{Error, Result};
+use track::Track;
 use track::TaglibTrack;
 use std::ascii::AsciiExt;
 
@@ -21,17 +18,6 @@ impl InvalidChar for char {
             '\"' | '<' | '>' | '|' | '\0' | ':' | '*' | '?' | '\\' | '/' => true,
             _ => false,
         }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-struct SeiriConnectionCustomizer;
-impl CustomizeConnection<Connection, SqliteError> for SeiriConnectionCustomizer {
-    fn on_acquire(&self, conn: &mut Connection) -> SqliteResult<()> {
-        enable_wal_mode(conn).unwrap();
-        add_regexp_function(conn).unwrap();
-        create_database(conn);
-        Ok(())
     }
 }
 
@@ -52,27 +38,6 @@ pub fn get_appdata_path() -> PathBuf {
         )
     }
     appdata_path
-}
-
-pub fn get_database_connection() -> Connection {
-    let mut database_path = get_appdata_path();
-    database_path.push("tracks.db");
-    let conn = Connection::open(database_path.as_path()).unwrap();
-    enable_wal_mode(&conn).unwrap();
-    add_regexp_function(&conn).unwrap();
-    create_database(&conn);
-    conn
-}
-
-pub fn get_connection_pool() -> Pool<SqliteConnectionManager> {
-    let mut database_path = get_appdata_path();
-    database_path.push("tracks.db");
-    let manager = SqliteConnectionManager::file(&database_path);
-    let pool = Pool::builder()
-        .connection_customizer(Box::new(SeiriConnectionCustomizer))
-        .build(manager)
-        .unwrap();
-    pool
 }
 
 pub fn ensure_music_folder(folder_path: &str) -> io::Result<(PathBuf, PathBuf)> {
@@ -190,7 +155,7 @@ pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Tra
         return Ok(None);
     }
 
-    if let Ok(track_as_read) = Track::new(track_file_path, Some(&track.source)) {
+    if let Ok(track_as_read) = Track::from_taglibsharp(track_file_path, Some(&track.source)) {
         if !track_warrants_move(track, &track_as_read) {
             return Ok(Some(track_as_read));
         }
@@ -277,6 +242,6 @@ pub fn move_track(track: &Track, library_path: &Path, source: &str) -> Result<Tr
             new_file_name.to_string_lossy().into_owned(),
         ))
     } else {
-        Track::new(&new_file_name, Some(&source))
+        Track::from_taglibsharp(&new_file_name, Some(&source))
     }
 }

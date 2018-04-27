@@ -37,6 +37,8 @@ impl BangIdentifier for str {
             "c" => BangType::HasCoverArt,
             "mb" => BangType::HasMusicbrainzId,
             "dup" => BangType::HasDuplicates,
+            "ubf" => BangType::UpdatedBefore,
+            "uaf" => BangType::UpdatedAfter,
             "!" => BangType::Grouping,
             unknown => BangType::Unknown(unknown.to_owned()),
         }
@@ -67,6 +69,8 @@ enum BangType {
     HasCoverArt,
     HasMusicbrainzId,
     HasDuplicates,
+    UpdatedBefore,
+    UpdatedAfter,
     Grouping,
     Unknown(String),
 }
@@ -240,6 +244,14 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
             ),
             BangType::HasDuplicates => parse_bang(
                 |dup: bool| Bang::HasDuplicates(dup),
+                extract_argument(tokens),
+            ),
+            BangType::UpdatedBefore => parse_bang(
+                |ubf: String| Bang::UpdatedBefore(ubf),
+                extract_argument(tokens),
+            ),
+            BangType::UpdatedAfter => parse_bang(
+                |uaf: String| Bang::UpdatedAfter(uaf),
                 extract_argument(tokens),
             ),
             BangType::Grouping => {

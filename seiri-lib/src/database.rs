@@ -2,14 +2,53 @@ extern crate rusqlite;
 
 use bangs::ms_to_ticks;
 use bangs::ticks_to_ms;
+use r2d2::{CustomizeConnection, Pool};
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::{Error, Result};
 use bangs::Bang;
 use rand::{thread_rng, Rng};
 use regex::Regex;
 use rusqlite::types::ToSql;
-use rusqlite::{Connection, Error, Result};
 use std::collections::HashMap;
 use track::Track;
 use track::TrackFileType;
+use paths::get_appdata_path;
+
+pub use rusqlite::Connection;
+
+pub type ConnectionPool = Pool<SqliteConnectionManager>;
+
+#[derive(Copy, Clone, Debug)]
+struct SeiriConnectionCustomizer;
+impl CustomizeConnection<Connection, Error> for SeiriConnectionCustomizer {
+    fn on_acquire(&self, conn: &mut Connection) -> Result<()> {
+        enable_wal_mode(conn).unwrap();
+        add_regexp_function(conn).unwrap();
+        create_database(conn);
+        Ok(())
+    }
+}
+
+pub fn get_database_connection() -> Connection {
+    let mut database_path = get_appdata_path();
+    database_path.push("tracks.db");
+    let conn = Connection::open(database_path.as_path()).unwrap();
+    enable_wal_mode(&conn).unwrap();
+    add_regexp_function(&conn).unwrap();
+    create_database(&conn);
+    conn
+}
+
+pub fn get_connection_pool() -> ConnectionPool {
+    let mut database_path = get_appdata_path();
+    database_path.push("tracks.db");
+    let manager = SqliteConnectionManager::file(&database_path);
+    let pool = Pool::builder()
+        .connection_customizer(Box::new(SeiriConnectionCustomizer))
+        .build(manager)
+        .unwrap();
+    pool
+}
 
 #[allow(dead_code)]
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
@@ -276,6 +315,18 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             params.push((param_name, format!("{}", duration)));
             format
         }
+        Bang::UpdatedBefore(date) => {
+            let param_name = get_rand_param();
+            let format = format!("(Updated < {})", param_name);
+            params.push((param_name, format!("date({})", date)));
+            format
+        }
+        Bang::UpdatedAfter(date) => {
+            let param_name = get_rand_param();
+            let format = format!("(Updated > {})", param_name);
+            params.push((param_name, format!("date({})", date)));
+            format
+        }
         Bang::HasCoverArt(has) => {
             let param_name = get_rand_param();
             let format = format!("(HasFrontCover = {})", param_name);
@@ -387,6 +438,7 @@ pub fn add_track(track: &Track, conn: &Connection) {
             &track.disc_number,
             &ms_to_ticks(track.duration),
             &track.file_type.value(),
+            &track.updated,
         ],
     ).unwrap();
 }

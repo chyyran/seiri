@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::env;
 use std::path::PathBuf;
-use seiri::{Error, Result};
+use error::{Error, Result};
 
 extern crate tree_magic;
 

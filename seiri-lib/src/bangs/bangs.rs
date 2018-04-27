@@ -35,6 +35,8 @@ pub enum Bang {
     LogicalAnd(Box<Bang>, Box<Bang>),
     LogicalOr(Box<Bang>, Box<Bang>),
     Grouping(Box<Bang>),
+    UpdatedBefore(String),
+    UpdatedAfter(String),
     FilePath(String)
 }
 

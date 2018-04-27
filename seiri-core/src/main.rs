@@ -51,10 +51,6 @@ extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
 
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::Connection;
-
 use std::io;
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
@@ -63,21 +59,21 @@ use std::thread;
 use std::time::Duration;
 
 mod config;
-mod paths;
-mod taglibsharp;
-mod track;
 mod utils;
 mod watcher;
 
 use config::Config;
 use seiri::database;
+use seiri::database::Connection;
+use seiri::database::ConnectionPool;
+use seiri::paths;
 use seiri::Error;
 use seiri::Track;
-use track::TaglibTrack;
+use seiri::TaglibTrack;
 use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config, conn: &Connection) {
-    let track = Track::new(path, None);
+    let track = Track::from_taglibsharp(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
@@ -125,7 +121,7 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: &Config, pool: &Pool<SqliteConnectionManager>, rx: Receiver<WatchStatus>) {
+fn begin_watch(config: &Config, pool: &ConnectionPool, rx: Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
@@ -141,7 +137,7 @@ fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandl
         .name("WatchThread".to_string())
         .spawn(move || {
             let config = config::get_config();
-            let pool = paths::get_connection_pool();
+            let pool = database::get_connection_pool();
             begin_watch(&config, &pool, rx)
         })
 }
@@ -248,6 +244,6 @@ fn main() {
         start_rocket();
     }
 
-    let conn = paths::get_database_connection();
+    let conn = database::get_database_connection();
     utils::wait_for_exit(&conn);
 }
