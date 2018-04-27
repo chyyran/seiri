@@ -1,0 +1,36 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js init
+
+PATH: 
+  C:\programdata\scoop\shims;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\dotnet\;C:\Program Files (x86)\GitExtensions\;C:\Program Files (x86)\Smart Projects\IsoBuster;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files (x86)\Yarn\bin;C:\Program Files (x86)\Pandoc\;C:\Program Files (x86)\PharosSystems\Core;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\WINDOWS\System32\OpenSSH\;C:\Users\ronny\.cargo\bin;C:\Users\ronny\AppData\Local\Programs\Python\Python36-32\Scripts\;C:\Users\ronny\AppData\Local\Programs\Python\Python36-32\;C:\Users\ronny\scoop\apps\yarn\current\Yarn\bin;C:\Users\ronny\scoop\apps\nodejs\current\bin;C:\Users\ronny\scoop\apps\nodejs\current;C:\Users\ronny\scoop\shims;C:\Users\ronny\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Bandizip\;C:\Users\ronny\AppData\Local\Microsoft\WindowsApps;C:\Users\ronny\AppData\Local\Yarn\bin;C:\Program Files\Microsoft VS Code\bin;C:\Users\ronny\AppData\Roaming\npm;C:\Users\ronny\.watchman;C:\texlive\2017\bin\win32;C:\Users\ronny\coding\robinbird-bin\bin;
+
+Yarn version: 
+  1.0.1
+
+Node version: 
+  9.3.0
+
+Platform: 
+  win32 x64
+
+npm manifest: 
+  No manifest
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: canceled
+      at Interface.<anonymous> (C:\Program Files (x86)\Yarn\lib\cli.js:115284:13)
+      at Interface.emit (events.js:159:13)
+      at Interface._ttyWrite (readline.js:786:16)
+      at ReadStream.onkeypress (readline.js:165:10)
+      at ReadStream.emit (events.js:159:13)
+      at emitKeys (internal/readline.js:420:14)
+      at emitKeys.next (<anonymous>)
+      at ReadStream.onData (readline.js:1022:36)
+      at ReadStream.emit (events.js:159:13)
+      at addChunk (_stream_readable.js:265:12)

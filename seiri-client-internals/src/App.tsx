@@ -14,14 +14,10 @@ class App extends React.Component {
               <DebounceInput
                 style={{position: 'fixed'}}
                 minLength={1}
-                debounceTimeout={300}
+                debounceTimeout={100}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => val.updateQuery!(e.target.value)}
               />
-              {val.latestQueryString === ""
-                ? val.allTracks.map(e => <div key={e.filePath}>{e.title}</div>)
-                : val.latestQueryTracks.map(e => (
-                    <div key={e.filePath}>{e.title}</div>
-                  ))}
+              {val.tracks.map(e => <div key={e.filePath}>{e.title}</div>)}
             </div>
           )}
         </SeiriContext.Consumer>
