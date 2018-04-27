@@ -79,7 +79,7 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                     eprintln!("TRACKADDED~{:?}:Added {:?} to database", track.title, track);
                 }
             }
-            Err(err) => eprintln!("LIBRARYNOTFOUND~The library path was not found."),
+            Err(_) => eprintln!("LIBRARYNOTFOUND~The library path was not found."),
         },
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => {
@@ -186,36 +186,37 @@ fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
 fn main() {
     let _lock = ensure_port(9235).expect("Unable to acquire lock");
 
-    // You can also deserialize this
-    let options = rocket_cors::Cors {
-        allowed_origins:  AllowedOrigins::all(),
-        allowed_methods: vec![Method::Get, Method::Post]
-            .into_iter()
-            .map(From::from)
-            .collect(),
-        allowed_headers: AllowedHeaders::all(),
-        allow_credentials: true,
-        ..Default::default()
-    };
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
-    let conn = paths::get_database_connection();
-    thread::spawn(move || {
-        let config = RocketConfig::build(Environment::Development)
-            .address("localhost")
-            .port(9234)
-            .finalize()
-            .unwrap();
-        rocket::custom(config, true)
-            .manage(graphql::Context::new())
-            .manage(Schema::new(
-                graphql::Query::new(),
-                EmptyMutation::<graphql::Context>::new(),
-            ))
-            .mount("/", routes![graphiql, post_graphql_handler])
-            .attach(options)
-            .launch();
-    });
 
+    if cfg!(feature = "use_graphql") { 
+        let options = rocket_cors::Cors {
+            allowed_origins:  AllowedOrigins::all(),
+            allowed_methods: vec![Method::Get, Method::Post]
+                .into_iter()
+                .map(From::from)
+                .collect(),
+            allowed_headers: AllowedHeaders::all(),
+            allow_credentials: true,
+            ..Default::default()
+        };
+        thread::spawn(move || {
+            let config = RocketConfig::build(Environment::Development)
+                .address("localhost")
+                .port(9234)
+                .finalize()
+                .unwrap();
+            rocket::custom(config, true)
+                .manage(graphql::Context::new())
+                .manage(Schema::new(
+                    graphql::Query::new(),
+                    EmptyMutation::<graphql::Context>::new(),
+                ))
+                .mount("/", routes![graphiql, post_graphql_handler])
+                .attach(options)
+                .launch();
+        });
+    }
+    let conn = paths::get_database_connection();
     utils::wait_for_exit(&conn);
 }

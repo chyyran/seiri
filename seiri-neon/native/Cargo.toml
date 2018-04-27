@@ -1,0 +1,33 @@
+[package]
+name = "seiri-neon"
+version = "0.1.0"
+authors = ["Ronny Chan <ronny6993@gmail.com>"]
+license = "MIT"
+build = "build.rs"
+
+[lib]
+name = "seiri_neon"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.1.22"
+
+[dependencies]
+neon = "0.1.22"
+quick-error = "1.2.1"
+regex = "0.2.10"
+lazy_static = "1.0.0"
+itertools = "0.7.8"
+humantime = "1.1.1"
+rand = "0.4.2"
+app_dirs ="1.2.1"
+toml = "0.4"
+chrono = "0.4"
+r2d2_sqlite = "0.5.0"
+r2d2 = "0.8.2"
+rayon = "1.0"
+
+
+[dependencies.rusqlite]
+version = "0.13.0"
+features = ["bundled", "functions"]
