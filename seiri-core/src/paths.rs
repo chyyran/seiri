@@ -1,14 +1,15 @@
 use app_dirs::*;
 use chrono::prelude::*;
-use database::{add_regexp_function, create_database, enable_wal_mode};
-use error::{Error, Result};
 use r2d2::{CustomizeConnection, Pool};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, Error as SqliteError, Result as SqliteResult};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use track::Track;
+use seiri::{Error, Result, Track};
+use seiri::database::{add_regexp_function, create_database, enable_wal_mode};
+use track::TaglibTrack;
+use std::ascii::AsciiExt;
 
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
@@ -132,7 +133,7 @@ pub fn is_in_hidden_path(file_path: &Path, relative_to: &Path) -> bool {
 
 fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
     match track_file_path.parent().unwrap().strip_prefix(relative_to) {
-        Ok(source) if source.to_string_lossy().is_whitespace() => "None".to_owned(),
+        Ok(source) if source.to_string_lossy().is_ascii_whitespace() => "None".to_owned(),
         Ok(source) => sanitize_file_name(&source.to_string_lossy())
             .split("_")
             .next()

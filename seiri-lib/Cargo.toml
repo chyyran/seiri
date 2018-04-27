@@ -1,0 +1,20 @@
+[package]
+name = "seiri"
+version = "0.1.0"
+authors = ["Ronny Chan <ronny@ronnchyran.com>"]
+
+[lib]
+name = "seiri"
+
+[dependencies]
+quick-error = "1.2.1"
+regex = "0.2.10"
+itertools = "0.7.8"
+humantime = "1.1.1"
+rand = "0.4.2"
+chrono = "0.4"
+juniper = "*"
+
+[dependencies.rusqlite]
+version = "0.13.0"
+features = ["bundled", "functions"]

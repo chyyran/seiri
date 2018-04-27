@@ -1,5 +1,3 @@
-use bangs::Bang;
-use database::{query_tracks, remove_track, add_track};
 use juniper;
 use juniper::{FieldError, FieldResult};
 use paths::{get_connection_pool, ensure_music_folder, reconsider_track};
@@ -7,7 +5,10 @@ use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rayon::prelude::*;
 use std::path::Path;
-use track::Track;
+use seiri::Track;
+use seiri::Bang;
+use seiri::database::{query_tracks, remove_track, add_track};
+
 use config;
 
 pub struct Context {

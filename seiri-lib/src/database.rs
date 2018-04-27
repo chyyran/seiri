@@ -1,5 +1,6 @@
 extern crate rusqlite;
 
+use bangs::ms_to_ticks;
 use bangs::ticks_to_ms;
 use bangs::Bang;
 use rand::{thread_rng, Rng};
@@ -10,6 +11,7 @@ use std::collections::HashMap;
 use track::Track;
 use track::TrackFileType;
 
+#[allow(dead_code)]
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
     let mut cached_regexes = HashMap::new();
     db.create_scalar_function("regexp", 2, true, move |ctx| {
@@ -38,6 +40,7 @@ pub fn add_regexp_function(db: &Connection) -> Result<()> {
     })
 }
 
+#[allow(dead_code)]
 pub fn create_database(conn: &Connection) {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tracks ( 
@@ -57,18 +60,21 @@ pub fn create_database(conn: &Connection) {
         Source TEXT,
         DiscNumber INTEGER,
         Duration INTEGER,
-        FileType INTEGER
+        FileType INTEGER,
+        Updated DATE
     )",
         &[],
     ).unwrap();
 }
 
+#[allow(dead_code)]
 pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     let mut statement = conn.prepare("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
     statement.query(&[])?;
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn query_tracks(
     bang: Bang,
     conn: &Connection,
@@ -128,6 +134,7 @@ pub fn query_tracks(
             disc_number: row.get_checked(14)?,
             duration: ticks_to_ms(row.get_checked(15)?),
             file_type: TrackFileType::from(row.get_checked::<_, i32>(16)?),
+            updated: row.get_checked::<_, String>(17)?
         };
         tracks.push(track)
     }
@@ -135,11 +142,13 @@ pub fn query_tracks(
     Ok(tracks)
 }
 
+#[allow(dead_code)]
 fn get_rand_param() -> String {
     let mut rng = thread_rng();
     format!(":{}", rng.gen_ascii_chars().take(10).collect::<String>()).to_owned()
 }
 
+#[allow(dead_code)]
 fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
     match bang {
         Bang::FilePath(path) => {
@@ -328,9 +337,56 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
     }
 }
 
+#[allow(dead_code)]
 pub fn remove_track(track: &Track, conn: &Connection) {
     conn.execute(
         "DELETE FROM tracks WHERE FilePath = ?1",
         &[&track.file_path],
+    ).unwrap();
+}
+
+#[allow(dead_code)]
+pub fn add_track(track: &Track, conn: &Connection) {
+    conn.execute(
+        "INSERT OR REPLACE INTO tracks(
+                FilePath, 
+                Title,
+                Artist,
+                AlbumArtists,
+                Album,
+                Year,
+                TrackNumber,
+                MusicBrainzTrackId,
+                HasFrontCover,
+                FrontCoverWidth,
+                FrontCoverHeight, 
+                Bitrate,
+                SampleRate,
+                Source,
+                DiscNumber,
+                Duration,
+                FileType,
+                Updated) 
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7,
+                        ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
+        &[
+            &track.file_path,
+            &track.title,
+            &track.artist,
+            &track.album_artists.join(";"),
+            &track.album,
+            &track.year,
+            &track.track_number,
+            &track.musicbrainz_track_id,
+            &track.has_front_cover,
+            &track.front_cover_width,
+            &track.front_cover_height,
+            &track.bitrate,
+            &track.sample_rate,
+            &track.source,
+            &track.disc_number,
+            &ms_to_ticks(track.duration),
+            &track.file_type.value(),
+        ],
     ).unwrap();
 }

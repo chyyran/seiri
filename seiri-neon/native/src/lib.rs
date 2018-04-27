@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate quick_error;
-#[macro_use]
 extern crate neon;
 
 extern crate app_dirs;
@@ -14,24 +12,17 @@ extern crate rayon;
 extern crate regex;
 extern crate rusqlite;
 extern crate toml;
+extern crate seiri;
 
-mod error;
-mod bangs;
-mod track;
 mod path;
-mod database;
 
-use track::Track;
-use bangs::Bang;
+use seiri::Track;
+use seiri::Bang;
+use seiri::database;
 use neon::vm::{Call, JsResult};
 use neon::js::{Object, JsArray, JsString, JsObject, JsInteger, JsBoolean, JsNull};
 use neon::vm::Throw;
 
-fn hello(call: Call) -> JsResult<JsString> {
-    let scope = call.scope;
-    
-    Ok(JsString::new(scope, "hello node").unwrap())
-}
 
 fn get_appdata_path(call: Call) -> JsResult<JsString> {
     let scope = call.scope;
@@ -45,6 +36,7 @@ fn get_appdata_path(call: Call) -> JsResult<JsString> {
     }
 }
 
+#[allow(non_snake_case)]
 fn query_tracks(call: Call) -> JsResult<JsObject> {
     let scope = call.scope;
     let ret = JsObject::new(scope);
@@ -83,7 +75,7 @@ fn query_tracks(call: Call) -> JsResult<JsObject> {
         jsTrack.set("discNumber", JsInteger::new(scope, track.disc_number))?;
         jsTrack.set("duration", JsInteger::new(scope, track.duration))?;
         jsTrack.set("fileType", JsString::new(scope, &track.file_type.to_string()).unwrap())?;
-
+        jsTrack.set("updated", JsString::new(scope, &track.updated).unwrap())?;
         jsTracks.set(i as u32, jsTrack)?;
     }
     ret.set("tracks", jsTracks)?;

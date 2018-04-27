@@ -2,7 +2,7 @@ use error::{Error, Result};
 use std::fmt;
 use std::str;
 
-#[derive(Debug)]
+#[derive(Debug, GraphQLEnum)]
 pub enum TrackFileType {
     Flac,
     Flac4,
@@ -112,7 +112,7 @@ impl str::FromStr for TrackFileType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, GraphQLObject)]
 pub struct Track {
     pub file_path: String,
     pub title: String,
@@ -131,4 +131,6 @@ pub struct Track {
     pub disc_number: i32,
     pub duration: i32,
     pub file_type: TrackFileType,
+    pub updated: String
 }
+

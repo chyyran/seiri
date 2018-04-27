@@ -1,47 +1,56 @@
 #![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
 #![feature(mpsc_select)]
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
-
-#[macro_use]
-extern crate quick_error;
+#![feature(ascii_ctype)]
 
 #[macro_use]
 extern crate serde_derive;
 
+#[cfg(feature = "use_graphql")]
 #[macro_use]
 extern crate juniper;
+#[cfg(feature = "use_graphql")]
 extern crate juniper_rocket;
+#[cfg(feature = "use_graphql")]
+extern crate rayon;
+#[cfg(feature = "use_graphql")]
+extern crate rocket;
+#[cfg(feature = "use_graphql")]
+extern crate rocket_cors;
+#[cfg(feature = "use_graphql")]
+mod graphql;
+#[cfg(feature = "use_graphql")]
+use juniper::EmptyMutation;
+#[cfg(feature = "use_graphql")]
+use rocket::config::Environment;
+#[cfg(feature = "use_graphql")]
+use rocket::http::Method;
+#[cfg(feature = "use_graphql")]
+use rocket::response::content;
+#[cfg(feature = "use_graphql")]
+use rocket::Config as RocketConfig;
+#[cfg(feature = "use_graphql")]
+use rocket::State;
+#[cfg(feature = "use_graphql")]
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
 extern crate app_dirs;
 extern crate chrono;
 extern crate humantime;
 extern crate itertools;
-
 extern crate notify;
 extern crate r2d2;
 extern crate r2d2_sqlite;
 extern crate rand;
-extern crate rayon;
 extern crate regex;
-extern crate rocket;
+
 extern crate rusqlite;
+extern crate seiri;
 extern crate serde_json;
 extern crate toml;
 extern crate tree_magic;
 extern crate walkdir;
-extern crate rocket_cors;
 
-use rocket::http::Method;
-use rocket_cors::{AllowedOrigins, AllowedHeaders};
-
-use rocket::config::Environment;
-use rocket::response::content;
-use rocket::Config as RocketConfig;
-use rocket::State;
-
-use juniper::EmptyMutation;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
@@ -53,11 +62,7 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
 
-mod bangs;
 mod config;
-mod database;
-mod error;
-mod graphql;
 mod paths;
 mod taglibsharp;
 mod track;
@@ -65,11 +70,14 @@ mod utils;
 mod watcher;
 
 use config::Config;
-use error::Error;
+use seiri::database;
+use seiri::Error;
+use seiri::Track;
+use track::TaglibTrack;
 use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config, conn: &Connection) {
-    let track = track::Track::new(path, None);
+    let track = Track::new(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
@@ -86,14 +94,21 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                 match paths::ensure_music_folder(&config.music_folder) {
                     Ok(library_path) => {
                         paths::move_non_track(&file_name, &library_path.1).unwrap();
-                        eprintln!("NONTRACK~{:?}:Found and moved non-track item {:?}", file_name, file_name)
+                        eprintln!(
+                            "NONTRACK~{:?}:Found and moved non-track item {:?}",
+                            file_name, file_name
+                        )
                     }
-                    Err(err) => eprintln!("TRACKMOVEERROR~{:?}:Error {} ocurred when attempting to move track.", file_name, err),
+                    Err(err) => eprintln!(
+                        "TRACKMOVEERROR~{:?}:Error {} ocurred when attempting to move track.",
+                        file_name, err
+                    ),
                 };
             }
-            Error::MissingRequiredTag(file_name, tag) => {
-                eprintln!("MISSINGTAG~Found track {} but missing tag {}.", file_name, tag)
-            }
+            Error::MissingRequiredTag(file_name, tag) => eprintln!(
+                "MISSINGTAG~Found track {} but missing tag {}.",
+                file_name, tag
+            ),
             Error::HelperNotFound => eprintln!("HELPERNOTFOUND~Katatsuki TagLib helper not found."),
             _ => {}
         },
@@ -149,31 +164,21 @@ fn start_watcher_watchdog(wait_time: Duration) {
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
             if let Err(_) = music_folder {
-                eprintln!("WATCHERFOLDERACCESSLOST~Lost access to {}", &config.music_folder);
+                eprintln!(
+                    "WATCHERFOLDERACCESSLOST~Lost access to {}",
+                    &config.music_folder
+                );
                 wait_for_watch_root_available(&config.music_folder);
                 let (new_tx, rx) = channel();
                 tx.send(WatchStatus::Exit).unwrap();
-                eprintln!("WATCHERRESTART~Requested watcher thread exit. Restarting Watcher Thread...");
+                eprintln!(
+                    "WATCHERRESTART~Requested watcher thread exit. Restarting Watcher Thread..."
+                );
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
             }
         }
     });
-}
-
-#[get("/")]
-fn graphiql() -> content::Html<String> {
-    juniper_rocket::graphiql_source("/graphql")
-}
-type Schema = juniper::RootNode<'static, graphql::Query, EmptyMutation<graphql::Context>>;
-
-#[post("/graphql", data = "<request>")]
-fn post_graphql_handler(
-    context: State<graphql::Context>,
-    request: juniper_rocket::GraphQLRequest,
-    schema: State<Schema>,
-) -> juniper_rocket::GraphQLResponse {
-    request.execute(&schema, &context)
 }
 
 fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
@@ -183,40 +188,66 @@ fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
     }
 }
 
+#[cfg(feature = "use_graphql")]
+#[get("/")]
+fn graphiql() -> content::Html<String> {
+    juniper_rocket::graphiql_source("/graphql")
+}
+
+#[cfg(feature = "use_graphql")]
+type Schema = juniper::RootNode<'static, graphql::Query, EmptyMutation<graphql::Context>>;
+
+#[cfg(feature = "use_graphql")]
+#[post("/graphql", data = "<request>")]
+fn post_graphql_handler(
+    context: State<graphql::Context>,
+    request: juniper_rocket::GraphQLRequest,
+    schema: State<Schema>,
+) -> juniper_rocket::GraphQLResponse {
+    request.execute(&schema, &context)
+}
+
+#[cfg(feature = "use_graphql")]
+fn start_rocket() {
+    let options = rocket_cors::Cors {
+        allowed_origins: AllowedOrigins::all(),
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::all(),
+        allow_credentials: true,
+        ..Default::default()
+    };
+    thread::spawn(move || {
+        let config = RocketConfig::build(Environment::Development)
+            .address("localhost")
+            .port(9234)
+            .finalize()
+            .unwrap();
+        rocket::custom(config, true)
+            .manage(graphql::Context::new())
+            .manage(Schema::new(
+                graphql::Query::new(),
+                EmptyMutation::<graphql::Context>::new(),
+            ))
+            .mount("/", routes![graphiql, post_graphql_handler])
+            .attach(options)
+            .launch();
+    });
+}
+
 fn main() {
     let _lock = ensure_port(9235).expect("Unable to acquire lock");
 
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
 
-    if cfg!(feature = "use_graphql") { 
-        let options = rocket_cors::Cors {
-            allowed_origins:  AllowedOrigins::all(),
-            allowed_methods: vec![Method::Get, Method::Post]
-                .into_iter()
-                .map(From::from)
-                .collect(),
-            allowed_headers: AllowedHeaders::all(),
-            allow_credentials: true,
-            ..Default::default()
-        };
-        thread::spawn(move || {
-            let config = RocketConfig::build(Environment::Development)
-                .address("localhost")
-                .port(9234)
-                .finalize()
-                .unwrap();
-            rocket::custom(config, true)
-                .manage(graphql::Context::new())
-                .manage(Schema::new(
-                    graphql::Query::new(),
-                    EmptyMutation::<graphql::Context>::new(),
-                ))
-                .mount("/", routes![graphiql, post_graphql_handler])
-                .attach(options)
-                .launch();
-        });
+    #[cfg(feature = "use_graphql")]
+    {
+        start_rocket();
     }
+
     let conn = paths::get_database_connection();
     utils::wait_for_exit(&conn);
 }

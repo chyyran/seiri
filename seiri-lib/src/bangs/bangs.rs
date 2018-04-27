@@ -1,11 +1,11 @@
 extern crate itertools;
-extern crate lazy_static;
 
 use track::TrackFileType;
 use error::{Result};
 use super::lexer::{lex_query};
 use super::parser::{parse_token_stream};
 use std::path::{Path, PathBuf};
+
 #[derive(Debug)]
 pub enum Bang {
     All,

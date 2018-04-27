@@ -1,6 +1,6 @@
 use std::io;
-use bangs::Bang;
-use database::query_tracks;
+use seiri::Bang;
+use seiri::database::query_tracks;
 use rusqlite::Connection;
 
 pub fn wait_for_exit(conn: &Connection) {
