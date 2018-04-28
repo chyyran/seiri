@@ -5,6 +5,7 @@ authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 include = ["tools/**/*"]
 
 [dependencies]
+seiri = "*"
 notify = "4.0.3"
 serde = "1.0.*"
 serde_derive = "1.0.*"
@@ -38,8 +39,7 @@ use_graphql = [
     "rocket"
 ]
 
-[dependencies.seiri]
-path = "../seiri-lib"
+
 
 [dependencies.rusqlite]
 version = "0.13.0"

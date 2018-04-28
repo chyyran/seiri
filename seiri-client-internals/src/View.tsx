@@ -3,36 +3,42 @@ import { DebounceInput } from "react-debounce-input";
 import { connect, Dispatch } from 'react-redux';
 import { updateQuery, updateTracksTick } from "./actions";
 import State from "./State";
+import TrackTable from "./TrackTable";
 import { Track } from "./types";
+import "./View.css"
 
-interface ListProps {
+interface ViewProps {
     tracks: Track[],
     query: string,
     dispatch?: Dispatch<any>
 }
 
-const mapStateToProps = (state: State) : ListProps => {
+const mapStateToProps = (state: State) : ViewProps => {
     return { tracks: state.tracks, query: state.query }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<any>, ownProps: ListProps) : ListProps => {
+const mapDispatchToProps = (dispatch: Dispatch<any>, ownProps: ViewProps) : ViewProps => {
   return { ...ownProps, dispatch}
 }
 
 // tslint:disable:jsx-no-lambda
-class List extends React.Component<ListProps> {
-  constructor(props: ListProps) {
+class View extends React.Component<ViewProps> {
+  constructor(props: ViewProps) {
     super(props)
     window.setTimeout(() => {
       this.props.dispatch!(updateQuery.action({query: ""}))
       this.props.dispatch!(updateTracksTick.action())
     }, 0)
   }
+
   public render() {
     return (
-      <div>
+      <div className="container">
+        <div className="tracks-containers">
+          <TrackTable tracks={this.props.tracks}/>
+        </div>
         <DebounceInput
-          style={{position: 'fixed'}}
+          className="bang-input"
           minLength={1}
           debounceTimeout={100}
           // tslint:disable-next-line:no-console
@@ -41,12 +47,17 @@ class List extends React.Component<ListProps> {
             this.props.dispatch!(updateQuery.action({query: e.target.value}))
           }}
         />
-        {
-          this.props.tracks.map(t => <div key={t.filePath}>{t.title}</div>)
-        }
       </div>
     );
   }
+
+  // private launch(filename: string) {
+  //   // tslint:disable-next-line:no-console
+  //   const dirname = window.require("path").dirname(filename)
+  //   // tslint:disable-next-line:no-console
+  //   console.log(dirname)
+  //   window.require("child_process").execFile(dirname)
+  // }
 }
 
-export default connect<ListProps>(mapStateToProps, mapDispatchToProps)(List);
+export default connect<ViewProps>(mapStateToProps, mapDispatchToProps)(View);

@@ -33,17 +33,29 @@ export interface UpdateTracksTimerTick {
 export const updateTracks = actionCreator<{tracks: Track[]}>("UPDATE_TRACKS")
 
 export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (query, dispatch) => {
-    const tracks = window.require("seiri-neon")(query.query)
-    dispatch(updateTracks(tracks))
+    try {
+        const tracks = window.require("seiri-neon")(query.query)
+        // tslint:disable-next-line:no-console
+        dispatch(updateTracks(tracks))
+    } catch {
+        // tslint:disable-next-line:no-console
+        console.log("invalid bang?")
+    }
     return { type: "UPDATE_QUERY", query }
 })
 
 export const updateTracksTick = createAsync<{}, {}>("UPDATE_TRACKS_TICK", (query, dispatch, getState) => {
     const state = getState();
-    const tracks = window.require("seiri-neon")(state.query)
-    // tslint:disable-next-line:no-console
-    console.log("tick!")
-    dispatch(updateTracks(tracks))
+    try {
+        const tracks = window.require("seiri-neon")(state.query)
+         // tslint:disable-next-line:no-console
+        console.log("tick!")
+        dispatch(updateTracks(tracks))
+    } catch {
+        // tslint:disable-next-line:no-console
+        console.log("invalid bang?")
+    }
+
     window.setTimeout(() => dispatch(updateTracksTick.action()), 30000)
     return { type: "UPDATE_TRACKS_TICK" }
 })

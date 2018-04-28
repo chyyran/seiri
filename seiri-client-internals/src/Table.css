@@ -1,0 +1,65 @@
+.table-row {
+  font-size: 12px;
+  font-family: "Segoe UI", "Noto Sans CJK JP";
+  border-bottom: solid 1px black;
+}
+
+.table-container {
+    height: 100%;
+    width: 100%;
+}
+
+.ReactVirtualized__Table__rowColumn {
+  border-right: solid 1px black;
+  padding: 12px 2px;
+}
+
+.table-header {
+  font-weight: bold;
+}
+
+::-webkit-scrollbar { 
+    display: none; 
+}
+
+.ReactVirtualized__Table {
+  display: inline-block;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+
+}
+
+.ReactVirtualized__Table__headerColumn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  border-right: solid 1px black;
+  padding: 2px;
+}
+
+.ReactVirtualized__Table__headerTruncatedText {
+  flex: auto;
+}
+
+.DragHandle {
+  flex: 0 0 16px;
+  z-index: 2;
+  cursor: col-resize;
+  color: rgba(0, 0, 0, 0.2);
+}
+.DragHandle:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.DragHandleActive,
+.DragHandleActive:hover {
+  color: rgba(0, 0, 0, 0.6);
+  z-index: 3;
+}
+
+.DragHandleIcon {
+  flex: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}

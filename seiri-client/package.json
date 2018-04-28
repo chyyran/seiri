@@ -8,6 +8,7 @@
     "build": "electron-build-env neon build seiri-neon"
   },
   "dependencies": {
+    "opn": "^5.3.0",
     "seiri-neon": "file:../seiri-neon"
   },
   "devDependencies": {

@@ -20,19 +20,19 @@ export interface Track {
   }
 
   export enum TrackFileType {
-    FLAC,
-    FLAC4,
-    FLAC8,
-    FLAC16,
-    FLAC24,
-    FLAC32,
-    ALAC,
-    MP3_CBR,
-    MP3_VBR,
-    AAC,
-    VORBIS,
-    OPUS,
-    WAVPACK,
-    MONKEYS_AUDIO,
-    UNKNOWN
+    FLAC = "flac",
+    FLAC4 = "flac4",
+    FLAC8 = "flac8",
+    FLAC16 = "flac16",
+    FLAC24 = "flac24",
+    FLAC32 = "flac32",
+    ALAC = "alac",
+    MP3_CBR = "cbr",
+    MP3_VBR = "vbr",
+    AAC = "aac",
+    VORBIS = "vorbis",
+    OPUS = "opus",
+    WAVPACK = "wavpack",
+    MONKEYS_AUDIO = "ape",
+    UNKNOWN = "unknown"
   }

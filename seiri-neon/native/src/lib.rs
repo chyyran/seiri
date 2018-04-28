@@ -71,7 +71,7 @@ fn query_tracks(call: Call) -> JsResult<JsObject> {
         jsTrack.set("frontCoverWidth", JsInteger::new(scope, track.front_cover_width))?;
         jsTrack.set("bitrate", JsInteger::new(scope, track.bitrate))?;
         jsTrack.set("sampleRate", JsInteger::new(scope, track.sample_rate))?;
-        jsTrack.set("source", JsString::new(scope, &track.file_path).unwrap())?;
+        jsTrack.set("source", JsString::new(scope, &track.source).unwrap())?;
         jsTrack.set("discNumber", JsInteger::new(scope, track.disc_number))?;
         jsTrack.set("duration", JsInteger::new(scope, track.duration))?;
         jsTrack.set("fileType", JsString::new(scope, &track.file_type.to_string()).unwrap())?;
