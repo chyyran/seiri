@@ -1,7 +1,9 @@
 import { ChildProcess } from "child_process";
 import { orderBy as _, range } from "lodash";
+import * as Mousetrap from "mousetrap";
 import * as React from "react";
 import Draggable, { DraggableData } from "react-draggable";
+import { Dispatch } from "react-redux";
 import {
   AutoSizer,
   Column,
@@ -13,6 +15,7 @@ import {
   TableHeaderProps
 } from "react-virtualized";
 import "react-virtualized/styles.css"; // only needs to be imported once
+import { updateTracksTick } from "./actions";
 import ElectronWindow from "./ElectronWindow";
 import "./Table.css";
 import { Track, TrackFileType } from "./types";
@@ -22,6 +25,7 @@ declare var window: ElectronWindow;
 interface TrackTableProps {
   tracks: Track[];
   query: string;
+  dispatch: Dispatch<any>;
 }
 
 interface TrackTableState {
@@ -67,6 +71,21 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       selected: [],
       lastSelected: undefined
     };
+    // tslint:disable-next-line:no-console
+    console.log(Mousetrap)
+    Mousetrap.bind(['command+r', 'ctrl+r'], () => {
+      // tslint:disable-next-line:no-console
+      console.log("bound!")
+      for (const key in this.state.selected) {
+        if(this.state.selected[key]) {
+          // tslint:disable-next-line:no-console
+          console.log(this.state.sortedList[key])
+        }
+      } 
+      this.setState({selected: []})
+      this.props.dispatch!(updateTracksTick.action())
+      return false;
+  });
   }
 
   public componentWillReceiveProps(newProps: TrackTableProps) {

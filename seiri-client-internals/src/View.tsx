@@ -33,14 +33,21 @@ class View extends React.Component<ViewProps> {
       this.props.dispatch!(updateQuery.action({ query: "" }));
       this.props.dispatch!(updateTracksTick.action());
     }, 0);
-    window.addEventListener('keydown', () => this.queryInput!.focus())
+    window.addEventListener('keydown', (event) => {
+      if (!(event.shiftKey || event.ctrlKey || event.altKey)) {
+        this.queryInput!.focus();
+        return false;
+      } else {
+        return true;
+      }
+    })
   }
 
   public render() {
     return (
       <div className="container">
         <div className="tracks-containers">
-          <TrackTable tracks={this.props.tracks} query={this.props.query} />
+          <TrackTable tracks={this.props.tracks} query={this.props.query} dispatch={this.props.dispatch!} />
         </div>
         <div className="main-bar">
           <DebounceInput
