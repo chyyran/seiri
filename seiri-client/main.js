@@ -18,7 +18,8 @@ app.on('ready', () => {
   ])
   tray.setToolTip('This is my application.')
   tray.setContextMenu(contextMenu);
-  
+  Menu.setApplicationMenu(null)
+
   tray.on('click', () => {
     console.log('clicked!');
     if (winClose) {

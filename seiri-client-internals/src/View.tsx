@@ -40,7 +40,7 @@ class View extends React.Component<ViewProps> {
     return (
       <div className="container">
         <div className="tracks-containers">
-          <TrackTable tracks={this.props.tracks} />
+          <TrackTable tracks={this.props.tracks} query={this.props.query} />
         </div>
         <div className="main-bar">
           <DebounceInput

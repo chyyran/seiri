@@ -1,7 +1,7 @@
 import { ChildProcess } from "child_process";
-import { orderBy as _ } from "lodash";
+import { orderBy as _, range } from "lodash";
 import * as React from "react";
-import Draggable from "react-draggable";
+import Draggable, { DraggableData } from "react-draggable";
 import {
   AutoSizer,
   Column,
@@ -13,7 +13,7 @@ import {
   TableHeaderProps
 } from "react-virtualized";
 import "react-virtualized/styles.css"; // only needs to be imported once
-import ElectronWindow from './ElectronWindow';
+import ElectronWindow from "./ElectronWindow";
 import "./Table.css";
 import { Track, TrackFileType } from "./types";
 
@@ -21,6 +21,7 @@ declare var window: ElectronWindow;
 
 interface TrackTableProps {
   tracks: Track[];
+  query: string;
 }
 
 interface TrackTableState {
@@ -28,6 +29,8 @@ interface TrackTableState {
   sortBy: string;
   sortDirection: SortDirectionType;
   sortedList: Track[];
+  selected: { [index: number]: boolean | undefined };
+  lastSelected: number | undefined;
 }
 
 const TOTAL_WIDTH = 3000;
@@ -60,13 +63,38 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       },
       sortBy,
       sortDirection,
-      sortedList: this.sortList({ sortBy, sortDirection })
+      sortedList: this.sortList({ sortBy, sortDirection }),
+      selected: [],
+      lastSelected: undefined
     };
   }
 
   public componentWillReceiveProps(newProps: TrackTableProps) {
     const { sortBy, sortDirection } = this.state;
-    this.setState({ sortedList: this.sortList({ sortBy, sortDirection }) });
+    if (newProps.query !== this.props.query) {
+      this.setState({
+        sortedList: this.sortList({ sortBy, sortDirection }),
+        selected: []
+      });
+    } else {
+      this.setState({ sortedList: this.sortList({ sortBy, sortDirection }) });
+    }
+  }
+
+  private rowClassName({ index }: { index: number }) {
+    if (index < 0) {
+      return "table-row table-header";
+    }
+    let tableRowClass = "table-row";
+    if (!!this.state.selected[index]) {
+      tableRowClass += " selected";
+    }
+    if (index % 2 === 0) {
+      tableRowClass += " evenRow";
+    } else {
+      tableRowClass += " oddRow";
+    }
+    return tableRowClass;
   }
 
   private rowGetter = ({ index }: { index: number }) =>
@@ -103,6 +131,13 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     );
   }
 
+  private headerResizeHandler(dataKey: string, event: MouseEvent, { deltaX }: DraggableData) {
+    this.resizeRow({
+      dataKey,
+      deltaX
+    })
+  }
+
   private headerRenderer = ({
     columnData,
     dataKey,
@@ -114,19 +149,15 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     return (
       <React.Fragment key={dataKey}>
         <div className="ReactVirtualized__Table__headerTruncatedText">
-          {label}
+          <span className="table-header-label">{label}</span>
         </div>
         {sortBy === dataKey && <SortIndicator sortDirection={sortDirection} />}
         <Draggable
           axis="x"
           defaultClassName="DragHandle"
           defaultClassNameDragging="DragHandleActive"
-          onDrag={(event, { deltaX }) =>
-            this.resizeRow({
-              dataKey,
-              deltaX
-            })
-          }
+          // tslint:disable-next-line:jsx-no-bind
+          onDrag={this.headerResizeHandler.bind(this, dataKey)}
           position={{ x: 0 } as any}
         >
           <span className="DragHandleIcon">⋮</span>
@@ -207,8 +238,51 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   private handleDoubleClick(event: RowMouseEventHandlerParams) {
     const track: Track = event.rowData as any;
     const path = window.require<any>("path");
-    const open = window.require<(target: string, options?: any | undefined) => Promise<ChildProcess>>("opn")
+    const open = window.require<
+      (target: string, options?: any | undefined) => Promise<ChildProcess>
+    >("opn");
     open(path.dirname(track.filePath));
+  }
+
+  // tslint:disable:no-shadowed-variable
+  private handleClick(event: RowMouseEventHandlerParams) {
+    // tslint:disable-next-line:no-console
+    const mouseEvent = event.event as React.MouseEvent<any>;
+    if (!this.state.lastSelected) {
+      const newSelection = !!!this.state.selected[event.index];
+      const clearState = [];
+      clearState[event.index] = newSelection;
+      this.setState({ selected: clearState, lastSelected: event.index });
+      return;
+    }
+    if (mouseEvent.shiftKey) {
+      // const selectedIndexes = Object.keys(this.state.selected) as any as number[];
+      let newSelectionKeys = [];
+      const selected = [];
+      const lastSelected = this.state.lastSelected;
+      if (event.index > lastSelected) {
+        newSelectionKeys = range(lastSelected, event.index + 1);
+      } else {
+        newSelectionKeys = range(event.index, lastSelected + 1);
+      }
+
+      for (const key of newSelectionKeys) {
+        selected[key] = true;
+      }
+      this.setState({ selected });
+      return;
+    }
+    if (mouseEvent.ctrlKey) {
+      const selected = this.state.selected;
+      selected[event.index] = !!!this.state.selected[event.index];
+      this.setState({ selected, lastSelected: event.index });
+      return;
+    }
+    const newSelection = !!!this.state.selected[event.index];
+    const clearState = [];
+    clearState[event.index] = newSelection;
+    this.setState({ selected: clearState, lastSelected: event.index });
+    return;
   }
 
   // tslint:disable-next-line:member-ordering
@@ -223,7 +297,8 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
               // isScrolling={isScrolling}
               // scrollTop={scrollTop}
               className="Table"
-              rowClassName="table-row"
+              // tslint:disable-next-line:jsx-no-bind
+              rowClassName={this.rowClassName.bind(this)}
               headerClassName="table-header"
               width={TOTAL_WIDTH}
               height={height}
@@ -232,6 +307,8 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
               rowHeight={20}
               rowCount={this.props.tracks.length}
               onRowDoubleClick={this.handleDoubleClick}
+              // tslint:disable-next-line:jsx-no-bind
+              onRowClick={this.handleClick.bind(this)}
               // tslint:disable-next-line:jsx-no-bind
               sort={this.sort.bind(this)}
               sortBy={this.state.sortBy}

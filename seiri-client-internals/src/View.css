@@ -24,13 +24,14 @@
     width: 2rem;
     padding: 0;
     margin: 0;
-    background: white;
+    background: #37474f;;
     border: 0;
     padding: 0;
     margin: 0;
-    color: black;
+    color: white;
     font-family: 'Segoe MDL2 Assets';
-    font-size: 2rem;
+    line-height: 2rem;
+    font-size: 1rem;
 }
 
 .btn-quit:focus {
@@ -46,16 +47,22 @@
 }
 .bang-input {
     
-    font-size: 1.5rem;
-    font-family: "Roboto", "Noto Sans CJK JP";
+    font-size: 1rem;
+    font-family: "Segoe UI Light", "Noto Sans CJK JP";
     font-weight: 100;
-    background-color: #3a3a3a;
+    background-color: #37474f;
     color: white;
-    width: -webkit-fill-available;
+    width: stretch;
     height: 2rem;
+    line-height: 2rem;
     z-index: 10000;
     border: 0;
     margin: 0;
     padding: 0 ;
-    padding-left: 2px;
+    padding-left: 8px;
+}
+
+.bang-input::selection {
+    color: white;
+    background: #FF4081;
 }
