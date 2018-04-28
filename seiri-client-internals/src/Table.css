@@ -16,6 +16,7 @@
 
 .table-header {
   font-weight: bold;
+  -webkit-app-region: drag;
 }
 
 ::-webkit-scrollbar { 
@@ -45,6 +46,7 @@
   z-index: 2;
   cursor: col-resize;
   color: rgba(0, 0, 0, 0.2);
+  -webkit-app-region: no-drag;
 }
 .DragHandle:hover {
   background-color: rgba(0, 0, 0, 0.1);

@@ -1,20 +1,61 @@
 .container {
     display: grid;
-    grid-template-rows: auto 3rem;
+    grid-template-rows: auto 2.1rem;
     height: 100%;
     width: 100%;
+    position: relative;
 }
 .tracks-containers { 
     width: 100%;
 }
 
-.bang-input {
-    font-size: 1.5rem;
-    font-family: "Segoe UI", "Noto Sans CJK JP";
-    line-height: 3rem;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
+.main-bar {
+    padding-top: 4px;
+    display: grid;
+    grid-template-columns: auto 2rem;
+    width: 100vw;
+    height: 2rem;
+    position: fixed;
+    bottom: 0px;
+}
+
+.btn-quit {
+    height: 2rem;
+    width: 2rem;
     padding: 0;
     margin: 0;
+    background: white;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    color: black;
+    font-family: 'Segoe MDL2 Assets';
+    font-size: 2rem;
+}
+
+.btn-quit:focus {
+    outline: none;
+}
+.btn-quit:hover {
+    background: crimson;
+    color: white;
+}
+.bang-input:focus {
+    outline: none;
+    
+}
+.bang-input {
+    
+    font-size: 1.5rem;
+    font-family: "Roboto", "Noto Sans CJK JP";
+    font-weight: 100;
+    background-color: #3a3a3a;
+    color: white;
+    width: -webkit-fill-available;
+    height: 2rem;
+    z-index: 10000;
+    border: 0;
+    margin: 0;
+    padding: 0 ;
+    padding-left: 2px;
 }
