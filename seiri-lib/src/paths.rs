@@ -1,12 +1,12 @@
 use app_dirs::*;
 use chrono::prelude::*;
+use error::{Error, Result};
+use std::ascii::AsciiExt;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use error::{Error, Result};
-use track::Track;
 use track::TaglibTrack;
-use std::ascii::AsciiExt;
+use track::Track;
 
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
@@ -65,8 +65,12 @@ pub fn get_track_directory(track: &Track, library_path: &Path) -> PathBuf {
     } else {
         (&track.album_artists[0]).to_owned()
     };
+
+    let artist_folder = artist_folder.trim();
+    let album_folder = &track.album.to_owned();
+    let album_folder = album_folder.trim();
     track_path.push(sanitize_file_name(&artist_folder));
-    track_path.push(sanitize_file_name(&track.album));
+    track_path.push(sanitize_file_name(&album_folder));
     track_path
 }
 
@@ -138,8 +142,7 @@ pub fn move_non_track(path: &Path, auto_add_path: &Path) -> Result<()> {
 }
 
 fn track_warrants_move(track_as_saved: &Track, track_as_read: &Track) -> bool {
-    !(track_as_saved.title == track_as_read.title 
-        && track_as_saved.album == track_as_read.album
+    !(track_as_saved.title == track_as_read.title && track_as_saved.album == track_as_read.album
         && track_as_saved.artist == track_as_read.artist
         && track_as_saved.track_number == track_as_read.track_number
         && track_as_saved.album_artists == track_as_read.album_artists)
@@ -155,27 +158,30 @@ pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Tra
         return Ok(None);
     }
 
-    if let Ok(track_as_read) = Track::from_taglibsharp(track_file_path, Some(&track.source)) {
-        if !track_warrants_move(track, &track_as_read) {
-            return Ok(Some(track_as_read));
-        }
-        match move_track(&track_as_read, library_path, &track_as_read.source) {
-            Ok(track) => {
-                //  Cleanup
-                if let Some(old_dir) = &track_file_path.parent() {
-                    // If the directory is empty, simply remove it.
-                    fs::remove_dir(old_dir).unwrap_or(());
-                    if let Some(old_dir) = old_dir.parent() {
-                        // Cleanup after the artist as well.
-                        fs::remove_dir(old_dir).unwrap_or(());
-                    }
-                }
-                Ok(Some(track))
+    match Track::from_taglibsharp(track_file_path, Some(&track.source)) {
+        Ok(track_as_read) => {
+            if !track_warrants_move(track, &track_as_read) {
+                return Ok(Some(track_as_read));
             }
-            Err(err) => Err(err),
+            let track_as_read = Track { file_path: track.file_path.to_owned(), ..track_as_read };
+            println!("{:?}", track_as_read);
+            match move_track(&track_as_read, library_path, &track_as_read.source) {
+                Ok(track) => {
+                    //  Cleanup
+                    if let Some(old_dir) = &track_file_path.parent() {
+                        // If the directory is empty, simply remove it.
+                        fs::remove_dir(old_dir).unwrap_or(());
+                        if let Some(old_dir) = old_dir.parent() {
+                            // Cleanup after the artist as well.
+                            fs::remove_dir(old_dir).unwrap_or(());
+                        }
+                    }
+                    Ok(Some(track))
+                }
+                Err(err) => Err(err),
+            }
         }
-    } else {
-        Ok(None)
+        Err(err) => Err(err),
     }
 }
 
@@ -237,7 +243,9 @@ pub fn move_track(track: &Track, library_path: &Path, source: &str) -> Result<Tr
     let new_file_name = get_iterative_filename(&track_file_name, &track_ext, &track_folder);
 
     // Do the move.
-    if let Err(_) = fs::rename(track_file_path, &new_file_name) {
+    if let Err(err) = fs::rename(track_file_path, &new_file_name) {
+        println!("{}", err);
+        println!("{:?}",track_file_path);
         Err(Error::UnableToMove(
             new_file_name.to_string_lossy().into_owned(),
         ))

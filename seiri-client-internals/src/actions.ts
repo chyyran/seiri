@@ -1,14 +1,8 @@
 import actionCreatorFactory from 'typescript-fsa';
 import { asyncFactory } from 'typescript-fsa-redux-thunk';
+import seiri from "./seiri-neon";
 import State from "./State";
 import { Track } from "./types";
-
-
-interface ElectronWindow extends Window {
-    require: any;
-}
-
-declare var window: ElectronWindow;
 
 const actionCreator = actionCreatorFactory();
 const createAsync = asyncFactory<State>(actionCreator);
@@ -34,7 +28,7 @@ export const updateTracks = actionCreator<{tracks: Track[]}>("UPDATE_TRACKS")
 
 export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (query, dispatch) => {
     try {
-        const tracks = window.require("seiri-neon")(query.query)
+        const tracks = seiri.queryTracks(query.query)
         // tslint:disable-next-line:no-console
         dispatch(updateTracks(tracks))
     } catch {
@@ -47,13 +41,13 @@ export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (que
 export const updateTracksTick = createAsync<{}, {}>("UPDATE_TRACKS_TICK", (query, dispatch, getState) => {
     const state = getState();
     try {
-        const tracks = window.require("seiri-neon")(state.query)
+        const tracks = seiri.queryTracks(state.query)
          // tslint:disable-next-line:no-console
         console.log("tick!")
         dispatch(updateTracks(tracks))
-    } catch {
+    } catch (err) {
         // tslint:disable-next-line:no-console
-        console.log("invalid bang?")
+        console.log(err);
     }
 
     window.setTimeout(() => dispatch(updateTracksTick.action()), 30000)

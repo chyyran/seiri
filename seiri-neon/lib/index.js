@@ -1,3 +1,6 @@
 const addon = require('../native');
 
-module.exports = addon.queryTracks;
+module.exports = {
+    queryTracks: addon.queryTracks,
+    refreshTracks: addon.refreshTracks
+};

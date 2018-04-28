@@ -1,9 +1,11 @@
 taglibsharp-katatsuki/src/bin
 taglibsharp-katatsuki/src/obj/
-seiri-core/tools/
-seiri-core/tracks.db*
+seiri-watcher/tools/
+seiri-*/tools/
+seiri-watcher/tracks.db*
 seiri-client-internals/public/seiri-worker.js
 seiri-client-internals/public/seiri-worker.js.map
 seiri-client/node_modules/
 seiri-lib/target/
 seiri-client/icon.ico
+seiri-client/tools/SixLabors.ImageSharp.dll

@@ -3,6 +3,9 @@
 #![feature(ascii_ctype)]
 
 #[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
 extern crate juniper;
 
 #[macro_use]
@@ -18,6 +21,7 @@ extern crate rand;
 extern crate regex;
 extern crate rusqlite;
 extern crate app_dirs;
+extern crate toml;
 
 mod bangs;
 mod error;
@@ -30,6 +34,7 @@ pub use track::TaglibTrack;
 pub use error::{Error, Result};
 pub use bangs::Bang;
 
+pub mod config;
 pub mod database;
 pub mod paths;
 

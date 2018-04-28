@@ -3,8 +3,6 @@
 #![feature(mpsc_select)]
 #![feature(ascii_ctype)]
 
-#[macro_use]
-extern crate serde_derive;
 
 #[cfg(feature = "use_graphql")]
 #[macro_use]
@@ -34,22 +32,9 @@ use rocket::State;
 #[cfg(feature = "use_graphql")]
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 
-extern crate app_dirs;
-extern crate chrono;
-extern crate humantime;
-extern crate itertools;
-extern crate notify;
-extern crate r2d2;
-extern crate r2d2_sqlite;
-extern crate rand;
-extern crate regex;
-
-extern crate rusqlite;
 extern crate seiri;
-extern crate serde_json;
-extern crate toml;
-extern crate tree_magic;
 extern crate walkdir;
+extern crate notify;
 
 use std::io;
 use std::net::TcpListener;
@@ -58,11 +43,11 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
 
-mod config;
 mod utils;
 mod watcher;
 
-use config::Config;
+use seiri::config::Config;
+use seiri::config;
 use seiri::database;
 use seiri::database::Connection;
 use seiri::database::ConnectionPool;

@@ -1,13 +1,11 @@
 extern crate notify;
 
-use config::Config;
+use seiri::config::Config;
 
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use paths::is_in_hidden_path;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::Connection;
+use seiri::paths::is_in_hidden_path;
+use seiri::database::{ConnectionPool, Connection};
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
@@ -46,7 +44,7 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
 pub fn list<F>(
     watch_dir: &str,
     config: &Config,
-    pool: &Pool<SqliteConnectionManager>,
+    pool: &ConnectionPool,
     process: F,
 ) -> ()
 where
@@ -71,7 +69,7 @@ pub enum WatchStatus {
 pub fn watch<F>(
     watch_dir: &str,
     config: &Config,
-    pool: &Pool<SqliteConnectionManager>,
+    pool: &ConnectionPool,
     process: F,
     quit_rx: Receiver<WatchStatus>,
 ) -> notify::Result<()>

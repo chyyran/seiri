@@ -17,6 +17,7 @@ import {
 import "react-virtualized/styles.css"; // only needs to be imported once
 import { updateTracksTick } from "./actions";
 import ElectronWindow from "./ElectronWindow";
+import seiri from "./seiri-neon";
 import "./Table.css";
 import { Track, TrackFileType } from "./types";
 
@@ -76,12 +77,15 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     Mousetrap.bind(['command+r', 'ctrl+r'], () => {
       // tslint:disable-next-line:no-console
       console.log("bound!")
-      for (const key in this.state.selected) {
-        if(this.state.selected[key]) {
-          // tslint:disable-next-line:no-console
-          console.log(this.state.sortedList[key])
-        }
-      } 
+      const tracksToRefresh = this.state.sortedList.filter(
+        (track, index) => this.state.selected[index] === true
+      ).map(track => track.filePath)
+
+      seiri.refreshTracks(tracksToRefresh)
+      // tslint:disable-next-line:no-console
+      console.log("REFRESHED!");
+      // tslint:disable-next-line:no-console
+      console.log(tracksToRefresh);
       this.setState({selected: []})
       this.props.dispatch!(updateTracksTick.action())
       return false;
