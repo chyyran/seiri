@@ -8,7 +8,6 @@ extern crate tree_magic;
 fn locate_helper() -> Result<PathBuf> {
     if cfg!(target_os = "windows") {
         let mut path = env::current_dir().unwrap();
-        path.push("tools");
         path.push("taglibsharp-katatsuki.exe");
         if !path.exists() {
             return Err(Error::HelperNotFound);
@@ -16,7 +15,6 @@ fn locate_helper() -> Result<PathBuf> {
         return Ok(path);
     } else {
         let mut path = env::current_dir().unwrap();
-        path.push("tools");
         path.push("taglibsharp-katatsuki");
         if !path.exists() {
             return Err(Error::HelperNotFound);

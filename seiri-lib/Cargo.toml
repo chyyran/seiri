@@ -1,6 +1,6 @@
 [package]
 name = "seiri"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 description = "Support library for seiri music manager"
 license = "MIT"
