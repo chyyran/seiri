@@ -1,0 +1,8 @@
+[package]
+name = "libkatatsuki-sys"
+version = "0.1.0"
+authors = ["Ronny Chan <ronny6993@gmail.com>"]
+links = "libkatatsuki"
+
+[dependencies]
+libc = "0.2"

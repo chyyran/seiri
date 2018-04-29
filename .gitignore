@@ -9,3 +9,7 @@ seiri-client/node_modules/
 seiri-lib/target/
 seiri-client/icon.ico
 seiri-client/tools/SixLabors.ImageSharp.dll
+/libkatatsuki-sys/lib/*.lib
+obj/
+bin/
+*.pdb

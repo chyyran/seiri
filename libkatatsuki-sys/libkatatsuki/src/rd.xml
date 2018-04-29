@@ -1,0 +1,6 @@
+<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata"> 
+    <Application>
+            <Assembly Name="libkatatsuki" Dynamic="Required All"/>
+            <Assembly Name="taglib-sharp" Dynamic="Required All"/>
+    </Application> 
+</Directives>  
