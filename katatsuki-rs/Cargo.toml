@@ -2,6 +2,8 @@
 name = "katatsuki"
 version = "0.1.0"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
+description = "Rusty wrapper for libkatatsuki-sys"
+license = "MIT"
 
 [dependencies]
 widestring = "0.3"
@@ -9,6 +11,4 @@ libc = "0.2"
 chrono = "0.4"
 enum-primitive-derive = "^0.1"
 num-traits = "^0.1"
-
-[dependencies.libkatatsuki-sys]
-path = "../libkatatsuki-sys"
+libkatatsuki-sys = "0.1.0"

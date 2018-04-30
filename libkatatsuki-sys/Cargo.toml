@@ -3,6 +3,8 @@ name = "libkatatsuki-sys"
 version = "0.1.0"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
 links = "libkatatsuki"
+description = "Rust bindings for the Track interface of katatsuki"
+license = "MIT"
 
 [dependencies]
 libc = "0.2"

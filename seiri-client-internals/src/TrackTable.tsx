@@ -235,23 +235,41 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
         return "FLAC (24-bit Hi-Res)";
       case TrackFileType.FLAC32:
         return "FLAC (32-bit Integral)";
-      case TrackFileType.MP3_CBR:
+      case TrackFileType.MP3CBR:
         return "MP3 (Constant Bitrate)";
-      case TrackFileType.MP3_VBR:
+      case TrackFileType.MP3VBR:
         return "MP3 (Variable Bitrate)";
       case TrackFileType.AAC:
         return "AAC (M4A Audio)";
       case TrackFileType.ALAC:
         return "Apple Lossless";
-      case TrackFileType.OPUS:
+      case TrackFileType.ALAC16:
+        return "Apple Lossless (16-bit)";
+      case TrackFileType.ALAC24:
+        return "Apple Lossless (24-bit Hi-Res)";
+      case TrackFileType.AIFF:
+        return "AIFF (PCM Audio)";
+      case TrackFileType.AIFF4:
+        return "AIFF (4-bit PCM)"
+      case TrackFileType.AIFF8:
+        return "AIFF (8-bit PCM)"
+      case TrackFileType.AIFF16:
+        return "AIFF (16-bit PCM)"
+      case TrackFileType.AIFF24:
+        return "AIFF (24-bit PCM)"
+      case TrackFileType.AIFF32:
+        return "AIFF (32-bit PCM)"
+      case TrackFileType.Opus:
         return "Opus";
-      case TrackFileType.VORBIS:
+      case TrackFileType.Vorbis:
         return "Vorbis";
-      case TrackFileType.WAVPACK:
-        return "WavPack";
-      case TrackFileType.MONKEYS_AUDIO:
+      case TrackFileType.MonkeysAudio:
         return "Monkey's Audio";
-      case TrackFileType.UNKNOWN:
+      case TrackFileType.MonkeysAudio16:
+        return "Monkey's Audio (16-bit)";
+      case TrackFileType.MonkeysAudio24:
+        return "Monkey's Audio (24-bit)";
+      case TrackFileType.Unknown:
         return "Unknown";
       default:
         return "";

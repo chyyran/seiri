@@ -1,38 +1,19 @@
 #[macro_use]
 extern crate neon;
-
-extern crate app_dirs;
-extern crate chrono;
-extern crate humantime;
-extern crate itertools;
-extern crate lazy_static;
-
-extern crate rand;
-extern crate rayon;
-extern crate regex;
-extern crate rusqlite;
 extern crate seiri;
-extern crate toml;
-
-mod path;
+extern crate num_traits;
 
 use neon::js::{JsArray, JsBoolean, JsInteger, JsNull, JsObject, JsString, JsUndefined, Object};
 use neon::vm::Throw;
 use neon::vm::{Call, JsResult};
+use num_traits::cast::ToPrimitive;
 use seiri::config::get_config;
 use seiri::database;
 use seiri::paths;
 use seiri::Bang;
 use seiri::Track;
+use seiri::TrackFileType;
 use std::path::Path;
-
-fn get_appdata_path(call: Call) -> JsResult<JsString> {
-    let scope = call.scope;
-    match path::get_appdata_path() {
-        Ok(path) => Ok(JsString::new(scope, &path.to_string_lossy()).unwrap()),
-        Err(_) => Err(Throw),
-    }
-}
 
 #[allow(non_snake_case)]
 fn refresh_tracks(call: Call) -> JsResult<JsUndefined> {
@@ -77,12 +58,12 @@ fn query_tracks(call: Call) -> JsResult<JsObject> {
         .check::<JsString>()?
         .value();
     let bang = Bang::new(query).unwrap();
-    let conn = path::get_database_connection();
+    let conn = database::get_database_connection();
     let results: Vec<Track> = database::query_tracks(bang, &conn, None, None).unwrap();
     let jsTracks = JsArray::new(scope, results.len() as u32);
     for (i, track) in results.into_iter().enumerate() {
         let mut jsTrack = JsObject::new(scope);
-        jsTrack.set("filePath", JsString::new(scope, &track.file_path).unwrap())?;
+        jsTrack.set("filePath", JsString::new(scope, &track.file_path.into_os_string().into_string().unwrap()).unwrap())?;
         jsTrack.set("title", JsString::new(scope, &track.title).unwrap())?;
         jsTrack.set("artist", JsString::new(scope, &track.artist).unwrap())?;
 
@@ -121,10 +102,7 @@ fn query_tracks(call: Call) -> JsResult<JsObject> {
         jsTrack.set("source", JsString::new(scope, &track.source).unwrap())?;
         jsTrack.set("discNumber", JsInteger::new(scope, track.disc_number))?;
         jsTrack.set("duration", JsInteger::new(scope, track.duration))?;
-        jsTrack.set(
-            "fileType",
-            JsString::new(scope, &track.file_type.to_string()).unwrap(),
-        )?;
+        jsTrack.set("fileType", JsInteger::new(scope, track.file_type.to_i32().unwrap()))?;
         jsTrack.set("updated", JsString::new(scope, &track.updated).unwrap())?;
         jsTracks.set(i as u32, jsTrack)?;
     }
