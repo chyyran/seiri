@@ -18,6 +18,7 @@
 * Move files around.
 * Make your music queryable.
 * Help keep large libraries organized.
+* Does all these things fast.
 
 ## What *seiri* does not do.
 
@@ -43,7 +44,7 @@ For *seiri* to work best, you should learn to accept its 6 easy rules.
 2. Your entire music library should be under one folder.
 3. Tracks are sorted in an artist folder first, then album.
 4. All music **must be properly tagged**. *seiri* won't accept "mymixtape.mp3" with no artist or album. This also means that WAV audio is **forbidden**. Use FLAC (or Wavpack if you really need that 32bit float).
-5. Let *seiri* handle sorting for you. Do not touch the library folder. 
+5. Let *seiri* handle sorting for you. Do not move tracks around in the library folder. 
 6. Cover art in the tags. **cover.jpg** is forbidden. Hard drive space is cheap. *seiri* will not care about your cover.jpg.
 
 *seiri* works with most music formats, as long as you follow the rules above.
@@ -51,7 +52,7 @@ For *seiri* to work best, you should learn to accept its 6 easy rules.
 ## Adding music
 There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you've finished tagging your music, move it to this folder, and *seiri* will move it to the proper place in your library folder, and index it in its database. 
 
-Do not ever touch your music library folder manually, or *seiri* will not be able to keep track of it. If you made a tag change, you can ask *seiri* to refresh it, and it will reorganize the track accordingly.
+You can delete or re-tag files in your library folder, but do not move it to another folder, or *seiri* will not be able to keep track of it. If you made a tag change, you can ask *seiri* to refresh it, and it will reorganize the track accordingly.
 
 You can make top-level subfolders under the *Automatically add to Library* folder to keep track of the source. For example, if you had a *YouTube*\* folder, and an *iTunes*\* folder, *seiri* will automatically mark whether you got the track from iTunes, or YouTube, and make that queryable.
 
@@ -83,72 +84,21 @@ Bangs can be combined with the logical symbols `&` (AND) and `|` (OR). The group
 Bangs are parsed and transpiled into SQLite statements, which are then executed on the library database for fast results.
 
 
-## GraphQL Query Format
-`seiri-core` is a server-application written in Rust that handles database and filesystem management. UI is exposed via a lightweight electron app `seiri-client` that can be launched as needed, while `seiri-core` is designed to be minimal on system resources and long-running. However since GraphQL support requires upwards of 50MB of memory, the recommended way to interface with `seiri-core` is throw `stderr` notifications and `seiri-neon`.
-
-`seiri-core` exposes a GraphQL endpoint with the following schema to communicate with any clients, if built with the `use_graphql` feature.
-
-```graphql
-enum FileType {
-        FLAC,
-        FLAC4,
-        FLAC8,
-        FLAC16,
-        FLAC24,
-        FLAC32,
-        ALAC,
-        MP3_CBR,
-        MP3_VBR,
-        AAC,
-        VORBIS,
-        OPUS,
-        WAVPACK,
-        APE
-        UNKNOWN
-}
-
-type Track {
-  filePath: String!
-  title: String!
-  artist: String!
-  albumArtists: String!
-  album: String!
-  year: Int!
-  trackNumber: Int!
-  musicBrainzTrackId: String!
-  hasFrontCover: Boolean!
-  frontCoverWidth: Int!
-  frontCoverHeight: Int!
-  bitrate: Int!
-  sampleRate: Int!
-  source: String!
-  discNumber: Int!
-  duration: Int!
-  fileType: FileType!
-}
-
-type Query {
-  # Gets the tracks as a connection for the following query.
-  tracks(query: String!, first: Int, after: Int): [Track]
-  
-  # Gets the number of results that would be returned for the given query.
-  count(query: String!, first: Int, after: Int): Int
-
-  # Refresh the tracks with the given file path, and return the new tracks.
-  refresh(files: [String]): [Track]
-}
-```
-
-*seiri* does not have a Relay 'Connections' API due to Rust ownership concerns and the realtime nature of the application. Instead, we recommend heavily caching results, invalidation using the 'count' endpoint, and diffing results. In *seiri-client*, we achieve this using *service workers* to fetch and cache the application state periodically in the background.
-
 ## Building
 
 *seiri* consists of multiple components.
- - *seiri-core* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs.
- - *taglibsharp-katatsuki* handles parsing of track file data, written in C#. We need this because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size).
- - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. 
- - *seiri-client-service-worker* handles GraphQL communication with *seiri-core*, if GraphQL support has been compiled in.
- - *seiri-neon* is the recommended way to interface with the core. It uses node's native extension support to call into Rust natively and interface with the Tracks database.
- - *seiri-client-internals* is the actual user interface for *seiri-client*, consisting mostly of React code. 
+ - *seiri-lib* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs. This library is automatically built as part of *seiri-watcher* and *seiri-client*.
  
- Building seiri requires that you build all three components. Read *build.md* for more information about setting up the environment.
+ - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. We need this because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
+ *libkatatsuki* and its Rust bindings are automatically built when building *seiri-watcher* and *seiri-client*.
+ 
+ - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. You will need to build this with `yarn build`.
+ 
+ - *seiri-watcher* handles watching and adding new tracks. This should be built as part of *seiri-client*.
+ 
+ - *seiri-neon* is the recommended way to interface with the core. It uses node's native extension support to call into Rust natively and interface with the Tracks database. This is built automatically with *seiri-client*.
+ 
+ - *seiri-client-internals* is the actual user interface for *seiri-client*, consisting mostly of React code. This should be built as part of *seiri-client*.
+ 
+ 
+ Read *build.md* for more information about setting up the environment.
