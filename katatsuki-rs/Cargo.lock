@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "katatsuki-rs"
+name = "katatsuki"
 version = "0.1.0"
 dependencies = [
  "chrono 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -40,6 +40,7 @@ name = "libkatatsuki-sys"
 version = "0.1.0"
 dependencies = [
  "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
+ "widestring 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

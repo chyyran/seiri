@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace libkatatsuki {
 
     [StructLayout(LayoutKind.Sequential)]
-    public class CTrack {
+    public struct CTrack {
         public uint FileType { get; set; }
         public IntPtr Title { get; set; }
         public IntPtr Artist { get; set; }

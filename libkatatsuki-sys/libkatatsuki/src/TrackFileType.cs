@@ -4,19 +4,18 @@ namespace libkatatsuki
 {
     public enum TrackFileType : uint
     {
-        // The FLAC range is [0, 5]
+
+        Unknown = 0,
+          // The FLAC range is [1, 6]
         # region FLAC
         // Dummy for switching on.
-        FLAC = 0,
         FLAC_4 = 1,
         FLAC_8 = 2,
         FLAC_16 = 3,
         FLAC_24 = 4,
-        FLAC_32 = 5,
+        FLAC_32 = 5,        
+        FLAC = 6,
         # endregion
-
-        // Unknown is randomly here for backwards-compat with the MP3 definitions...
-        Unknown = 6,
 
         // The lossy range is [7, 11]
         # region Lossy
@@ -30,29 +29,30 @@ namespace libkatatsuki
         // The ALAC range is [12, 14]
         # region ALAC
         // Dummy for switching on.
-        ALAC = 12,
-        ALAC_16 = 13,
-        ALAC_24 = 14,
+        ALAC_16 = 12,
+        ALAC_24 = 13,
+        ALAC = 14,
         # endregion
 
         // AIFF is recommended over WAV due to support for ID3 over
         // RIFF frames. The range is [15, 20]
         # region AIFF
-        AIFF = 15,
+
         /// 4-Bit AIFF. This is technically possible.
-        AIFF_4 = 16,
-        AIFF_8 = 17,
-        AIFF_16 = 18,
-        AIFF_24 = 19,
-        AIFF_32 = 20,
+        AIFF_4 = 15,
+        AIFF_8 = 16,
+        AIFF_16 = 17,
+        AIFF_24 = 18,
+        AIFF_32 = 19,
+        AIFF = 20,
         # endregion AIFF
 
         // Monkey's Audio range is [21, 24]
         # region MonkeysAudio
-        MonkeysAudio = 21,
-        MonkeysAudio_8 = 22,
-        MonkeysAudio_16 = 23,
-        MonkeysAudio_24 = 24
+        MonkeysAudio_8 = 21,
+        MonkeysAudio_16 = 22,
+        MonkeysAudio_24 = 23,        
+        MonkeysAudio = 24,
         # endregion MonkeysAudio
     }
 

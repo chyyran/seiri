@@ -6,3 +6,4 @@ links = "libkatatsuki"
 
 [dependencies]
 libc = "0.2"
+widestring = "0.3"

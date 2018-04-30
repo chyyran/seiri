@@ -1,12 +1,13 @@
 use app_dirs::*;
 use chrono::prelude::*;
 use error::{Error, Result};
+use katatsuki::Track;
+use tree_magic;
 use std::ascii::AsciiExt;
 use std::fs;
 use std::io;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
-use track::TaglibTrack;
-use track::Track;
 
 trait InvalidChar {
     fn is_invalid_for_path(&self) -> bool;
@@ -18,6 +19,47 @@ impl InvalidChar for char {
             '\"' | '<' | '>' | '|' | '\0' | ':' | '*' | '?' | '\\' | '/' => true,
             _ => false,
         }
+    }
+}
+
+pub fn new_track_checked(track_path: &Path, source: Option<&str>) -> Result<Track> {
+
+    let mimetype = tree_magic::from_filepath(track_path);
+    if !mimetype.starts_with("audio") {
+        return Err(Error::UnsupportedFile(track_path.to_owned()));
+    } 
+    match Track::from_path(track_path, source) {
+        Ok(track) => {
+            if track.title.is_empty() {
+                return Err(Error::MissingRequiredTag(
+                    track_path.to_str().unwrap().to_owned(),
+                    "Title",
+                ));
+            }
+            if track.artist.is_empty() {
+                return Err(Error::MissingRequiredTag(
+                    track_path.to_str().unwrap().to_owned(),
+                    "Artist",
+                ));
+            }
+            if track.album.is_empty() {
+                return Err(Error::MissingRequiredTag(
+                    track_path.to_str().unwrap().to_owned(),
+                    "Album",
+                ));
+            }
+            if track.album_artists.len() == 0 {
+                return Err(Error::MissingRequiredTag(
+                    track_path.to_str().unwrap().to_owned(),
+                    "AlbumArtists",
+                ));
+            }
+            Ok(track)
+        }
+        Err(ioerror) => match ioerror.kind() {
+            ErrorKind::InvalidData => Err(Error::UnsupportedFile(PathBuf::from(track_path))),
+            _ => Err(Error::UnsupportedFile(PathBuf::from(track_path))),
+        },
     }
 }
 
@@ -158,12 +200,15 @@ pub fn reconsider_track(track: &Track, library_path: &Path) -> Result<Option<Tra
         return Ok(None);
     }
 
-    match Track::from_taglibsharp(track_file_path, Some(&track.source)) {
+    match new_track_checked(track_file_path, Some(&track.source)) {
         Ok(track_as_read) => {
             if !track_warrants_move(track, &track_as_read) {
                 return Ok(Some(track_as_read));
             }
-            let track_as_read = Track { file_path: track.file_path.to_owned(), ..track_as_read };
+            let track_as_read = Track {
+                file_path: track.file_path.to_owned(),
+                ..track_as_read
+            };
             println!("{:?}", track_as_read);
             match move_track(&track_as_read, library_path, &track_as_read.source) {
                 Ok(track) => {
@@ -245,11 +290,11 @@ pub fn move_track(track: &Track, library_path: &Path, source: &str) -> Result<Tr
     // Do the move.
     if let Err(err) = fs::rename(track_file_path, &new_file_name) {
         println!("{}", err);
-        println!("{:?}",track_file_path);
+        println!("{:?}", track_file_path);
         Err(Error::UnableToMove(
             new_file_name.to_string_lossy().into_owned(),
         ))
     } else {
-        Track::from_taglibsharp(&new_file_name, Some(&source))
+        new_track_checked(&new_file_name, Some(&source))
     }
 }

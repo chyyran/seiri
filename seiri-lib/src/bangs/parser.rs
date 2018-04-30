@@ -1,8 +1,8 @@
-use std::str::FromStr;
 use std::slice::Iter;
+use std::str::FromStr;
 use super::lexer::Token;
 use super::bangs::Bang;
-use track::TrackFileType;
+use katatsuki::TrackFileType;
 use error::{Error, Result};
 use humantime::Duration;
 use chrono::NaiveDate;

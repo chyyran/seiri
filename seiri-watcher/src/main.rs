@@ -4,34 +4,6 @@
 #![feature(ascii_ctype)]
 
 
-#[cfg(feature = "use_graphql")]
-#[macro_use]
-extern crate juniper;
-#[cfg(feature = "use_graphql")]
-extern crate juniper_rocket;
-#[cfg(feature = "use_graphql")]
-extern crate rayon;
-#[cfg(feature = "use_graphql")]
-extern crate rocket;
-#[cfg(feature = "use_graphql")]
-extern crate rocket_cors;
-#[cfg(feature = "use_graphql")]
-mod graphql;
-#[cfg(feature = "use_graphql")]
-use juniper::EmptyMutation;
-#[cfg(feature = "use_graphql")]
-use rocket::config::Environment;
-#[cfg(feature = "use_graphql")]
-use rocket::http::Method;
-#[cfg(feature = "use_graphql")]
-use rocket::response::content;
-#[cfg(feature = "use_graphql")]
-use rocket::Config as RocketConfig;
-#[cfg(feature = "use_graphql")]
-use rocket::State;
-#[cfg(feature = "use_graphql")]
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
-
 extern crate seiri;
 extern crate walkdir;
 extern crate notify;
@@ -54,11 +26,10 @@ use seiri::database::ConnectionPool;
 use seiri::paths;
 use seiri::Error;
 use seiri::Track;
-use seiri::TaglibTrack;
 use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config, conn: &Connection) {
-    let track = Track::from_taglibsharp(path, None);
+    let track = paths::new_track_checked(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
             Ok(library_path) => {
@@ -90,7 +61,6 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                 "MISSINGTAG~Found track {} but missing tag {}.",
                 file_name, tag
             ),
-            Error::HelperNotFound => eprintln!("HELPERNOTFOUND~Katatsuki TagLib helper not found."),
             _ => {}
         },
     }
@@ -169,65 +139,11 @@ fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
     }
 }
 
-#[cfg(feature = "use_graphql")]
-#[get("/")]
-fn graphiql() -> content::Html<String> {
-    juniper_rocket::graphiql_source("/graphql")
-}
-
-#[cfg(feature = "use_graphql")]
-type Schema = juniper::RootNode<'static, graphql::Query, EmptyMutation<graphql::Context>>;
-
-#[cfg(feature = "use_graphql")]
-#[post("/graphql", data = "<request>")]
-fn post_graphql_handler(
-    context: State<graphql::Context>,
-    request: juniper_rocket::GraphQLRequest,
-    schema: State<Schema>,
-) -> juniper_rocket::GraphQLResponse {
-    request.execute(&schema, &context)
-}
-
-#[cfg(feature = "use_graphql")]
-fn start_rocket() {
-    let options = rocket_cors::Cors {
-        allowed_origins: AllowedOrigins::all(),
-        allowed_methods: vec![Method::Get, Method::Post]
-            .into_iter()
-            .map(From::from)
-            .collect(),
-        allowed_headers: AllowedHeaders::all(),
-        allow_credentials: true,
-        ..Default::default()
-    };
-    thread::spawn(move || {
-        let config = RocketConfig::build(Environment::Development)
-            .address("localhost")
-            .port(9234)
-            .finalize()
-            .unwrap();
-        rocket::custom(config, true)
-            .manage(graphql::Context::new())
-            .manage(Schema::new(
-                graphql::Query::new(),
-                EmptyMutation::<graphql::Context>::new(),
-            ))
-            .mount("/", routes![graphiql, post_graphql_handler])
-            .attach(options)
-            .launch();
-    });
-}
-
 fn main() {
     let _lock = ensure_port(9235).expect("Unable to acquire lock");
 
     let wait_time = Duration::from_secs(5);
     start_watcher_watchdog(wait_time);
-
-    #[cfg(feature = "use_graphql")]
-    {
-        start_rocket();
-    }
 
     let conn = database::get_database_connection();
     utils::wait_for_exit(&conn);

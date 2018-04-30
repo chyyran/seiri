@@ -5,11 +5,11 @@ seiri-*/tools/
 seiri-watcher/tracks.db*
 seiri-client-internals/public/seiri-worker.js
 seiri-client-internals/public/seiri-worker.js.map
-seiri-client/node_modules/
-seiri-lib/target/
 seiri-client/icon.ico
 seiri-client/tools/SixLabors.ImageSharp.dll
-/libkatatsuki-sys/lib/*.lib
+*.lib
 obj/
 bin/
 *.pdb
+target/
+node_modules/
