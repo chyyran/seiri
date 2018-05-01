@@ -24,6 +24,13 @@ export interface UpdateTracksTimerTick {
     type: "UPDATE_TRACKS_TICK",
 }
 
+export interface UpdateSelected {
+    type: "UPDATE_SELECTED_COUNT",
+    count: number,
+}
+
+export const updateSelectedCount = actionCreator<{count: number}>("UPDATE_SELECTED_COUNT")
+
 export const updateTracks = actionCreator<{tracks: Track[]}>("UPDATE_TRACKS")
 
 export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (query, dispatch) => {

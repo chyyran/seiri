@@ -35,7 +35,7 @@
   background: #37474f;
   color: white;
   position: sticky;
-  top: 0;
+  top: 2rem;
   z-index: 100000;
 }
 

@@ -5,7 +5,7 @@ import * as React from "react";
 import Draggable, { DraggableData } from "react-draggable";
 import { Dispatch } from "react-redux";
 import {
-  
+
   Column,
   RowMouseEventHandlerParams,
   SortDirection,
@@ -16,7 +16,7 @@ import {
   WindowScroller
 } from "react-virtualized";
 import "react-virtualized/styles.css"; // only needs to be imported once
-import { updateTracksTick } from "./actions";
+import { updateSelectedCount, updateTracksTick } from "./actions";
 import ElectronWindow from "./ElectronWindow";
 import seiri from "./seiri-neon";
 import "./Table.css";
@@ -88,10 +88,19 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       console.log("REFRESHED!");
       // tslint:disable-next-line:no-console
       console.log(tracksToRefresh);
-      this.setState({selected: []})
+      this.setState({ selected: [] })
       this.props.dispatch!(updateTracksTick.action())
       return false;
-  });
+    });
+    this.rowClassName = this.rowClassName.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.handleDoubleClick = this.handleDoubleClick.bind(this);
+    this.sort = this.sort.bind(this);
+    this.rowGetter = this.rowGetter.bind(this);
+  }
+
+  public componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
+    this.props.dispatch(updateSelectedCount({ count: (nextState.selected as boolean[]).length }));
   }
 
   public componentWillReceiveProps(newProps: TrackTableProps) {
@@ -133,9 +142,9 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     sortBy,
     sortDirection
   }: {
-    sortBy: string;
-    sortDirection: SortDirectionType;
-  }) {
+      sortBy: string;
+      sortDirection: SortDirectionType;
+    }) {
     const sortedList = this.sortList({ sortBy, sortDirection });
 
     this.setState({ sortBy, sortDirection, sortedList });
@@ -145,9 +154,9 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     sortBy,
     sortDirection
   }: {
-    sortBy: string;
-    sortDirection: SortDirectionType;
-  }) {
+      sortBy: string;
+      sortDirection: SortDirectionType;
+    }) {
     const list = this.props.tracks;
     return _(
       list,
@@ -195,9 +204,9 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     dataKey,
     deltaX
   }: {
-    dataKey: string;
-    deltaX: number;
-  }) => {
+      dataKey: string;
+      deltaX: number;
+    }) => {
     window.requestAnimationFrame(() => {
       this.setState(prevState => {
         const prevWidths = prevState.widths;
@@ -283,7 +292,9 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     const path = window.require<any>("path");
     const open = window.require<
       (target: string, options?: any | undefined) => Promise<ChildProcess>
-    >("opn");
+      >("opn");
+    // todo: we need delayed expansion here or ampersands will break windows. 
+    // Maybe use native module (seiri-neon?)
     open(path.dirname(track.filePath));
   }
 
@@ -340,8 +351,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
               isScrolling={isScrolling}
               scrollTop={scrollTop}
               className="Table"
-              // tslint:disable-next-line:jsx-no-bind
-              rowClassName={this.rowClassName.bind(this)}
+              rowClassName={this.rowClassName}
               headerClassName="table-header"
               width={TOTAL_WIDTH}
               height={height}
@@ -350,14 +360,11 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
               rowHeight={20}
               rowCount={this.props.tracks.length}
               onRowDoubleClick={this.handleDoubleClick}
-              // tslint:disable-next-line:jsx-no-bind
-              onRowClick={this.handleClick.bind(this)}
-              // tslint:disable-next-line:jsx-no-bind
-              sort={this.sort.bind(this)}
+              onRowClick={this.handleClick}
+              sort={this.sort}
               sortBy={this.state.sortBy}
               sortDirection={this.state.sortDirection}
-              // tslint:disable-next-line:jsx-no-bind
-              rowGetter={this.rowGetter.bind(this)}
+              rowGetter={this.rowGetter}
             >
               <Column
                 headerRenderer={this.headerRenderer}

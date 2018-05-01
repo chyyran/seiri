@@ -1,9 +1,10 @@
 .container {
     display: grid;
-    grid-template-rows: auto 4.1rem;
+    grid-template-rows: 2rem auto;
     height: 100%;
     width: 100%;
     position: relative;
+    background: #37474f;
 }
 
 .tracks-containers { 
@@ -15,17 +16,19 @@
 }
 
 .main-bar {
-    padding-top: 4px;
     display: grid;
-    grid-template-columns: auto 2rem 17px;
+    grid-template-columns: 2rem auto auto 17px;
     width: 100vw;
     height: 2rem;
     position: fixed;
-    bottom: 0px;
+    top: 0;
+    z-index: 10000;
 }
 
+.no-overflow {
+    overflow-y: scroll;
+}
 .main-bar-clear {
-    padding-top: 4px;
     height: 2rem;
 }
 .btn-quit {
@@ -33,7 +36,7 @@
     width: 2rem;
     padding: 0;
     margin: 0;
-    background: #37474f;;
+    background: #37474f;
     border: 0;
     padding: 0;
     margin: 0;
@@ -59,8 +62,7 @@
     outline: none;
     
 }
-.bang-input {
-    
+.bang-input,.tracks {
     font-size: 1rem;
     font-family: "Segoe UI Light", "Noto Sans CJK JP";
     font-weight: 100;
@@ -73,8 +75,17 @@
     border: 0;
     margin: 0;
     padding: 0 ;
-    padding-left: 8px;
     -webkit-app-region: drag;
+}
+
+.tracks {
+    text-align: end;
+    padding-right: 8px;
+}
+
+.bang-input::placeholder {
+    color: white;
+    font-family: "Segoe UI Semibold";
 }
 
 .bang-input::selection {

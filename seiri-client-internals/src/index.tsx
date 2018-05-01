@@ -10,14 +10,19 @@ import State from "./State"
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
 import { reducerWithInitialState } from 'typescript-fsa-reducers';
-import { updateQuery, updateTracks, updateTracksTick } from "./actions";
+import { updateQuery, updateSelectedCount, updateTracks, updateTracksTick } from "./actions";
 
 const initialState: State = {
+  count: 0,
   query: "",
-  tracks: []
+  tracks: [],
 };
 
 const reducer = reducerWithInitialState(initialState)
+.case(updateSelectedCount, (state, {count}) => ({
+  ...state,
+  count
+}))
 .case(updateTracks, (state, {tracks}) => ({
   ...state,
   tracks

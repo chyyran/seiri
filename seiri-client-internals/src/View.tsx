@@ -10,6 +10,7 @@ import "./View.css";
 interface ViewProps {
   tracks: Track[];
   query: string;
+  count: number;
   dispatch?: Dispatch<any>;
 }
 
@@ -17,7 +18,7 @@ interface ViewState {
   showBangs: boolean;
 }
 const mapStateToProps = (state: State): ViewProps => {
-  return { tracks: state.tracks, query: state.query };
+  return { tracks: state.tracks, query: state.query, count: state.count };
 };
 
 const mapDispatchToProps = (
@@ -50,31 +51,24 @@ class View extends React.Component<ViewProps, ViewState> {
   }
 
   public componentWillReceiveProps(newProps: ViewProps) {
-    if (newProps.query === "bangs") {
+    if (newProps.query === "??bangs") {
       // tslint:disable-next-line:no-console
       console.log("bang query detcted.");
-      this.setState({showBangs: true})
+      this.setState({ showBangs: true })
 
     } else {
-      this.setState({showBangs: false})
+      this.setState({ showBangs: false })
     }
   }
 
   public render() {
     return (
-      <div className="container">
-        <div className="tracks-containers">
-          
-          <TrackTable
-            hidden = {this.state.showBangs}
-            tracks={this.props.tracks}
-            query={this.props.query}
-            dispatch={this.props.dispatch!}
-          />
-          <Helper hidden={!this.state.showBangs}/>
-      </div>
-      <div className="main-bar-clear"/>
+      <div className={this.props.tracks.length === 0 ? "container no-overflow" : "container"}>
+      
         <div className="main-bar">
+        <button className="btn-quit" onClick={() => close()}>
+            &#xe711;
+          </button>
           <DebounceInput
             placeholder={
               'Type to start searching. Type "??bangs" for bang reference.'
@@ -93,9 +87,18 @@ class View extends React.Component<ViewProps, ViewState> {
               );
             }}
           />
-          <button className="btn-quit" onClick={() => close()}>
-            &#xe711;
-          </button>
+        <div className="tracks">{this.props.tracks.length + " Tracks " + this.props.count + " Selected"}</div>
+        </div>
+        <div className="main-bar-clear" />
+
+        <div className="tracks-containers">
+          <TrackTable
+            hidden={this.state.showBangs}
+            tracks={this.props.tracks}
+            query={this.props.query}
+            dispatch={this.props.dispatch!}
+          />
+          <Helper hidden={!this.state.showBangs} />
         </div>
       </div>
     );
