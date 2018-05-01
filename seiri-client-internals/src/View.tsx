@@ -73,6 +73,7 @@ class View extends React.Component<ViewProps, ViewState> {
           />
           <Helper hidden={!this.state.showBangs}/>
       </div>
+      <div className="main-bar-clear"/>
         <div className="main-bar">
           <DebounceInput
             placeholder={

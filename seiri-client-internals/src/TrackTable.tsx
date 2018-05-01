@@ -5,14 +5,15 @@ import * as React from "react";
 import Draggable, { DraggableData } from "react-draggable";
 import { Dispatch } from "react-redux";
 import {
-  AutoSizer,
+  
   Column,
   RowMouseEventHandlerParams,
   SortDirection,
   SortDirectionType,
   SortIndicator,
   Table,
-  TableHeaderProps
+  TableHeaderProps,
+  WindowScroller
 } from "react-virtualized";
 import "react-virtualized/styles.css"; // only needs to be imported once
 import { updateTracksTick } from "./actions";
@@ -331,13 +332,13 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   public render() {
     return (
       <div className={this.props.hidden ? "table-container hidden" : "table-container"}>
-        <AutoSizer disableWidth={true}>
-          {({ height }) => (
+        <WindowScroller>
+          {({ height, isScrolling, registerChild, scrollTop }) => (
             <Table
               // tslint:disable-next-line:jsx-no-string-ref
-              // autoHeight={true}
-              // isScrolling={isScrolling}
-              // scrollTop={scrollTop}
+              autoHeight={true}
+              isScrolling={isScrolling}
+              scrollTop={scrollTop}
               className="Table"
               // tslint:disable-next-line:jsx-no-bind
               rowClassName={this.rowClassName.bind(this)}
@@ -460,7 +461,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
               />
             </Table>
           )}
-        </AutoSizer>
+        </WindowScroller>
       </div>
     );
   }

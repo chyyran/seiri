@@ -34,6 +34,9 @@
   font-weight: bold;
   background: #37474f;
   color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100000;
 }
 
 .ReactVirtualized__Table {

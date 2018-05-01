@@ -1,6 +1,6 @@
 .container {
     display: grid;
-    grid-template-rows: auto 3.1rem;
+    grid-template-rows: auto 4.1rem;
     height: 100%;
     width: 100%;
     position: relative;
@@ -17,13 +17,17 @@
 .main-bar {
     padding-top: 4px;
     display: grid;
-    grid-template-columns: auto 2rem;
+    grid-template-columns: auto 2rem 17px;
     width: 100vw;
     height: 2rem;
     position: fixed;
     bottom: 0px;
 }
 
+.main-bar-clear {
+    padding-top: 4px;
+    height: 2rem;
+}
 .btn-quit {
     height: 2rem;
     width: 2rem;
