@@ -23,6 +23,7 @@
   width: 100%;
 }
 
+
 .ReactVirtualized__Table__rowColumn {
   border-right: solid 1px #BDBDBD;
   padding: 12px 2px;
@@ -35,10 +36,6 @@
   color: white;
 }
 
-::-webkit-scrollbar {
-  display: none;
-}
-
 .ReactVirtualized__Table {
   display: inline-block;
   user-select: none;
@@ -48,6 +45,10 @@
 *:focus {
     outline: none;
   }
+
+.ReactVirtualized__Table__headerRow {
+  box-sizing: border-box;
+}
 
 .ReactVirtualized__Table__headerColumn {
   display: flex;

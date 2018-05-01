@@ -333,7 +333,7 @@ dependencies = [
 
 [[package]]
 name = "seiri"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "app_dirs 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",

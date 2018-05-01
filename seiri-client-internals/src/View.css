@@ -1,16 +1,17 @@
 .container {
     display: grid;
-    grid-template-rows: auto 2.1rem;
+    grid-template-rows: auto 3.1rem;
     height: 100%;
     width: 100%;
     position: relative;
 }
+
 .tracks-containers { 
     width: 100%;
 }
 
-*:focus {
-    background-color: red !important;
+.ReactVirtualized__Table__headerRow {
+    padding-right: 0;
 }
 
 .main-bar {
