@@ -53,6 +53,20 @@ pub fn get_connection_pool() -> ConnectionPool {
     pool
 }
 
+
+fn escape_regex_search(string: &str) -> String {
+    string.replace('\\', r"\\")
+          .replace('?', r"\?")
+          .replace('.', r"\.")
+          .replace('+', r"\+")
+          .replace('[', r"\[")
+          .replace(']', r"\]")
+          .replace('(', r"\(")
+          .replace(')', r"\)")
+          .replace('*', r"\*")
+          .replace('^', r"\^")
+}
+
 #[allow(dead_code)]
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
     let mut cached_regexes = HashMap::new();
@@ -242,14 +256,14 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             let format = format!("(AlbumArtists REGEXP {})", param_name);
             params.push((
                 param_name,
-                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", artist),
+                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", escape_regex_search(&artist)),
             ));
             format
         }
         Bang::AlbumArtistsExact(artist) => {
             let param_name = get_rand_param();
             let format = format!("(AlbumArtists REGEXP {})", param_name);
-            params.push((param_name, format!("(?:^|;)({})(?:;|$)", artist)));
+            params.push((param_name, format!("(?:^|;)({})(?:;|$)", escape_regex_search(&artist))));
             format
         }
         Bang::Source(source) => {
@@ -393,7 +407,7 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
             params.push((param_name, format!("%{}%", search)));
             params.push((
                 album_artists_param,
-                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", search),
+                format!("(?:^|;)(?:.*?)((?i){})(?:.*?)(?:;|$)", escape_regex_search(&search)),
             ));
 
             format
@@ -407,7 +421,7 @@ fn to_query_string(bang: Bang, params: &mut Vec<(String, String)>) -> String {
                 param_name, param_name, param_name, album_artists_param
             );
             params.push((param_name, format!("{}", search)));
-            params.push((album_artists_param, format!("(?:^|;)({})(?:;|$)", search)));
+            params.push((album_artists_param, format!("(?:^|;)({})(?:;|$)", escape_regex_search(&search))));
             format
         }
         Bang::LogicalAnd(lhs, rhs) => {

@@ -35,10 +35,6 @@
   color: white;
 }
 
-.app-area {
-  -webkit-app-region: drag;
-}
-
 ::-webkit-scrollbar {
   display: none;
 }
@@ -78,6 +74,8 @@
 }
 .DragHandle:hover {
   background-color: rgba(0, 0, 0, 0.1);
+  -webkit-app-region: no-drag;
+
 }
 
 
@@ -85,6 +83,8 @@
 .DragHandleActive:hover {
   color: rgba(0, 0, 0, 0.6);
   z-index: 3;
+  -webkit-app-region: no-drag;
+
 }
 
 .DragHandleIcon {
@@ -94,4 +94,9 @@
   justify-content: center;
   align-items: center;
   -webkit-app-region: no-drag;
+}
+
+.table-container {
+  background: white;
+  z-index: 1000;
 }

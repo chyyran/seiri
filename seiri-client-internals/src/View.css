@@ -9,6 +9,10 @@
     width: 100%;
 }
 
+*:focus {
+    background-color: red !important;
+}
+
 .main-bar {
     padding-top: 4px;
     display: grid;
@@ -32,8 +36,13 @@
     font-family: 'Segoe MDL2 Assets';
     line-height: 2rem;
     font-size: 1rem;
+    -webkit-app-region: no-drag;
+    user-select: none;
 }
 
+.hidden {
+    visibility: hidden;
+}
 .btn-quit:focus {
     outline: none;
 }
@@ -60,9 +69,16 @@
     margin: 0;
     padding: 0 ;
     padding-left: 8px;
+    -webkit-app-region: drag;
 }
 
 .bang-input::selection {
     color: white;
     background: #FF4081;
+}
+
+.bang-help {
+    user-select: none;
+    top: 0;
+    position: fixed;
 }

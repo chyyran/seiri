@@ -27,6 +27,7 @@ interface TrackTableProps {
   tracks: Track[];
   query: string;
   dispatch: Dispatch<any>;
+  hidden: boolean;
 }
 
 interface TrackTableState {
@@ -329,7 +330,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   // tslint:disable-next-line:member-ordering
   public render() {
     return (
-      <div className="table-container">
+      <div className={this.props.hidden ? "table-container hidden" : "table-container"}>
         <AutoSizer disableWidth={true}>
           {({ height }) => (
             <Table
