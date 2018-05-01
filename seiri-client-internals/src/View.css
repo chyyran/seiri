@@ -17,7 +17,7 @@
 
 .main-bar {
     display: grid;
-    grid-template-columns: 2rem auto auto 17px;
+    grid-template-columns: 2rem auto 20% 17px;
     width: 100vw;
     height: 2rem;
     position: fixed;
@@ -36,7 +36,7 @@
     width: 2rem;
     padding: 0;
     margin: 0;
-    background: #37474f;
+    background: #263238;
     border: 0;
     padding: 0;
     margin: 0;
@@ -66,7 +66,7 @@
     font-size: 1rem;
     font-family: "Segoe UI Light", "Noto Sans CJK JP";
     font-weight: 100;
-    background-color: #37474f;
+    background-color: #263238;
     color: white;
     width: stretch;
     height: 2rem;
@@ -74,8 +74,12 @@
     z-index: 10000;
     border: 0;
     margin: 0;
-    padding: 0 ;
+    padding: 0;
     -webkit-app-region: drag;
+}
+
+.bang-input {
+    padding-left: 8px; 
 }
 
 .tracks {

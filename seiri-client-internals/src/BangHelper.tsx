@@ -1,136 +1,89 @@
 import * as React from "react";
+// @ts-ignore
+import * as Markdown from "react-remarkable";
+import './BangHelper.css';
+
 const helper = ({hidden}: {hidden: boolean}) => (
   <div className={hidden ? "bang-help hidden" : "bang-help"}>
-    <table>
-      <thead>
-        <tr>
-          <th>Bang</th>
-          <th>Description</th>
-          <th>Inputs</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td />
-          <td>Track Title Search</td>
-          <td>
-            The empty bang matches all tracks in the database. In addition, a
-            bang-less search matches track titles partially.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>!!</code>
-          </td>
-          <td>The group bang</td>
-          <td>Another bang expression.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!q</code>
-          </td>
-          <td>Full Text Search</td>
-          <td>Matches track title, album title, artist partially.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!Q</code>
-          </td>
-          <td>Exact Full Text Search</td>
-          <td>Matches track title, album title, artist exactly.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!al</code>
-          </td>
-          <td>Album Title</td>
-          <td>Matches the name of the album partially.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!AL</code>
-          </td>
-          <td>Exact Album Title</td>
-          <td>Matches the name of the album exactly.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!ala</code>
-          </td>
-          <td>Album Artists</td>
-          <td>Matches the name of the album artist partially.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!ALA</code>
-          </td>
-          <td>Exact Album Artists</td>
-          <td>Matches the name of the album artist exactly.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!f</code>
-          </td>
-          <td>Format</td>
-          <td>
-            <code>flac, mp3, alac, aac, vorbis, opus, wavpack</code> are self
-            explanatory. The special tags <code>flac16, flac24</code> allow for
-            distinction between FLAC bitrates, and <code>cbr, vbr</code> allow
-            for distinction between constant bitrate MP3 and variable bitrate
-            MP3.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>!br[lt|gt]</code>
-          </td>
-          <td>Bitrate strictly [Less Than | Greater Than]</td>
-          <td>Integer</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!c(w|h)[lt|gt]</code>
-          </td>
-          <td>
-            Cover art has (width|height) strictly [Less Than | Greater Than]
-          </td>
-          <td>Integer</td>
-        </tr>
-        <tr>
-          <td>
-            <code>!c</code>
-          </td>
-          <td>Has cover art in tags</td>
-          <td>
-            <code>true</code> or <code>false</code>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>!mb</code>
-          </td>
-          <td>
-            Has{" "}
-            <a href="http://musicbrainz.org/" rel="nofollow">
-              MusicBrainz
-            </a>{" "}
-            IDs in tags
-          </td>
-          <td>
-            <code>true</code> or <code>false</code>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>!dup</code>
-          </td>
-          <td>Is a duplicate of another track (iTunes-like algorithm)</td>
-          <td>
-            <code>true</code> or <code>false</code>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <Markdown>{`
+# *seiri* Bang Reference
+Bangs can be used to query your library in more specific ways. Bangs start with an exclamation mark, and
+take a parameter enclosed in curly braces, for example
+
+**!t{Hotel California}**.
+
+Searching without a bang is equivalent to the *Full Text Search* bang (**!q**). 
+## Search Bangs
+The following bangs accept a search term case insensitively, and can be capitalized for case-sensitive exact matches.
+
+**!q / !Q** *Full Text Search* (Title, Album, Artists, Album Artists)
+
+**!t / !T** *Title Search* 
+
+**!al / !AL** *Album Search*
+
+**!alar / !ALAR** *Album Artists Search*
+
+**!ar / !AR** *Artist Name Search*
+
+**!s** *Source*
+
+## Format Bang
+The format bang (**!f**) accepts searching for the following formats.
+
+**flac / flac4 / flac8 / flac16/ flac24 / flac32** *FLAC (4/8/16/24/32-bit)* 
+
+**alac / alac16 / alac24** *ALAC (16/24-bit)* 
+
+**mp3 / cbr / vbr** *MP3 (Constant/Variable bitrate)*
+
+**aac** *M4A Audio (iTunes Plus)*
+
+**vorbis / opus** *Ogg Vorbis / Opus* 
+
+**aiff / aiff4 / aiff8 / aiff16 / aiff24 / aiff32** *AIFF (4/8/16/24/32-bit)* 
+
+**ape / ape8 / ape16 / ape24** *Monkey's Audio (8/16/24-bit)*
+
+## Boolean Bangs
+The following bangs accept either a **true** or **false** value. You can also append a backtick (*\`*) as
+shorthand for **true**, for example **!dup\`** translates to **!dup{true}**.
+
+**!dup** *Duplicate tracks* 
+
+**!mb** *Tracks have MusicBrainz ID ag* 
+
+**!c** *Tracks have cover art tag* 
+
+## Numerical Tags
+These tags take a number, and are used to look up things that are greater than (**gt**) or less than (**lt**)
+a value.
+
+**!brlt / !brgt** *Bitrate* 
+
+**!cwlt / !cwgt** *Cover Art Width (pixels)* 
+
+**!chlt / !chgt** *Cover Art Height (pixels)* 
+
+## Duration Tags
+These tags take in a duration in the form **0h0m0s**, where **0** is a placeholder for any number. 
+
+**!dlt / !dgt** *Track duration* 
+
+## Updated 
+
+These tags take in a date in the form **YYYY-MM-DD**. 
+
+**!ubf / !uaf** *Updated (before / after)*
+
+## Advanced Usage
+Bangs can also be combined usin the grouping bang, and logical operators.
+
+For example, **!!{!t{Hotel California} & !ar{The Eagles}} | !!{!t{Hey Jude} & !ar{The Beatles}}** will look for
+tracks with the title "Hotel California" and the artist "The Eagles", or tracks with the title "Hey Jude" and 
+the artist "The Beatles".
+    `}
+    </Markdown>
   </div>
 );
 

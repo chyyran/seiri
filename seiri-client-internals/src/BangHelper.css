@@ -1,0 +1,14 @@
+.bang-help {
+    padding-left: 16px;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 10pt;
+    height: calc(100vh - 44px);
+}
+
+.bang-help div {
+    overflow-y: auto;
+    height: calc(100vh - 44px);
+    margin-top: 20px;
+}
+
