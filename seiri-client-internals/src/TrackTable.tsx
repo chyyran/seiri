@@ -51,7 +51,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     this.state = {
       // tslint:disable:object-literal-sort-keys
       widths: {
-        track: 0.03,
+        track: 0.05,
         title: 0.2,
         album: 0.2,
         artist: 0.2,
@@ -74,8 +74,6 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       selected: [],
       lastSelected: undefined
     };
-    // tslint:disable-next-line:no-console
-    console.log(Mousetrap)
     Mousetrap.bind(['command+r', 'ctrl+r'], () => {
       // tslint:disable-next-line:no-console
       console.log("bound!")
@@ -97,6 +95,10 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     this.handleDoubleClick = this.handleDoubleClick.bind(this);
     this.sort = this.sort.bind(this);
     this.rowGetter = this.rowGetter.bind(this);
+    this.albumArtistCellRenderer = this.albumArtistCellRenderer.bind(this);
+    this.durationCellRenderer = this.durationCellRenderer.bind(this);
+    this.fileTypeCellRenderer = this.fileTypeCellRenderer.bind(this);
+    this.hasCoverArtCellRenderer = this.hasCoverArtCellRenderer.bind(this);
   }
 
   public componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
@@ -293,9 +295,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     const open = window.require<
       (target: string, options?: any | undefined) => Promise<ChildProcess>
       >("opn");
-    // todo: we need delayed expansion here or ampersands will break windows. 
-    // Maybe use native module (seiri-neon?)
-    open(path.dirname(track.filePath));
+    // explicitly use exporer on windows.
+    if (require('process').platform === 'win32') {
+      open(path.dirname(track.filePath), {app: 'explorer'});
+    } else {
+      open(path.dirname(track.filePath));
+    }
   }
 
   // tslint:disable:no-shadowed-variable
@@ -339,6 +344,10 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     return;
   }
 
+  private albumArtistCellRenderer = ({ cellData } : { cellData: any }) => (cellData || []).join(";") 
+  private durationCellRenderer = ({ cellData } : { cellData: any }) => this.msToTime(cellData)
+  private fileTypeCellRenderer = ({ cellData } : { cellData: any }) => this.fileTypeString(cellData)
+  private hasCoverArtCellRenderer = ({ cellData } : { cellData: any}) => (cellData ? "Yes" : "No")
   // tslint:disable-next-line:member-ordering
   public render() {
     return (
@@ -368,7 +377,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
             >
               <Column
                 headerRenderer={this.headerRenderer}
-                label="#"
+                label="Track"
                 dataKey="trackNumber"
                 width={this.state.widths.track * TOTAL_WIDTH}
               />
@@ -395,21 +404,21 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
                 width={this.state.widths.albumArtists * TOTAL_WIDTH}
                 label="Album Artists"
                 dataKey="albumArtists"
-                cellRenderer={({ cellData }) => (cellData || []).join(";")}
+                cellRenderer={this.albumArtistCellRenderer as any}
               />
               <Column
                 headerRenderer={this.headerRenderer}
                 width={this.state.widths.duration * TOTAL_WIDTH}
                 label="Duration"
                 dataKey="duration"
-                cellRenderer={({ cellData }) => this.msToTime(cellData)}
+                cellRenderer={this.durationCellRenderer as any}
               />
               <Column
                 headerRenderer={this.headerRenderer}
                 width={this.state.widths.fileType * TOTAL_WIDTH}
                 label="File Type"
                 dataKey="fileType"
-                cellRenderer={({ cellData }) => this.fileTypeString(cellData)}
+                cellRenderer={this.fileTypeCellRenderer as any}
               />
               <Column
                 headerRenderer={this.headerRenderer}
@@ -428,7 +437,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
                 width={this.state.widths.hasCoverArt * TOTAL_WIDTH}
                 label="Art"
                 dataKey="hasFrontCover"
-                cellRenderer={({ cellData }) => (cellData ? "Yes" : "No")}
+                cellRenderer={this.hasCoverArtCellRenderer as any}
               />
               <Column
                 headerRenderer={this.headerRenderer}
