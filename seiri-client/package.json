@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "license": "MIT",
   "main": "main.js",
+  "appId": "moe.chyyran.seiri",
   "scripts": {
     "start": "electron .",
     "build": "electron-build-env neon build seiri-neon"
   },
   "dependencies": {
+    "node-notifier": "^5.2.1",
     "opn": "^5.3.0",
     "seiri-neon": "file:../seiri-neon"
   },

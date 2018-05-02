@@ -70,7 +70,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       },
       sortBy,
       sortDirection,
-      sortedList: this.sortList({ sortBy, sortDirection }),
+      sortedList: this.sortList({ list: this.props.tracks, sortBy, sortDirection }),
       selected: [],
       lastSelected: undefined
     };
@@ -102,18 +102,19 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   }
 
   public componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
-    this.props.dispatch(updateSelectedCount({ count: (nextState.selected as boolean[]).length }));
+    this.props.dispatch(updateSelectedCount({ count: (nextState.selected as boolean[]).filter(s => s).length }));
   }
 
   public componentWillReceiveProps(newProps: TrackTableProps) {
     const { sortBy, sortDirection } = this.state;
-    if (newProps.query !== this.props.query) {
+    if (newProps.query !== this.props.query || newProps.tracks.length !== this.props.tracks.length) {
       this.setState({
-        sortedList: this.sortList({ sortBy, sortDirection }),
-        selected: []
+        sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }),
+        selected: [],
+        lastSelected: undefined
       });
     } else {
-      this.setState({ sortedList: this.sortList({ sortBy, sortDirection }) });
+      this.setState({ sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }) });
     }
   }
 
@@ -147,19 +148,20 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       sortBy: string;
       sortDirection: SortDirectionType;
     }) {
-    const sortedList = this.sortList({ sortBy, sortDirection });
+    const sortedList = this.sortList({ list: this.props.tracks, sortBy, sortDirection });
 
     this.setState({ sortBy, sortDirection, sortedList });
   }
 
   private sortList({
+    list,
     sortBy,
     sortDirection
   }: {
+      list: Track[];
       sortBy: string;
       sortDirection: SortDirectionType;
     }) {
-    const list = this.props.tracks;
     return _(
       list,
       [sortBy, "album", "tracknumber"],
@@ -307,7 +309,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   private handleClick(event: RowMouseEventHandlerParams) {
     // tslint:disable-next-line:no-console
     const mouseEvent = event.event as React.MouseEvent<any>;
-    if (!this.state.lastSelected) {
+    if (this.state.lastSelected === undefined) {
       const newSelection = !!!this.state.selected[event.index];
       const clearState = [];
       clearState[event.index] = newSelection;
@@ -324,7 +326,6 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       } else {
         newSelectionKeys = range(event.index, lastSelected + 1);
       }
-
       for (const key of newSelectionKeys) {
         selected[key] = true;
       }
@@ -333,6 +334,8 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     }
     if (mouseEvent.ctrlKey) {
       const selected = this.state.selected;
+      // tslint:disable-next-line:no-console
+      console.log(event.index);
       selected[event.index] = !!!this.state.selected[event.index];
       this.setState({ selected, lastSelected: event.index });
       return;

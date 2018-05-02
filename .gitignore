@@ -13,3 +13,4 @@ bin/
 *.pdb
 target/
 node_modules/
+seiri-client/*.exe
