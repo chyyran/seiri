@@ -297,10 +297,15 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     const open = window.require<
       (target: string, options?: any | undefined) => Promise<ChildProcess>
       >("opn");
+    const child = window.require<any>("child_process");
     // explicitly use exporer on windows.
-    if (require('process').platform === 'win32') {
-      open(path.dirname(track.filePath), {app: 'explorer'});
+    if (window.require<any>('process').platform === 'win32') {
+      // open(path.dirname(track.filePath), {app: 'explorer'});
+      // tslint:disable-next-line:no-console
+      console.log("win32!");
+      child.spawn("explorer", [path.dirname(track.filePath)], {detached: true})
     } else {
+            // tslint:disable-next-line:no-console
       open(path.dirname(track.filePath));
     }
   }

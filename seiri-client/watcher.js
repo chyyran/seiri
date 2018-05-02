@@ -12,7 +12,11 @@ const launch_watcher = (onStdErr, onQuit) => {
     quit: () => watcher.stdin.write("exit"),
     disconnect: () => {
       if (watcher) {
-        watcher.disconnect();
+        try {
+          watcher.disconnect();
+        } catch {
+          // do nothing.
+        }
       }
     }
   };
