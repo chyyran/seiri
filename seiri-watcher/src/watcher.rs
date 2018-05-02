@@ -107,7 +107,7 @@ where
                         }
                     }
                 }
-                Err(e) => println!("WATCHERROR~{:?}:watch error {:?}", e, e),
+                Err(e) => eprintln!("WATCHERROR~{:?}", e),
             },
             keepalive = quit_rx.recv() => match keepalive {
                 Ok(WatchStatus::KeepAlive) => (),

@@ -3,29 +3,27 @@
 #![feature(mpsc_select)]
 #![feature(ascii_ctype)]
 
-
+extern crate notify;
 extern crate seiri;
 extern crate walkdir;
-extern crate notify;
 
+use std::borrow::Cow;
 use std::io;
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 use std::time::Duration;
-
 mod utils;
 mod watcher;
 
-use seiri::config::Config;
 use seiri::config;
+use seiri::config::Config;
 use seiri::database;
 use seiri::database::Connection;
 use seiri::database::ConnectionPool;
 use seiri::paths;
 use seiri::Error;
-use seiri::Track;
 use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config, conn: &Connection) {
@@ -36,10 +34,10 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                 let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
                 if let Ok(track) = track {
                     database::add_track(&track, conn);
-                    eprintln!("TRACKADDED~{:?}:Added {:?} to database", track.title, track);
+                    eprintln!("TRACKADDED~{}–{}", track.artist, track.title);
                 }
             }
-            Err(_) => eprintln!("LIBRARYNOTFOUND~The library path was not found."),
+            Err(_) => eprintln!("LIBRARYNOTFOUND~{}.", path.display()),
         },
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => {
@@ -47,19 +45,23 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                     Ok(library_path) => {
                         paths::move_non_track(&file_name, &library_path.1).unwrap();
                         eprintln!(
-                            "NONTRACK~{:?}:Found and moved non-track item {:?}",
-                            file_name, file_name
+                            "NONTRACK~{}",
+                            file_name
+                                .file_stem()
+                                .and_then(|s| Some(s.to_string_lossy()))
+                                .unwrap_or(Cow::Borrowed(""))
                         )
                     }
-                    Err(err) => eprintln!(
-                        "TRACKMOVEERROR~{:?}:Error {} ocurred when attempting to move track.",
-                        file_name, err
-                    ),
+                    Err(_) => eprintln!("TRACKMOVEERROR~{}", file_name.display()),
                 };
             }
             Error::MissingRequiredTag(file_name, tag) => eprintln!(
-                "MISSINGTAG~Found track {} but missing tag {}.",
-                file_name, tag
+                "MISSINGTAG~Track {} is missing tag {}.",
+                Path::new(&file_name)
+                    .file_stem()
+                    .and_then(|s| Some(s.to_string_lossy()))
+                    .unwrap_or(Cow::Borrowed("")),
+                tag
             ),
             _ => {}
         },
@@ -115,10 +117,7 @@ fn start_watcher_watchdog(wait_time: Duration) {
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
             if let Err(_) = music_folder {
-                eprintln!(
-                    "WATCHERFOLDERACCESSLOST~Lost access to {}",
-                    &config.music_folder
-                );
+                eprintln!("WATCHERFOLDERACCESSLOST~{}", &config.music_folder);
                 wait_for_watch_root_available(&config.music_folder);
                 let (new_tx, rx) = channel();
                 tx.send(WatchStatus::Exit).unwrap();
