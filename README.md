@@ -1,4 +1,5 @@
 <h1>
+  <img src="https://github.com/RonnChyran/seiri/blob/master/branding/seiri.png?raw=true" height="64" width="64">
   <ruby>
 聲<rt>せい</rt>
 理<rt>り</rt>
