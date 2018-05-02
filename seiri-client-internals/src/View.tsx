@@ -3,10 +3,13 @@ import { DebounceInput } from "react-debounce-input";
 import { connect, Dispatch } from "react-redux";
 import { updateQuery, updateTracksTick } from "./actions";
 import Helper from "./BangHelper";
+import ElectronWindow from "./ElectronWindow";
 import State from "./State";
 import TrackTable from "./TrackTable";
 import { Track } from "./types";
 import "./View.css";
+
+declare var window: ElectronWindow;
 interface ViewProps {
   tracks: Track[];
   query: string;
@@ -66,12 +69,12 @@ class View extends React.Component<ViewProps, ViewState> {
       <div className={this.props.tracks.length === 0 ? "container no-overflow" : "container"}>
       
         <div className="main-bar">
-        <button className="btn-quit" onClick={() => close()}>
+        <button className="btn-quit" onClick={() => this.hide()}>
             &#xe711;
           </button>
           <DebounceInput
             placeholder={
-              'Type to start searching. Type "??bangs" for bang reference.'
+              'Type to start searching. Type "??bangs" for bang reference. Ctrl+R to refresh.'
             }
             inputRef={input => {
               this.queryInput = input;
@@ -102,6 +105,9 @@ class View extends React.Component<ViewProps, ViewState> {
         </div>
       </div>
     );
+  }
+  private hide() {
+    window.require<any>('electron').remote.getCurrentWindow().hide();
   }
 }
 

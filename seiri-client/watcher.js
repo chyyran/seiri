@@ -9,12 +9,12 @@ const launch_watcher = (onStdErr, onQuit) => {
   watcher.stdout.pipe(process.stdout);
   watcher.stderr.pipe(process.stdout);
   return {
-    quit: () => watcher.stdin.write("exit"),
+    quit: () => watcher.stdin.write("exit\r\n"),
     disconnect: () => {
       if (watcher) {
         try {
           watcher.disconnect();
-        } catch {
+        } catch (e) {
           // do nothing.
         }
       }
