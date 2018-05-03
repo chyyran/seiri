@@ -1,6 +1,6 @@
 {
   "name": "seiri-client",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "license": "MIT",
   "main": "main.js",
   "appId": "moe.chyyran.seiri",
@@ -20,6 +20,10 @@
       "*.exe",
       "*.asar",
       "seiri-watcher"
+    ],
+    "extraFiles": [
+      "**/uwp/*",
+      "**/seiri.VisualElementsManifest.xml"
     ]
   },
   "win": {
