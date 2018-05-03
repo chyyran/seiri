@@ -11,7 +11,8 @@
     "build": "electron-build-env neon build seiri-neon",
     "postinstall": "electron-builder install-app-deps",
     "pack-electron": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "publish-electron": "electron-builder publish"
   },
   "build": {
     "appId": "moe.chyyran.seiri",
@@ -22,7 +23,7 @@
       "seiri-watcher"
     ],
     "extraFiles": [
-      "**/uwp/*",
+      "**/VisualElements/*",
       "**/seiri.VisualElementsManifest.xml"
     ]
   },
