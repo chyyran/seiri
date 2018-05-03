@@ -34,7 +34,9 @@ fn main() {
   #[cfg(all(target_os = "windows", target_arch = "x86_64"))] { println!("cargo:rustc-flags=-l ole32"); }
   println!("cargo:rustc-link-search=native={}", path);
   println!("cargo:rustc-link-search=native={}", get_sdk_path().display());
-  println!("cargo:rustc-link-lib=static=libkatatsuki");
+  #[cfg(all(target_os = "windows", target_arch = "x86_64"))] { println!("cargo:rustc-link-lib=static=libkatatsuki"); }
+  #[cfg(all(target_os = "linux", target_arch = "x86_64"))] { println!("cargo:rustc-link-lib=static=katatsuki"); }
+  #[cfg(all(target_os = "macos", target_arch = "x86_64"))] { println!("cargo:rustc-link-lib=static=katatsuki"); }
   println!("cargo:rustc-link-lib=static=bootstrapperdll");
   println!("cargo:rustc-link-lib=static=Runtime");
 

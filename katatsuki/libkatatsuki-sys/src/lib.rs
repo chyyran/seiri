@@ -24,9 +24,9 @@ pub struct katatsuki_Track {
     pub Duration: c_longlong,
 }
 
-//#[link(name = "libkatatsuki", kind = "static")]
-#[link(name = "bootstrapperdll", kind = "static")]
-#[link(name = "Runtime",  kind = "static")]
+// #[link(name = "libkatatsuki", kind = "static")]
+// #[link(name = "bootstrapperdll", kind = "static")]
+// #[link(name = "Runtime",  kind = "static")]
 extern "C" {
     pub fn katatsuki_get_track_data(file_path: *const u16) -> katatsuki_Track;
 }
