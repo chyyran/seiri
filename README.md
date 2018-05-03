@@ -2,7 +2,7 @@
 
 🎶 Opinionated, barebones music manager.
 
-![screen](https://i.imgur.com/rZqlBJY.png)
+![screen](https://i.imgur.com/8SQreXO.png)
 
 ## About
 *seiri* is an opinionated music manager designed for large libraries (10000+ tracks). *Opinionated* means that *seiri* intentionally has one way of organizing music, and is not customizable besides very few options. This helps keeps large libraries consolidated and easily searachable. *seiri* doesn't care about the music player you use to listen to your library, or the tools used to tag your tracks, only the way the files are organized in folders. Because of this, *seiri* works best with music players that don't care where your music is stored, like [foobar2000](https://www.foobar2000.org/).
