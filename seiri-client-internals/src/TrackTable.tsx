@@ -1,4 +1,3 @@
-import { ChildProcess } from "child_process";
 import { orderBy as _, range } from "lodash";
 import * as Mousetrap from "mousetrap";
 import * as React from "react";
@@ -294,9 +293,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   private handleDoubleClick(event: RowMouseEventHandlerParams) {
     const track: Track = event.rowData as any;
     const path = window.require<any>("path");
-    const open = window.require<
-      (target: string, options?: any | undefined) => Promise<ChildProcess>
-      >("opn");
+    const open = window.require<any>("electron").remote.require('opn');
     const child = window.require<any>("child_process");
     // explicitly use exporer on windows.
     if (window.require<any>('process').platform === 'win32') {

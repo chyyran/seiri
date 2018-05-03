@@ -5,6 +5,7 @@ const url = require("url");
 const watcher = require("./watcher");
 const isDev = require('electron-is-dev');
 const appId = "moe.chyyran.seiri";
+const opn = require('opn');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
