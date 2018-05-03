@@ -1,7 +1,11 @@
 const child_proc = require("child_process");
+const isDev = require('electron-is-dev');
+const path = require("path");
 
 const launch_watcher = (onStdErr, onQuit) => {
-  let watcher = child_proc.spawn("seiri-watcher.exe", [], {
+  let watcher = child_proc.spawn((isDev
+    ? "seiri-watcher"
+    : `${path.join(__dirname, "../app.asar.unpacked/seiri-watcher")}`), [], {
     stdio: "pipe"
   });
   watcher.addListener("close", onQuit);

@@ -14,3 +14,4 @@ bin/
 target/
 node_modules/
 seiri-client/*.exe
+dist/

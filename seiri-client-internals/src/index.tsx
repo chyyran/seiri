@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-// import registerServiceWorker from './registerServiceWorker';
 import { Provider } from 'react-redux'
 import thunk from "redux-thunk";
 import App from "./App";
@@ -45,4 +44,3 @@ ReactDOM.render(
     <App />
   </Provider>, 
 document.getElementById("root") as HTMLElement);
-// registerServiceWorker();

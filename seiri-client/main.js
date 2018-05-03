@@ -3,6 +3,8 @@ const notifier = require("node-notifier");
 const path = require("path");
 const url = require("url");
 const watcher = require("./watcher");
+const isDev = require('electron-is-dev');
+const appId = "moe.chyyran.seiri";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -46,14 +48,16 @@ const processWatcherMessage = message => {
       console.log("Track move error...");
       notifier.notify({
         title: "Track Move Error",
-        message: "Error occurred when moving " + messagePayload
+        message: "Error occurred when moving " + messagePayload,
+        appID: appId
       });
       break;
     case "MISSINGTAG":
       console.log("Missing tag...");
       notifier.notify({
         title: "Track is missing tag.",
-        message: messagePayload
+        message: messagePayload,
+        appID: appId
       });
       break;
     case "TRACKADDED":
@@ -63,7 +67,8 @@ const processWatcherMessage = message => {
     default:
       notifier.notify({
         title: "Error occurred.",
-        message: messagePayload
+        message: messagePayload,
+        appID: appId
       });
       break;
   }
@@ -74,7 +79,8 @@ const startNewTracksNotifier = () => {
     if (newTracksAdded.length === 1) {
       notifier.notify({
         title: "New Tracks Added",
-        message: "Added " + newTracksAdded[0]
+        message: "Added " + newTracksAdded[0],
+        appID: appId
       });
       newTracksAdded.length = 0;
     } else if (newTracksAdded.length !== 0) {
@@ -85,7 +91,8 @@ const startNewTracksNotifier = () => {
           newTracksAdded[0] +
           " and " +
           (newTracksAdded.length - 1) +
-          " more."
+          " more.",
+        appID: appId
       });
       newTracksAdded.length = 0;
     }
@@ -108,6 +115,7 @@ const restartWatcher = () => {
 };
 
 app.on("ready", () => {
+  console.log("App Ready!");
   Menu.setApplicationMenu(null);
   restartWatcher();
   startNewTracksNotifier();
@@ -172,17 +180,13 @@ function createWindow() {
     height: 600,
     frame: false,
     icon: __dirname + "/branding/seiri.png",
-    show: false
+    show: false,
+    webSecurity: false
   });
 
+  let dir = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../app.asar.unpacked/ui.asar/index.html")}` 
   // and load the index.html of the app.
-  win.loadURL(
-    url.format({
-      pathname: "localhost:3000",
-      protocol: "http:",
-      slashes: true
-    })
-  );
+  win.loadURL(dir);
 
   // Open the DevTools.
   //win.webContents.openDevTools();
