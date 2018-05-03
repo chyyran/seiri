@@ -29,7 +29,7 @@ fn main() {
   dotnet_do_restore();
   dotnet_do_clean();
   let profile = env::var("PROFILE").unwrap();
-  dotnet_do_build_shared(&profile, &path);
+  #[cfg(all(target_os = "windows", target_arch = "x86_64"))] { dotnet_do_build_shared(&profile, &path); }
   dotnet_do_build_static(&profile, &path);
   #[cfg(all(target_os = "windows", target_arch = "x86_64"))] { println!("cargo:rustc-flags=-l ole32"); }
   println!("cargo:rustc-link-search=native={}", path);
