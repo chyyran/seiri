@@ -1,0 +1,44 @@
+{
+  "images" : [
+    {
+      "size" : "3727x3727",
+      "idiom" : "mac",
+      "filename" : "Typemark.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "3727x3727",
+      "idiom" : "mac",
+      "filename" : "Typemark@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "3727x3727",
+      "idiom" : "mac",
+      "filename" : "Typemark@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "32x32",
+      "idiom" : "mac",
+      "filename" : "Typemark_32x32.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "64x64",
+      "idiom" : "mac",
+      "filename" : "Typemark_64x64.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "24x24",
+      "idiom" : "mac",
+      "filename" : "Typemark_24x24.png",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
