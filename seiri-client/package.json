@@ -4,6 +4,7 @@
   "license": "MIT",
   "main": "main.js",
   "appId": "moe.chyyran.seiri",
+  "repository": "github:RonnChyran/seiri",
   "description": "seiri Music Manager",
   "author": "Ronny Chan",
   "scripts": {
@@ -12,7 +13,7 @@
     "postinstall": "electron-builder install-app-deps",
     "pack-electron": "electron-builder --dir",
     "dist": "electron-builder",
-    "publish-electron": "electron-builder publish"
+    "publish-electron": "electron-builder --publish"
   },
   "build": {
     "appId": "moe.chyyran.seiri",
