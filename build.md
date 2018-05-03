@@ -5,15 +5,19 @@
 ## Installing Prerequisites
 
 1. Rust
+
 Install Rust (1.25.0) or higher at https://www.rust-lang.org, or through your package manager of choice. *seiri* requires the nightly compiler, so once rustup is installed, run `rustup default nightly`.
 
 2. .NET Core
+
 Building *libkatatsuki-sys* requires .NET Core SDK 2.1.300 Preview 2 at a minimum to be installed. Follow the instructions on your operating system of choice at https://www.microsoft.com/net/download/dotnet-core/sdk-2.1.300-preview2.
 
 3. CoreRT
+
 *libkatatsuki-sys* relies on the experimental technology [CoreRT](https://github.com/dotnet/corert). There are prerequisites to building CoreRT projects, specified at the https://github.com/dotnet/corert/blob/master/Documentation/prerequisites-for-building.md. At a minimum, CMake 3.8.0 is required, and the Visual C++ MSVC Toolchain on Windows. On Linux, clang-3.9 is a requirement, higher versions are not supported.
 
 4. Node
+
 Building *seiri-neon* requires Node 8.11.1 LTS. Install Node at https://nodejs.org/en/ or through your package manager of choice. 
 
 After, install the `neon` tool using `npm install -g neon-cli`.
