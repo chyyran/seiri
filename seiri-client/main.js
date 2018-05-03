@@ -6,6 +6,8 @@ const watcher = require("./watcher");
 const isDev = require('electron-is-dev');
 const appId = "moe.chyyran.seiri";
 const opn = require('opn');
+const ensureConfig = require('./ensureConfig');
+const autoUpdater = require("electron-updater").autoUpdater
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -40,6 +42,7 @@ if (shouldQuit) {
   app.quit();
   return;
 }
+
 
 const processWatcherMessage = message => {
   let messageType = message.split("~")[0];
@@ -117,6 +120,9 @@ const restartWatcher = () => {
 
 app.on("ready", () => {
   console.log("App Ready!");
+  ensureConfig(app.getPath('appData'), app.getPath('home'));
+  autoUpdater.checkForUpdatesAndNotify();
+  console.log("config ensured.");
   Menu.setApplicationMenu(null);
   restartWatcher();
   startNewTracksNotifier();
@@ -190,7 +196,7 @@ function createWindow() {
   win.loadURL(dir);
 
   // Open the DevTools.
-  //win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   win.on("hide", () => {
     console.log("Closing in 60 seconds...");
