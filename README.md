@@ -39,7 +39,7 @@ For *seiri* to work best, you should learn to accept its 6 easy rules.
 1. Single-file CUE rips are **forbidden**
 2. Your entire music library should be under one folder.
 3. Tracks are sorted in an artist folder first, then album.
-4. All music **must be properly tagged**. *seiri* won't accept "mymixtape.mp3" with no artist or album. This also means that WAV audio is **forbidden**. Use FLAC (or Wavpack if you really need that 32bit float).
+4. All music **must be properly tagged**. *seiri* won't accept "mymixtape.mp3" with no artist or album. This also means that WAV audio is **forbidden**. Use FLAC (or AIFF if you really need that 32bit float).
 5. Let *seiri* handle sorting for you. Do not move tracks around in the library folder. 
 6. Cover art in the tags. **cover.jpg** is forbidden. Hard drive space is cheap. *seiri* will not care about your cover.jpg.
 
