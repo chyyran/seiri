@@ -13,7 +13,7 @@
     "postinstall": "electron-builder install-app-deps",
     "pack-electron": "electron-builder --dir",
     "dist": "electron-builder",
-    "publish-electron": "electron-builder --publish"
+    "publish-electron": "electron-builder --publish onTagOrDraft"
   },
   "build": {
     "appId": "moe.chyyran.seiri",
