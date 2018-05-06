@@ -54,6 +54,10 @@ You can make top-level subfolders under the *Automatically add to Library* folde
 
 <sub>*If you need this, I hope you're not getting your music by ripping from YouTube 😉.</sub> 
 
+## Help, I'm getting *Error* when I try to add tracks!
+Most likely, your track file is corrupted. *seiri* does some preliminary verification of tracks to catch corrupt files. If your file is lossless, you can try re-encoding your file. Otherwise, verify that the track is properly encoded.
+
+Other errors include missing tag errors. In that case, ensure your tracks have the correct tag.
 ## Queries
 *seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
 
