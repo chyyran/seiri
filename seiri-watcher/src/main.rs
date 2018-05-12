@@ -6,6 +6,7 @@
 extern crate notify;
 extern crate seiri;
 extern crate walkdir;
+extern crate threadpool;
 
 use std::borrow::Cow;
 use std::io;
@@ -34,7 +35,7 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
                 let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
                 if let Ok(track) = track {
                     database::add_track(&track, conn);
-                    eprintln!("TRACKADDED~{}–{}", track.artist, track.title);
+                    eprintln!("TRACKADDED~{} – {}", track.artist, track.title);
                 }
             }
             Err(_) => eprintln!("LIBRARYNOTFOUND~{}.", path.display()),
@@ -78,13 +79,13 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: &Config, pool: &ConnectionPool, rx: Receiver<WatchStatus>) {
+fn begin_watch(config: Config, pool: ConnectionPool, rx: Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
     watcher::list(&watch_path, &config, &pool, process);
     // Create a channel to receive the events.
-    if let Err(e) = watcher::watch(&watch_path, &config, &pool, process, rx) {
+    if let Err(e) = watcher::watch(&watch_path, config, pool, process, rx) {
         println!("{}", e);
     }
 }
@@ -95,7 +96,7 @@ fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandl
         .spawn(move || {
             let config = config::get_config();
             let pool = database::get_connection_pool();
-            begin_watch(&config, &pool, rx)
+            begin_watch(config, pool, rx)
         })
 }
 
