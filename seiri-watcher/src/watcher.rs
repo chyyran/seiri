@@ -1,16 +1,21 @@
+<<<<<<< HEAD
 use seiri::config::Config;
+=======
+>>>>>>> ecae36508feaa6d49a5807bdc3f8e74b586be3d7
 use notify;
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use seiri::config::Config;
+use seiri::database::{Connection, ConnectionPool};
 use seiri::paths::is_in_hidden_path;
-use seiri::database::{ConnectionPool, Connection};
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
+use std::sync::{Arc};
+use std::thread;
 use std::time::Duration;
-use std::thread::spawn;
+use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};
-
 fn check_idle(path: &PathBuf) -> bool {
     return match OpenOptions::new()
         .read(true)
@@ -40,12 +45,7 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
         .unwrap_or(false)
 }
 
-pub fn list<F>(
-    watch_dir: &str,
-    config: &Config,
-    pool: &ConnectionPool,
-    process: F,
-) -> ()
+pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F) -> ()
 where
     F: Fn(&Path, &Config, &Connection) -> (),
 {
@@ -67,16 +67,19 @@ pub enum WatchStatus {
 
 pub fn watch<F>(
     watch_dir: &str,
-    config: &Config,
-    pool: &ConnectionPool,
+    config: Config,
+    pool: ConnectionPool,
     process: F,
     quit_rx: Receiver<WatchStatus>,
 ) -> notify::Result<()>
 where
-    F: Fn(&Path, &Config, &Connection) -> (),
+    F: Fn(&Path, &Config, &Connection) -> () + Send + Sync + Copy + 'static,
 {
     let (tx, rx) = channel();
-
+    let exec_pool = ThreadPool::new(8);
+    let db_pool = Arc::new(pool);
+    let config = Arc::new(config);
+   // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
     let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
@@ -88,6 +91,12 @@ where
     // This is a simple loop, but you may want to use more complex logic here,
     // for example to handle I/O.
     let watch_dir = Path::new(watch_dir);
+
+    // process(&*path.to_owned()
+    // , &config.clone(), &db_pool.clone().get().unwrap());
+    // let res: Result<(), ()> = Ok(());
+    //                             res
+
     loop {
         select! {
             event = rx.recv() => match event {
@@ -97,12 +106,34 @@ where
                     // Otherwise, the write event will be delayed until the latest possible.
                     if let DebouncedEvent::Write(ref path) = event {
                         if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                                process(path, config, &pool.get().unwrap());
+                            let db_pool = Arc::clone(&db_pool);
+                            let config = Arc::clone(&config);
+                            let path = path.clone();
+                            exec_pool.execute(move || {
+                                println!("Started processing thread! Waiting 500ms for settling.");
+                                thread::sleep(Duration::from_millis(500));
+                                let pool_ref = &db_pool;
+                                let config = config.as_ref();
+                                let db_conn = pool_ref.get().unwrap();
+                                let path = path.as_path();
+                                process(path, config, &db_conn);
+                            });
                         }
                     }
                     if let DebouncedEvent::Create(ref path) = event {
                         if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            process(path, config, &pool.get().unwrap());
+                            let db_pool = db_pool.clone();
+                            let config = config.clone();
+                            let path = path.clone();
+                            exec_pool.execute(move || {
+                                println!("Started processing thread! Waiting 500ms for settling.");
+                                thread::sleep(Duration::from_millis(500));
+                                let pool_ref = &db_pool;
+                                let config = config.as_ref();
+                                let db_conn = pool_ref.get().unwrap();
+                                let path = path.as_path();
+                                process(path, config, &db_conn);
+                            });
                         }
                     }
                 }
