@@ -2,7 +2,7 @@ use app_dirs::*;
 use chrono::prelude::*;
 use error::{Error, Result};
 use katatsuki::Track;
-use tree_magic;
+// use tree_magic;
 use std::ascii::AsciiExt;
 use std::fs;
 use std::io;
@@ -24,10 +24,10 @@ impl InvalidChar for char {
 
 pub fn new_track_checked(track_path: &Path, source: Option<&str>) -> Result<Track> {
 
-    let mimetype = tree_magic::from_filepath(track_path);
-    if !mimetype.starts_with("audio") {
-        return Err(Error::UnsupportedFile(track_path.to_owned()));
-    } 
+    // let mimetype = tree_magic::from_filepath(track_path);
+    // if !mimetype.starts_with("audio") {
+    //     return Err(Error::UnsupportedFile(track_path.to_owned()));
+    // } 
     match Track::from_path(track_path, source) {
         Ok(track) => {
             if track.title.is_empty() {
@@ -58,7 +58,7 @@ pub fn new_track_checked(track_path: &Path, source: Option<&str>) -> Result<Trac
         }
         Err(ioerror) => match ioerror.kind() {
             ErrorKind::InvalidData => Err(Error::UnsupportedFile(PathBuf::from(track_path))),
-            _ => Err(Error::UnsupportedFile(PathBuf::from(track_path))),
+            _ => Err(Error::FileIOError(PathBuf::from(track_path))),
         },
     }
 }

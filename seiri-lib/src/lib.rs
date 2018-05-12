@@ -19,7 +19,6 @@ extern crate rusqlite;
 extern crate app_dirs;
 extern crate toml;
 extern crate katatsuki;
-extern crate tree_magic;
 
 mod bangs;
 mod error;

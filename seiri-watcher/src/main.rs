@@ -5,8 +5,8 @@
 
 extern crate notify;
 extern crate seiri;
-extern crate walkdir;
 extern crate threadpool;
+extern crate walkdir;
 
 use std::borrow::Cow;
 use std::io;
@@ -27,8 +27,7 @@ use seiri::paths;
 use seiri::Error;
 use watcher::WatchStatus;
 
-fn process(path: &Path, config: &Config, conn: &Connection) {
-    thread::sleep_ms(500); // Sleep for half a second to allow things to settle.
+fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
     let track = paths::new_track_checked(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
@@ -43,29 +42,51 @@ fn process(path: &Path, config: &Config, conn: &Connection) {
         },
         Err(err) => match err {
             Error::UnsupportedFile(file_name) => {
-                match paths::ensure_music_folder(&config.music_folder) {
-                    Ok(library_path) => {
-                        paths::move_non_track(&file_name, &library_path.1).unwrap();
-                        eprintln!(
-                            "NONTRACK~{}",
-                            file_name
-                                .file_stem()
-                                .and_then(|s| Some(s.to_string_lossy()))
-                                .unwrap_or(Cow::Borrowed(""))
-                        )
+                if !retry {
+                    match paths::ensure_music_folder(&config.music_folder) {
+                        Ok(library_path) => {
+                            paths::move_non_track(&file_name, &library_path.1).unwrap();
+                            eprintln!(
+                                "NONTRACK~{}",
+                                file_name
+                                    .file_name()
+                                    .and_then(|s| Some(s.to_string_lossy()))
+                                    .unwrap_or(Cow::Borrowed(""))
+                            )
+                        }
+                        Err(_) => {
+                            if retry {
+                                thread::sleep(Duration::from_secs(2));
+                                println!("Retrying...");
+                                process(path, config, conn, false)
+                            } else {
+                                eprintln!("TRACKMOVEERROR~{}", file_name.display())
+                            }
+                        }
                     }
-                    Err(_) => eprintln!("TRACKMOVEERROR~{}", file_name.display()),
-                };
+                } else {
+                    thread::sleep(Duration::from_secs(2));
+                    println!("Retrying...");
+                    process(path, config, conn, false)
+                }
             }
             Error::MissingRequiredTag(file_name, tag) => eprintln!(
                 "MISSINGTAG~Track {} is missing tag {}.",
                 Path::new(&file_name)
-                    .file_stem()
+                    .file_name()
                     .and_then(|s| Some(s.to_string_lossy()))
                     .unwrap_or(Cow::Borrowed("")),
                 tag
             ),
-            _ => {}
+            _ => {
+                if retry {
+                    thread::sleep(Duration::from_secs(2));
+                    println!("Retrying...");
+                    process(path, config, conn, false)
+                } else {
+                    eprintln!("TRACKERROR~")
+                }
+            }
         },
     }
 }

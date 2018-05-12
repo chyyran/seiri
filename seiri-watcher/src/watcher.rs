@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-use seiri::config::Config;
-=======
->>>>>>> ecae36508feaa6d49a5807bdc3f8e74b586be3d7
 use notify;
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
@@ -47,14 +43,14 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
 
 pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F) -> ()
 where
-    F: Fn(&Path, &Config, &Connection) -> (),
+    F: Fn(&Path, &Config, &Connection, bool) -> (),
 {
     let watch_dir = Path::new(watch_dir);
     let walker = WalkDir::new(watch_dir).into_iter();
     for entry in walker.filter_entry(|e| !is_hidden(e)) {
         if let Ok(entry) = entry {
             if entry.file_type().is_file() {
-                process(entry.path(), config, &pool.get().unwrap());
+                process(entry.path(), config, &pool.get().unwrap(), true);
             }
         }
     }
@@ -73,7 +69,7 @@ pub fn watch<F>(
     quit_rx: Receiver<WatchStatus>,
 ) -> notify::Result<()>
 where
-    F: Fn(&Path, &Config, &Connection) -> () + Send + Sync + Copy + 'static,
+    F: Fn(&Path, &Config, &Connection, bool) -> () + Send + Sync + Copy + 'static,
 {
     let (tx, rx) = channel();
     let exec_pool = ThreadPool::new(8);
@@ -92,11 +88,6 @@ where
     // for example to handle I/O.
     let watch_dir = Path::new(watch_dir);
 
-    // process(&*path.to_owned()
-    // , &config.clone(), &db_pool.clone().get().unwrap());
-    // let res: Result<(), ()> = Ok(());
-    //                             res
-
     loop {
         select! {
             event = rx.recv() => match event {
@@ -110,13 +101,11 @@ where
                             let config = Arc::clone(&config);
                             let path = path.clone();
                             exec_pool.execute(move || {
-                                println!("Started processing thread! Waiting 500ms for settling.");
-                                thread::sleep(Duration::from_millis(500));
                                 let pool_ref = &db_pool;
                                 let config = config.as_ref();
                                 let db_conn = pool_ref.get().unwrap();
                                 let path = path.as_path();
-                                process(path, config, &db_conn);
+                                process(path, config, &db_conn, true);
                             });
                         }
                     }
@@ -126,13 +115,11 @@ where
                             let config = config.clone();
                             let path = path.clone();
                             exec_pool.execute(move || {
-                                println!("Started processing thread! Waiting 500ms for settling.");
-                                thread::sleep(Duration::from_millis(500));
                                 let pool_ref = &db_pool;
                                 let config = config.as_ref();
                                 let db_conn = pool_ref.get().unwrap();
                                 let path = path.as_path();
-                                process(path, config, &db_conn);
+                                process(path, config, &db_conn, true);
                             });
                         }
                     }

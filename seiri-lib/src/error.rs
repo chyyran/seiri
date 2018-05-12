@@ -22,6 +22,10 @@ quick_error! {
             description("The file could not be moved")
             display(r#"The file {} could not be moved."#, file_name)
         }
+        FileIOError(file_name:  PathBuf) {
+            description("The file could not be processed.")
+            display(r#"The file {:?} could not be processed."#, file_name)
+        }
         UnableToCreateDirectory(directory_name: String) {
             description("The directory could not be created")
             display(r#"The directory {} could not be created."#, directory_name)

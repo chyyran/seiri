@@ -1,6 +1,6 @@
 [package]
 name = "seiri"
-version = "0.7.0"
+version = "0.7.2"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 description = "Support library for seiri music manager"
 license = "MIT"
@@ -17,7 +17,6 @@ rand = "0.4.2"
 chrono = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
-tree_magic = "0.2.0"
 app_dirs ="1.2.1"
 r2d2_sqlite = "0.5.0"
 r2d2 = "0.8.2"
