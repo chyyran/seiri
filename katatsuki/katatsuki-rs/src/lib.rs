@@ -4,18 +4,17 @@ extern crate enum_primitive_derive;
 extern crate chrono;
 extern crate libc;
 extern crate num_traits;
-extern crate widestring;
 
 extern crate libkatatsuki_sys as sys;
 
 use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
-
+use std::ffi::{CStr, CString};
+use libc::c_char;
 use sys::katatsuki_Track;
 use sys::katatsuki_get_track_data;
 
 use chrono::Local;
-use widestring::WideCString;
 
 pub use num_traits::{FromPrimitive, ToPrimitive};
 pub use track::Track;
@@ -28,13 +27,16 @@ fn ticks_to_ms(ticks: i64) -> i32 {
     (ticks / TICKS_PER_MS) as i32
 }
 
-fn wide_string_ptr_to_string(pointer: *const u16) -> Option<String> {
-    unsafe {
-        if !pointer.is_null() {
-            Some(WideCString::from_ptr_str(pointer).to_string_lossy())
-        } else {
-            None
-        }
+fn c_str_to_str(c_str: *const c_char) -> Option<String> {
+    if c_str.is_null() {
+        return None;
+    }
+
+    let bytes = unsafe { CStr::from_ptr(c_str).to_bytes() };
+    if bytes.is_empty() {
+        None
+    } else {
+        Some(String::from_utf8_lossy(bytes).to_string())
     }
 }
 
@@ -46,8 +48,8 @@ impl Track {
                 format!("File {:?} not found.", path),
             ))
         } else {
-            if let Ok(path_ptr) = WideCString::from_str(path.as_os_str()) {
-                let track: katatsuki_Track = unsafe { katatsuki_get_track_data(path_ptr.as_ptr()) };
+            if let Ok(path_ptr) = CString::new(path.as_os_str().to_string_lossy().as_ref()) {
+                let track: katatsuki_Track = unsafe { katatsuki_get_track_data(path_ptr.into_raw()) };
                 if track.FileType == 0 {
                     Err(Error::new(
                         ErrorKind::InvalidData,
@@ -57,16 +59,17 @@ impl Track {
                     Ok(Track {
                         file_path: path.to_owned(),
                         file_type: TrackFileType::from_u32(track.FileType).unwrap(),
-                        title: wide_string_ptr_to_string(track.Title).unwrap_or("".to_owned()),
-                        artist: wide_string_ptr_to_string(track.Artist).unwrap_or("".to_owned()),
-                        album: wide_string_ptr_to_string(track.Album).unwrap_or("".to_owned()),
-                        album_artists: wide_string_ptr_to_string(track.AlbumArtists).unwrap_or("".to_owned())
+                        title: c_str_to_str(track.Title).unwrap_or("".to_owned()),
+                        artist: c_str_to_str(track.Artist).unwrap_or("".to_owned()),
+                        album: c_str_to_str(track.Album).unwrap_or("".to_owned()),
+                        album_artists: c_str_to_str(track.AlbumArtists)
+                            .unwrap_or("".to_owned())
                             .split(';')
                             .map(|c| c.to_owned())
                             .collect::<Vec<String>>(),
                         year: track.Year as i32,
                         track_number: track.TrackNumber as i32,
-                        musicbrainz_track_id: wide_string_ptr_to_string(track.MusicBrainzTrackId),
+                        musicbrainz_track_id: c_str_to_str(track.MusicBrainzTrackId),
                         has_front_cover: track.HasFrontCover,
                         front_cover_width: track.FrontCoverWidth,
                         front_cover_height: track.FrontCoverHeight,

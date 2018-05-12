@@ -1,7 +1,5 @@
-extern crate notify;
-
 use seiri::config::Config;
-
+use notify;
 use notify::DebouncedEvent;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use seiri::paths::is_in_hidden_path;
@@ -10,6 +8,7 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
+use std::thread::spawn;
 use walkdir::{DirEntry, WalkDir};
 
 fn check_idle(path: &PathBuf) -> bool {
@@ -98,7 +97,7 @@ where
                     // Otherwise, the write event will be delayed until the latest possible.
                     if let DebouncedEvent::Write(ref path) = event {
                         if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            process(path, config, &pool.get().unwrap());
+                                process(path, config, &pool.get().unwrap());
                         }
                     }
                     if let DebouncedEvent::Create(ref path) = event {

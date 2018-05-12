@@ -6,6 +6,7 @@
 extern crate notify;
 extern crate seiri;
 extern crate walkdir;
+extern crate futures;
 
 use std::borrow::Cow;
 use std::io;
@@ -27,6 +28,7 @@ use seiri::Error;
 use watcher::WatchStatus;
 
 fn process(path: &Path, config: &Config, conn: &Connection) {
+    thread::sleep_ms(500); // Sleep for half a second to allow things to settle.
     let track = paths::new_track_checked(path, None);
     match track {
         Ok(track) => match paths::ensure_music_folder(&config.music_folder) {

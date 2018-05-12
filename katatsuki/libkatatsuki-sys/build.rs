@@ -47,7 +47,7 @@ fn get_sdk_path() -> PathBuf {
   home_dir.push(".nuget");
   home_dir.push("packages");
   home_dir.push(format!("runtime.{}.microsoft.dotnet.ilcompiler", runtime_identifier));
-  home_dir.push("1.0.0-alpha-26428-01");
+  home_dir.push("1.0.0-alpha-26512-01");
   home_dir.push("sdk");
   home_dir
 }

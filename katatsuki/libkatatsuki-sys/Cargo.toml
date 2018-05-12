@@ -1,6 +1,6 @@
 [package]
 name = "libkatatsuki-sys"
-version = "0.1.3"
+version = "0.2.2"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
 links = "libkatatsuki"
 description = "Rust bindings for the Track interface of katatsuki"

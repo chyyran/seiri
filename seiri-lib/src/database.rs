@@ -170,7 +170,7 @@ pub fn query_tracks(
     let mut rows = statement.query_named(params.as_slice())?;
     while let Some(Ok(row)) = rows.next() {
         let track = Track {
-            file_path: PathBuf::from_str(&row.get_checked::<_, String>(0)?).unwrap(),
+            file_path: PathBuf::from(&row.get_checked::<_, String>(0)?),
             title: row.get_checked(1)?,
             artist: row.get_checked(2)?,
             album_artists: row.get_checked::<_, String>(3)?

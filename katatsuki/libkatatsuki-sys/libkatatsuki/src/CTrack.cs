@@ -21,13 +21,13 @@ namespace libkatatsuki {
         public uint DiscNumber { get; }
         public long Duration { get; set; }
         public CTrack(Track track) {
-            this.Title = Marshal.StringToCoTaskMemUni(track.Title);
-            this.Artist = Marshal.StringToCoTaskMemUni(track.Artist);
-            this.AlbumArtists = Marshal.StringToCoTaskMemUni(String.Join(";", track.AlbumArtists));
-            this.Album = Marshal.StringToCoTaskMemUni(track.Album);
+            this.Title = Marshal.StringToCoTaskMemUTF8(track.Title);
+            this.Artist = Marshal.StringToCoTaskMemUTF8(track.Artist);
+            this.AlbumArtists = Marshal.StringToCoTaskMemUTF8(String.Join(";", track.AlbumArtists));
+            this.Album = Marshal.StringToCoTaskMemUTF8(track.Album);
             this.Year = track.Year;
             this.TrackNumber = track.TrackNumber;
-            this.MusicBrainzTrackId = Marshal.StringToCoTaskMemUni(track.MusicBrainzTrackId);
+            this.MusicBrainzTrackId = Marshal.StringToCoTaskMemUTF8(track.MusicBrainzTrackId);
             this.HasFrontCover = track.HasFrontCover;
             this.FrontCoverHeight = track.FrontCoverHeight;
             this.FrontCoverWidth = track.FrontCoverWidth;
