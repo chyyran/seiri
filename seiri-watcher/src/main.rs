@@ -56,7 +56,6 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
                         }
                         Err(_) => {
                             if retry {
-                                thread::sleep(Duration::from_secs(2));
                                 println!("Retrying...");
                                 process(path, config, conn, false)
                             } else {
@@ -65,7 +64,6 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
                         }
                     }
                 } else {
-                    thread::sleep(Duration::from_secs(2));
                     println!("Retrying...");
                     process(path, config, conn, false)
                 }
@@ -80,7 +78,6 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
             ),
             _ => {
                 if retry {
-                    thread::sleep(Duration::from_secs(2));
                     println!("Retrying...");
                     process(path, config, conn, false)
                 } else {

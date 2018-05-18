@@ -71,7 +71,7 @@ const processWatcherMessage = message => {
     default:
       notifier.notify({
         title: "Error occurred.",
-        message: messagePayload,
+        message: messagePayload + ": " + messageType,
         appID: appId
       });
       break;

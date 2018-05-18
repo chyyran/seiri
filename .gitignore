@@ -16,3 +16,5 @@ node_modules/
 seiri-client/*.exe
 dist/
 seiri-client/*.asar
+katatsuki/katatsuki-sys-main/
+rls/

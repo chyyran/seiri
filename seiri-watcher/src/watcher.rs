@@ -105,6 +105,8 @@ where
                                 let config = config.as_ref();
                                 let db_conn = pool_ref.get().unwrap();
                                 let path = path.as_path();
+                                // Wait two seconds for the track to idle...
+                                thread::sleep(Duration::from_secs(2));
                                 process(path, config, &db_conn, true);
                             });
                         }
@@ -119,6 +121,8 @@ where
                                 let config = config.as_ref();
                                 let db_conn = pool_ref.get().unwrap();
                                 let path = path.as_path();
+                                // Wait two seconds for the track to idle...
+                                thread::sleep(Duration::from_secs(2));
                                 process(path, config, &db_conn, true);
                             });
                         }
