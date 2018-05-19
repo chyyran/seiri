@@ -16,3 +16,4 @@ node_modules/
 seiri-client/*.exe
 dist/
 seiri-client/*.asar
+seiri-client-internals/ui.asar
