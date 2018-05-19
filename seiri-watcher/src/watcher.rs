@@ -78,7 +78,7 @@ where
     // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(32))?;
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
@@ -106,8 +106,6 @@ where
                                     let config = config.as_ref();
                                     let db_conn = pool_ref.get().unwrap();
                                     let path = path.as_path();
-                                    // Wait two seconds for the track to idle...
-                                    thread::sleep(Duration::from_secs(2));
                                     process(path, config, &db_conn, true);
                                 });
                             }
