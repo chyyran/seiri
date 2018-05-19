@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, Tray } = require("electron");
 const notifier = require("node-notifier");
 const path = require("path");
+const child = require("child_process");
 const url = require("url");
 const watcher = require("./watcher");
 const isDev = require('electron-is-dev');
@@ -153,6 +154,14 @@ app.on("ready", () => {
           runningWatcher.quit();
           console.log("Sent exit signal to running watcher...");
         }
+      }
+    },
+    { type: "separator" },
+    {
+      label: "Open Configuration Directory",
+      click: () => {
+        const seiriPath = path.join(app.getPath('appData'), ".seiri/");
+        child.spawn("explorer", [seiriPath], {detached: true});
       }
     },
     { type: "separator" },
