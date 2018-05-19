@@ -7,7 +7,7 @@ use seiri::paths::is_in_hidden_path;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use threadpool::ThreadPool;
@@ -75,7 +75,7 @@ where
     let exec_pool = ThreadPool::new(8);
     let db_pool = Arc::new(pool);
     let config = Arc::new(config);
-   // let process = Arc::new(process);
+    // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
     let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
@@ -92,39 +92,32 @@ where
         select! {
             event = rx.recv() => match event {
                 Ok(event) => {
-                    // We only want to process events when the file is idle.
-                    // However, if the write finishes before the delay, only the create event is fired.
-                    // Otherwise, the write event will be delayed until the latest possible.
-                    if let DebouncedEvent::Write(ref path) = event {
-                        if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            let db_pool = Arc::clone(&db_pool);
-                            let config = Arc::clone(&config);
-                            let path = path.clone();
-                            exec_pool.execute(move || {
-                                let pool_ref = &db_pool;
-                                let config = config.as_ref();
-                                let db_conn = pool_ref.get().unwrap();
-                                let path = path.as_path();
-                                process(path, config, &db_conn, true);
-                            });
+                    match event {
+                        // We only want to process events when the file is idle.
+                        // However, if the write finishes before the delay, only the create event is fired.
+                        // Otherwise, the write event will be delayed until the latest possible.
+                        DebouncedEvent::Write(ref path) | DebouncedEvent::Create(ref path) => {
+                            if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
+                                let db_pool = Arc::clone(&db_pool);
+                                let config = Arc::clone(&config);
+                                let path = path.clone();
+                                exec_pool.execute(move || {
+                                    let pool_ref = &db_pool;
+                                    let config = config.as_ref();
+                                    let db_conn = pool_ref.get().unwrap();
+                                    let path = path.as_path();
+                                    // Wait two seconds for the track to idle...
+                                    thread::sleep(Duration::from_secs(2));
+                                    process(path, config, &db_conn, true);
+                                });
+                            }
                         }
-                    }
-                    if let DebouncedEvent::Create(ref path) = event {
-                        if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                            let db_pool = db_pool.clone();
-                            let config = config.clone();
-                            let path = path.clone();
-                            exec_pool.execute(move || {
-                                let pool_ref = &db_pool;
-                                let config = config.as_ref();
-                                let db_conn = pool_ref.get().unwrap();
-                                let path = path.as_path();
-                                process(path, config, &db_conn, true);
-                            });
-                        }
+                        _ => ()
                     }
                 }
-                Err(e) => eprintln!("WATCHERROR~{:?}", e),
+                // If a watch error occurred, break out of the thread
+                // to trigger a thread restart.
+                Err(_) => break,
             },
             keepalive = quit_rx.recv() => match keepalive {
                 Ok(WatchStatus::KeepAlive) => (),

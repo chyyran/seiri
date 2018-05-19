@@ -69,10 +69,34 @@ const processWatcherMessage = message => {
       console.log("Track added...");
       newTracksAdded.push(messagePayload);
       break;
+    case "TRACKMOVEERROR": 
+      console.log("Unable to move...");
+      notifier.notify({
+        title: "Unable to move file...",
+        message: messagePayload,
+        appID: appId
+      });
+      break;
+    case "TRACKEERROR": 
+      console.log("Unable to move...");
+      notifier.notify({
+        title: "File error occurred...",
+        message: messagePayload,
+        appID: appId
+      });
+      break;
+    case "CREATEDIRECTORYERROR":
+      console.log("Unable to create directory...");
+      notifier.notify({
+        title: "Unable to create directory.",
+        message: messagePayload,
+        appID: appId
+      });
+      break;
     default:
       notifier.notify({
         title: "Error occurred.",
-        message: messagePayload,
+        message: messagePayload + ": " + messageType,
         appID: appId
       });
       break;

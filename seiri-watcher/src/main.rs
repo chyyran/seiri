@@ -9,6 +9,7 @@ extern crate threadpool;
 extern crate walkdir;
 
 use std::borrow::Cow;
+use std::ffi::OsStr;
 use std::io;
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
@@ -27,67 +28,52 @@ use seiri::paths;
 use seiri::Error;
 use watcher::WatchStatus;
 
+fn osstr_to_string(osstr: Option<&OsStr>) -> Cow<str> {
+    osstr
+        .and_then(|s| Some(s.to_string_lossy()))
+        .unwrap_or(Cow::Borrowed(""))
+}
+
 fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
     let track = paths::new_track_checked(path, None);
-    match track {
-        Ok(track) => match paths::ensure_music_folder(&config.music_folder) {
-            Ok(library_path) => {
-                let track = paths::move_new_track(&track, &library_path.0, &library_path.1);
-                if let Ok(track) = track {
+    match paths::ensure_music_folder(&config.music_folder) {
+        Ok(library_path) => match track {
+            Ok(track) => match paths::move_new_track(&track, &library_path.0, &library_path.1) {
+                Ok(track) => {
                     database::add_track(&track, conn);
                     eprintln!("TRACKADDED~{} – {}", track.artist, track.title);
                 }
-            }
-            Err(_) => eprintln!("LIBRARYNOTFOUND~{}.", path.display()),
-        },
-        Err(err) => match err {
-            Error::UnsupportedFile(file_name) => {
-                if !retry {
-                    match paths::ensure_music_folder(&config.music_folder) {
-                        Ok(library_path) => {
-                            paths::move_non_track(&file_name, &library_path.1).unwrap();
-                            eprintln!(
-                                "NONTRACK~{}",
-                                file_name
-                                    .file_name()
-                                    .and_then(|s| Some(s.to_string_lossy()))
-                                    .unwrap_or(Cow::Borrowed(""))
-                            )
-                        }
+                Err(_) if retry => process(path, config, conn, false),
+                Err(Error::UnableToMove(_)) => {
+                    eprintln!("TRACKMOVEERROR~{}", track.file_path.display())
+                }
+                Err(Error::UnableToCreateDirectory(new_directory)) => {
+                    eprintln!("CREATEDIRECTORYERROR~{}", new_directory)
+                }
+                Err(_) => eprintln!("TRACKERROR~{}", track.file_path.display()),
+            },
+            Err(_) if retry => process(path, config, conn, false),
+            Err(err) => match err {
+                Error::UnsupportedFile(file_name) => {
+                    match paths::move_non_track(&file_name, &library_path.1) {
+                        Ok(()) => eprintln!("NONTRACK~{}", osstr_to_string(file_name.file_name())),
                         Err(_) => {
-                            if retry {
-                                thread::sleep(Duration::from_secs(2));
-                                println!("Retrying...");
-                                process(path, config, conn, false)
-                            } else {
-                                eprintln!("TRACKMOVEERROR~{}", file_name.display())
-                            }
+                            eprintln!("TRACKMOVEERROR~{}", osstr_to_string(file_name.file_name()))
                         }
                     }
-                } else {
-                    thread::sleep(Duration::from_secs(2));
-                    println!("Retrying...");
-                    process(path, config, conn, false)
                 }
-            }
-            Error::MissingRequiredTag(file_name, tag) => eprintln!(
-                "MISSINGTAG~Track {} is missing tag {}.",
-                Path::new(&file_name)
-                    .file_name()
-                    .and_then(|s| Some(s.to_string_lossy()))
-                    .unwrap_or(Cow::Borrowed("")),
-                tag
-            ),
-            _ => {
-                if retry {
-                    thread::sleep(Duration::from_secs(2));
-                    println!("Retrying...");
-                    process(path, config, conn, false)
-                } else {
-                    eprintln!("TRACKERROR~")
+                Error::FileIOError(file_name) => {
+                    eprintln!("TRACKERROR~{}", osstr_to_string(file_name.file_name()))
                 }
-            }
+                Error::MissingRequiredTag(file_name, tag) => eprintln!(
+                    "MISSINGTAG~Track {} is missing tag {}.",
+                    osstr_to_string(Path::new(&file_name).file_name()),
+                    tag
+                ),
+                _ => eprintln!("TRACKERROR~"),
+            },
         },
+        Err(_) => eprintln!("LIBRARYNOTFOUND~{}.", path.display()),
     }
 }
 
