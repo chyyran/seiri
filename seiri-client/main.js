@@ -216,7 +216,7 @@ app.on("ready", () => {
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 800,
+    width: 1000,
     height: 600,
     frame: false,
     icon: __dirname + "/branding/seiri.png",
