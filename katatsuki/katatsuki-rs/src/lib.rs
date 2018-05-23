@@ -4,6 +4,7 @@ extern crate enum_primitive_derive;
 extern crate chrono;
 extern crate libc;
 extern crate num_traits;
+extern crate imagesize;
 
 extern crate libkatatsuki_sys as sys;
 
@@ -13,6 +14,8 @@ use std::ffi::{CStr, CString};
 use libc::c_char;
 use sys::katatsuki_Track;
 use sys::katatsuki_get_track_data;
+use std::slice::from_raw_parts;
+use imagesize::blob_size;
 
 use chrono::Local;
 
@@ -42,6 +45,7 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
 
 impl Track {
     pub fn from_path(path: &Path, source: Option<&str>) -> Result<Track> {
+
         if !path.exists() {
             Err(Error::new(
                 ErrorKind::NotFound,
@@ -56,6 +60,16 @@ impl Track {
                         format!("File {:?} is unsupported", path),
                     ))
                 } else {
+                    let mut fcw = 0;
+                    let mut fch = 0;
+                    if !track.CoverBytes.is_null() {
+                        let slice = unsafe { from_raw_parts(track.CoverBytes, 32) };
+                        if let Ok(size) = blob_size(slice) {
+                            fcw = size.width as i32;
+                            fch = size.height as i32;
+                        }
+                    }
+                    
                     Ok(Track {
                         file_path: path.to_owned(),
                         file_type: TrackFileType::from_u32(track.FileType).unwrap(),
@@ -71,8 +85,8 @@ impl Track {
                         track_number: track.TrackNumber as i32,
                         musicbrainz_track_id: c_str_to_str(track.MusicBrainzTrackId),
                         has_front_cover: track.HasFrontCover,
-                        front_cover_width: track.FrontCoverWidth,
-                        front_cover_height: track.FrontCoverHeight,
+                        front_cover_width: fcw,
+                        front_cover_height: fch,
                         bitrate: track.Bitrate,
                         sample_rate: track.SampleRate,
                         source: source.unwrap_or("None").to_owned(),

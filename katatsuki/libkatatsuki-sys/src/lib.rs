@@ -17,15 +17,13 @@ pub struct katatsuki_Track {
     pub TrackNumber: c_uint,
     pub MusicBrainzTrackId: *const c_char,
     pub HasFrontCover: bool,
-    pub FrontCoverHeight: c_int,
-    pub FrontCoverWidth: c_int,
     pub Bitrate: c_int,
     pub SampleRate: c_int,
     pub DiscNumber: c_uint,
     pub Duration: c_longlong,
+    pub CoverBytes: *const u8
 }
 
-// #[link(name = "libkatatsuki", kind = "static")]
 #[link(name = "bootstrapperdll", kind = "static")]
 #[link(name = "Runtime", kind = "static")]
 extern "C" {
@@ -42,16 +40,7 @@ impl Drop for katatsuki_Track {
             free_corert(self.Album);
             free_corert(self.AlbumArtists);
             free_corert(self.MusicBrainzTrackId);
+            free_corert(self.CoverBytes as *const c_char);
         }
     }
 }
-// pub fn main() {
-//     use std::path::Path;
-//     use widestring::WideCString;
-//     let track_path = Path::new("track.flac");
-//     let track_path_ptr = WideCString::from_str(track_path.as_os_str()).unwrap();
-//     unsafe {
-//         let track = katatsuki_get_track_data(track_path_ptr.as_ptr());
-//         println!("{:?}", track);
-//     }
-// }

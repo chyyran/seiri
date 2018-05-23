@@ -85,6 +85,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "imagesize"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "itertools"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -94,13 +99,14 @@ dependencies = [
 
 [[package]]
 name = "katatsuki"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "chrono 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum-primitive-derive 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "imagesize 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
- "libkatatsuki-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libkatatsuki-sys 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -116,7 +122,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "libkatatsuki-sys"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -298,13 +304,13 @@ dependencies = [
 
 [[package]]
 name = "seiri"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "app_dirs 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "humantime 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "katatsuki 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "katatsuki 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "r2d2 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "r2d2_sqlite 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -503,11 +509,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
 "checksum fuchsia-zircon-sys 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 "checksum humantime 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0484fda3e7007f2a4a0d9c3a703ca38c71c54c55602ce4660c419fd32e188c9e"
+"checksum imagesize 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cc44b86ac69310b6a08aee713f67ddd73bd5576af4c91256f8024e37399f35a1"
 "checksum itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)" = "f58856976b776fedd95533137617a02fb25719f40e7d9b01c7043cd65474f450"
-"checksum katatsuki 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "6dec54e5f83e825d6e7f1713d111ea77d8145fe30f96cb2415cf254ba1b39c91"
+"checksum katatsuki 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "a2d58a0f40edff5d5573ca1d5e0dd840a2a7420a00185c0ec52ab34ca2a3e11e"
 "checksum lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c8f31047daa365f19be14b47c29df4f7c3b581832407daabe6ae77397619237d"
 "checksum libc 0.2.40 (registry+https://github.com/rust-lang/crates.io-index)" = "6fd41f331ac7c5b8ac259b8bf82c75c0fb2e469bbf37d2becbba9a6a2221965b"
-"checksum libkatatsuki-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "535d98b94caf37ff22ef7abdb009c62e29405a71f2388d11398ccb22b76aeeb8"
+"checksum libkatatsuki-sys 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "648d87da22f83cc8643e7b89c7ee175f217a58ba44e02b7267ae0800f82dd450"
 "checksum libsqlite3-sys 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0e9eb7b8e152b6a01be6a4a2917248381875758250dc3df5d46caf9250341dda"
 "checksum linked-hash-map 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7860ec297f7008ff7a1e3382d7f7e1dcd69efc94751a2284bafc3d013c2aa939"
 "checksum log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "89f010e843f2b1a31dbd316b3b8d443758bc634bed37aabade59c686d644e0a2"

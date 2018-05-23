@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TagLib;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace libkatatsuki
 {
@@ -18,14 +15,12 @@ namespace libkatatsuki
         public uint TrackNumber { get; set; }
         public string MusicBrainzTrackId { get; set; }
         public bool HasFrontCover { get; set; }
-        public int FrontCoverHeight { get; set; } = 0;
-        public int FrontCoverWidth { get; set; } = 0;
         public int Bitrate { get; set; }
         public int SampleRate { get; set; }
         public uint DiscNumber { get; }
         public long Duration { get; set; }
         public TrackFileType FileType { get; set; }
-
+        public byte[] CoverBytes { get; set; }
         public Track(string filename)
         {
             using (var file = TagLib.File.Create(filename))
@@ -42,17 +37,14 @@ namespace libkatatsuki
                 this.MusicBrainzTrackId = file.Tag.MusicBrainzTrackId;
                 this.Title = file.Tag.Title;
                 this.DiscNumber = file.Tag.Disc == 0 ? 1 : file.Tag.Disc;
+            
                 var frontAlbum = from picture in file.Tag.Pictures
                                  where picture.Type == TagLib.PictureType.FrontCover
                                  select picture;
                 this.HasFrontCover = frontAlbum.Any();
                 if (this.HasFrontCover)
-                {
-                    using (Image<Rgba32> image = Image.Load(new MemoryStream(frontAlbum.First().Data.Data)))
-                    {
-                        this.FrontCoverHeight = image.Height;
-                        this.FrontCoverWidth = image.Width;
-                    }
+                {                 
+                    this.CoverBytes = frontAlbum.First().Data.Data.Take(32).ToArray();
                 }
             }
 
