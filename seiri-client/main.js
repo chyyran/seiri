@@ -46,8 +46,9 @@ if (shouldQuit) {
 
 
 const processWatcherMessage = message => {
-  let messageType = message.split("~")[0];
-  let messagePayload = message.slice(message.indexOf("~") + 1);
+  let index = message.indexOf("~");
+  let messageType = message.slice(0, index);
+  let messagePayload = message.slice(index + 1);
   switch (messageType) {
     case "TRACKMOVEERR":
       console.log("Track move error...");
@@ -67,6 +68,7 @@ const processWatcherMessage = message => {
       break;
     case "TRACKADDED":
       console.log("Track added...");
+      console.log(messagePayload);
       newTracksAdded.push(messagePayload);
       break;
     case "TRACKMOVEERROR": 
