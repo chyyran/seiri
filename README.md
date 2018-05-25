@@ -102,3 +102,7 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
  
  
  Read *build.md* for more information about setting up the environment.
+
+
+## Privacy Policy
+*seiri* collects absolutely no personal data.
