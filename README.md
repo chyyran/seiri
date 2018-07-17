@@ -5,12 +5,12 @@
 ![screen](https://i.imgur.com/8SQreXO.png)
 
 ## About
-*seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *Seiri*'s features are constrained to keep large libraries of music consolidated and searachable. *seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
+*Seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *Seiri*'s features are constrained to keep large libraries of music consolidated and searachable. *Seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *Seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
 
-*seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
+*Seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
 
 
-## *seiri* features.
+## *Seiri* features.
 * Move files between directories.
 * Makes music queryable.
 * Keeps large libraries organized.
@@ -18,7 +18,7 @@
 
 ## What *seiri* does not do.
 
-*seiri* does not do any of the following: 
+*Seiri* does not perform any of the following functions: 
 
 * [Play music.](https://www.foobar2000.org/)
 * [Transcode music.](https://www.freac.org/)
@@ -46,7 +46,7 @@ For *seiri* to work best, you should accept its 6 easy rules.
 *seiri* works with most music formats, as long as you follow the rules above.
 
 ## Adding music
-There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you have finished tagging your music, place it into this folder. *seiri* will then move the songs to the proper place in your library folder, and index it in its database. 
+There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you have finished tagging your music, place it into this folder. *Seiri* will then move the songs to the proper place in your library folder, and index it in its database. 
 
 You can delete or re-tag files in your library folder, but do not move it to another folder, or *seiri* will not be able to keep track of it. If you make a tag change, you can ask *seiri* to refresh it, and the music will be reorganized.
 
@@ -59,7 +59,7 @@ Your track file is likely corrupt. *seiri* does some preliminary verification of
 
 Ensure your tracks have the correct tag otherwise missing tag errors can occur.
 ## Queries
-*seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
+*Seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
 
 |Bang|Description|Inputs|
 |----|-----------|------|
@@ -86,7 +86,7 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 
 ## Building
 
-*seiri* consists of multiple components.
+*Seiri* consists of multiple components.
  - *seiri-lib* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs. This library is automatically built as part of *seiri-watcher* and *seiri-client*.
  
  - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. This is needed because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
@@ -105,4 +105,4 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 
 
 ## Privacy Policy
-*seiri* collects absolutely no personal data.
+*Seiri* collects absolutely no personal data.
