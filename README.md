@@ -46,7 +46,7 @@ For *seiri* to work best, you should accept its 6 easy rules.
 *seiri* works with most music formats, as long as you follow the rules above.
 
 ## Adding music
-There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you have finished tagging your music, place it into this folder. *Seiri* will then move the songs to the proper place in your library folder, and index it in its database. 
+There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you have finished tagging your music, place it into this folder. *seiri* will then move the songs to the proper place in your library folder, and index it in its database. 
 
 You can delete or re-tag files in your library folder, but do not move it to another folder, or *seiri* will not be able to keep track of it. If you make a tag change, you can ask *seiri* to refresh it, and the music will be reorganized.
 
