@@ -5,20 +5,20 @@
 ![screen](https://i.imgur.com/8SQreXO.png)
 
 ## About
-*seiri* is an opinionated music manager designed for large libraries (10000+ tracks). *Opinionated* means that *seiri* intentionally has one way of organizing music, and is not customizable besides very few options. This helps keeps large libraries consolidated and easily searachable. *seiri* doesn't care about the music player you use to listen to your library, or the tools used to tag your tracks, only the way the files are organized in folders. Because of this, *seiri* works best with music players that don't care where your music is stored, like [foobar2000](https://www.foobar2000.org/).
+*seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *seiri*'s features are constrained to keep large libraries of music consolidated and searachable. *seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
 
 *seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
 
 
-## What *seiri* does do.
-* Move files around.
-* Make your music queryable.
-* Help keep large libraries organized.
-* Does all these things fast.
+## *seiri* features.
+* Move files between directories.
+* Makes music queryable.
+* Keeps large libraries organized.
+* Fast performance.
 
 ## What *seiri* does not do.
 
-*seiri* does not do any of the following. 
+*seiri* does not perform any of the following functions: 
 
 * [Play music.](https://www.foobar2000.org/)
 * [Transcode music.](https://www.freac.org/)
@@ -34,7 +34,7 @@
 
 ## Rules
 
-For *seiri* to work best, you should learn to accept its 6 easy rules.
+For *seiri* to work best, you should accept its 6 easy rules.
 
 1. Single-file CUE rips are **forbidden**
 2. Your entire music library should be under one folder.
@@ -46,18 +46,18 @@ For *seiri* to work best, you should learn to accept its 6 easy rules.
 *seiri* works with most music formats, as long as you follow the rules above.
 
 ## Adding music
-There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you've finished tagging your music, move it to this folder, and *seiri* will move it to the proper place in your library folder, and index it in its database. 
+There is only one way to add music to your library with *seiri*. Next to your library folder, *seiri* will create an *Automatically add to Library* folder. Once you have finished tagging your music, place it into this folder. *Seiri* will then move the songs to the proper place in your library folder, and index it in its database. 
 
-You can delete or re-tag files in your library folder, but do not move it to another folder, or *seiri* will not be able to keep track of it. If you made a tag change, you can ask *seiri* to refresh it, and it will reorganize the track accordingly.
+You can delete or re-tag files in your library folder, but do not move it to another folder, or *seiri* will not be able to keep track of it. If you make a tag change, you can ask *seiri* to refresh it, and the music will be reorganized.
 
-You can make top-level subfolders under the *Automatically add to Library* folder to keep track of the source. For example, if you had a *YouTube*\* folder, and an *iTunes*\* folder, *seiri* will automatically mark whether you got the track from iTunes, or YouTube, and make that queryable.
+You can make top-level subfolders under the *Automatically add to Library* folder to keep track of the source. For example, if you had a *YouTube*\* folder, and an *iTunes*\* folder, *seiri* will automatically mark whether you retrieved the track from iTunes, or YouTube, and make these tags queryable.
 
-<sub>*If you need this, I hope you're not getting your music by ripping from YouTube 😉.</sub> 
+<sub>*I hope you're not getting your music by ripping from YouTube 😉.</sub> 
 
 ## Help, I'm getting *Error* when I try to add tracks!
-Most likely, your track file is corrupted. *seiri* does some preliminary verification of tracks to catch corrupt files. If your file is lossless, you can try re-encoding your file. Otherwise, verify that the track is properly encoded.
+Your track file is likely corrupt. *seiri* does some preliminary verification of tracks to catch corrupt files. If your file is lossless, you can try re-encoding your file. You must otherwise verify that the track is properly encoded.
 
-Other errors include missing tag errors. In that case, ensure your tracks have the correct tag.
+Ensure your tracks have the correct tag otherwise missing tag errors can occur.
 ## Queries
 *seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
 
@@ -89,10 +89,10 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 *seiri* consists of multiple components.
  - *seiri-lib* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs. This library is automatically built as part of *seiri-watcher* and *seiri-client*.
  
- - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. We need this because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
+ - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. This is needed because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
  *libkatatsuki* and its Rust bindings are automatically built when building *seiri-watcher* and *seiri-client*.
  
- - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when needed. You will need to build this with `yarn build`.
+ - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when necessary. You will need to build this with `yarn build`.
  
  - *seiri-watcher* handles watching and adding new tracks. This should be built as part of *seiri-client*.
  
