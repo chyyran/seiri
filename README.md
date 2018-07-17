@@ -5,12 +5,12 @@
 ![screen](https://i.imgur.com/8SQreXO.png)
 
 ## About
-*Seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *Seiri*'s features are constrained to keep large libraries of music consolidated and searachable. *Seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *Seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
+*seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *seiri*'s features are constrained to keep large libraries of music consolidated and searachable. *seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
 
-*Seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
+*seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
 
 
-## *Seiri* features.
+## *seiri* features.
 * Move files between directories.
 * Makes music queryable.
 * Keeps large libraries organized.
@@ -18,7 +18,7 @@
 
 ## What *seiri* does not do.
 
-*Seiri* does not perform any of the following functions: 
+*seiri* does not perform any of the following functions: 
 
 * [Play music.](https://www.foobar2000.org/)
 * [Transcode music.](https://www.freac.org/)
@@ -59,7 +59,7 @@ Your track file is likely corrupt. *seiri* does some preliminary verification of
 
 Ensure your tracks have the correct tag otherwise missing tag errors can occur.
 ## Queries
-*Seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
+*seiri* supports querying your library using *bangs*. All bang inputs are case insensitive.
 
 |Bang|Description|Inputs|
 |----|-----------|------|
@@ -86,7 +86,7 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 
 ## Building
 
-*Seiri* consists of multiple components.
+*seiri* consists of multiple components.
  - *seiri-lib* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs. This library is automatically built as part of *seiri-watcher* and *seiri-client*.
  
  - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. This is needed because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
@@ -105,4 +105,4 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 
 
 ## Privacy Policy
-*Seiri* collects absolutely no personal data.
+*seiri* collects absolutely no personal data.
