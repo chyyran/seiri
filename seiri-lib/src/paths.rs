@@ -3,7 +3,6 @@ use chrono::prelude::*;
 use error::{Error, Result};
 use katatsuki::Track;
 // use tree_magic;
-use std::ascii::AsciiExt;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
@@ -142,9 +141,13 @@ pub fn is_in_hidden_path(file_path: &Path, relative_to: &Path) -> bool {
     get_source(file_path, relative_to).starts_with(".")
 }
 
+fn is_whitespace(string: &str) -> bool {
+    string.chars().all(char::is_whitespace)
+}
+
 fn get_source(track_file_path: &Path, relative_to: &Path) -> String {
     match track_file_path.parent().unwrap().strip_prefix(relative_to) {
-        Ok(source) if source.to_string_lossy().is_ascii_whitespace() => "None".to_owned(),
+        Ok(source) if is_whitespace(&source.to_string_lossy()) => "None".to_owned(),
         Ok(source) => sanitize_file_name(&source.to_string_lossy())
             .split("_")
             .next()

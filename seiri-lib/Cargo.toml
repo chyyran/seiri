@@ -1,6 +1,6 @@
 [package]
 name = "seiri"
-version = "0.7.3"
+version = "0.7.4"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 description = "Support library for seiri music manager"
 license = "MIT"
@@ -21,7 +21,7 @@ app_dirs ="1.2.1"
 r2d2_sqlite = "0.5.0"
 r2d2 = "0.8.2"
 toml = "0.4.6"
-katatsuki = "0.1.6"
+katatsuki = "1.0.3"
 
 [dependencies.rusqlite]
 version = "0.13.0"

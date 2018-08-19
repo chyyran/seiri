@@ -1,6 +1,5 @@
 #![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
-#![feature(ascii_ctype)]
 
 #[macro_use]
 extern crate serde_derive;
