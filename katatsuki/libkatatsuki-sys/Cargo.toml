@@ -1,14 +1,15 @@
 [package]
 name = "libkatatsuki-sys"
-version = "0.3.0"
+version = "1.0.3"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
 links = "libkatatsuki"
 description = "Rust bindings for the Track interface of katatsuki"
 license = "MIT"
-exclude = ["libkatatsuki/src/bin/, libkatatsuki/src/obj/"]
+exclude = ["libkatatsuki/taglib/**/*"]
 
 [dependencies]
 libc = "0.2"
 
 [build-dependencies]
-semver = "0.9.0"
+cmake = "0.1"
+bindgen = "0.26.3"

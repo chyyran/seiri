@@ -12,8 +12,6 @@ use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
 use std::ffi::{CStr, CString};
 use libc::c_char;
-use sys::katatsuki_Track;
-use sys::katatsuki_get_track_data;
 use std::slice::from_raw_parts;
 use imagesize::blob_size;
 
@@ -24,11 +22,6 @@ pub use track::Track;
 pub use track::TrackFileType;
 
 mod track;
-const TICKS_PER_MS: i64 = 10000;
-
-fn ticks_to_ms(ticks: i64) -> i32 {
-    (ticks / TICKS_PER_MS) as i32
-}
 
 fn c_str_to_str(c_str: *const c_char) -> Option<String> {
     if c_str.is_null() {
@@ -43,6 +36,73 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
     }
 }
 
+struct TrackData {
+    raw: *mut sys::track_data
+}
+
+impl TrackData {
+    // Dangerous access here, path not existing is UB.
+    pub fn new(path: &CString) -> TrackData {
+         TrackData { raw: unsafe { sys::create_track_data(path.to_owned().into_raw()) } }
+    }
+
+    pub fn title(&self) -> String {
+        c_str_to_str(unsafe { sys::get_title(self.raw) }).unwrap_or("".to_owned())
+    }
+
+    pub fn artist(&self) -> String {
+        c_str_to_str(unsafe { sys::get_artist(self.raw) }).unwrap_or("".to_owned())
+    }
+
+    pub fn album(&self) -> String {
+        c_str_to_str(unsafe { sys::get_album(self.raw) }).unwrap_or("".to_owned())
+    }
+  
+    pub fn album_artists(&self) -> String {
+        c_str_to_str(unsafe { sys::get_album_artist(self.raw) }).unwrap_or("".to_owned())
+    }
+
+     pub fn musicbrainz_track_id(&self) -> Option<String> {
+        c_str_to_str(unsafe { sys::get_musicbrainz_track_id(self.raw) })
+    }
+
+    pub fn year(&self) -> u32 {
+        unsafe { sys::get_year(self.raw) }
+    }
+
+    pub fn track_number(&self) -> u32 {
+        unsafe { sys::get_track_number(self.raw) }
+    }
+
+    pub fn bitrate(&self) -> i32 {
+        unsafe { sys::get_bitrate(self.raw) }
+    }
+
+    pub fn disc_number(&self) -> u32 {
+        unsafe { sys::get_disc_number(self.raw) }
+    }
+
+    pub fn duration(&self) -> i64 {
+        unsafe { sys::get_duration(self.raw) }
+    }
+
+    pub fn sample_rate(&self) -> i32 {
+        unsafe { sys::get_sample_rate(self.raw) }
+    }
+
+    pub fn file_type(&self) -> TrackFileType {
+       TrackFileType::from_u32(unsafe { sys::get_file_type(self.raw) }).unwrap()
+    }
+
+    pub fn has_front_cover(&self) -> bool {
+        unsafe { sys::has_cover_art(self.raw) }
+    }
+
+    pub unsafe fn cover_bytes(&self, size: usize) -> *const u8 {
+        sys::get_album_art_bytes(self.raw, size) as *const u8 
+    }
+}
+
 impl Track {
     pub fn from_path(path: &Path, source: Option<&str>) -> Result<Track> {
 
@@ -53,8 +113,9 @@ impl Track {
             ))
         } else {
             if let Ok(path_ptr) = CString::new(path.as_os_str().to_string_lossy().as_ref()) {
-                let track: katatsuki_Track = unsafe { katatsuki_get_track_data(path_ptr.into_raw()) };
-                if track.FileType == 0 {
+                let track: TrackData = TrackData::new(&path_ptr);
+
+                if let TrackFileType::Unknown = track.file_type() {
                     Err(Error::new(
                         ErrorKind::InvalidData,
                         format!("File {:?} is unsupported", path),
@@ -62,8 +123,8 @@ impl Track {
                 } else {
                     let mut fcw = 0;
                     let mut fch = 0;
-                    if !track.CoverBytes.is_null() {
-                        let slice = unsafe { from_raw_parts(track.CoverBytes, 32) };
+                    if track.has_front_cover() {
+                        let slice = unsafe { from_raw_parts(track.cover_bytes(32), 32) };
                         if let Ok(size) = blob_size(slice) {
                             fcw = size.width as i32;
                             fch = size.height as i32;
@@ -72,26 +133,25 @@ impl Track {
                     
                     Ok(Track {
                         file_path: path.to_owned(),
-                        file_type: TrackFileType::from_u32(track.FileType).unwrap(),
-                        title: c_str_to_str(track.Title).unwrap_or("".to_owned()),
-                        artist: c_str_to_str(track.Artist).unwrap_or("".to_owned()),
-                        album: c_str_to_str(track.Album).unwrap_or("".to_owned()),
-                        album_artists: c_str_to_str(track.AlbumArtists)
-                            .unwrap_or("".to_owned())
+                        file_type: track.file_type(),
+                        title: track.title(),
+                        artist: track.artist(),
+                        album: track.album(),
+                        album_artists: track.album_artists()
                             .split(';')
                             .map(|c| c.to_owned())
                             .collect::<Vec<String>>(),
-                        year: track.Year as i32,
-                        track_number: track.TrackNumber as i32,
-                        musicbrainz_track_id: c_str_to_str(track.MusicBrainzTrackId),
-                        has_front_cover: track.HasFrontCover,
+                        year: track.year() as i32,
+                        track_number: track.track_number() as i32,
+                        musicbrainz_track_id: track.musicbrainz_track_id(),
+                        has_front_cover: track.has_front_cover(),
                         front_cover_width: fcw,
                         front_cover_height: fch,
-                        bitrate: track.Bitrate,
-                        sample_rate: track.SampleRate,
+                        bitrate: track.bitrate(),
+                        sample_rate: track.sample_rate(),
                         source: source.unwrap_or("None").to_owned(),
-                        disc_number: track.DiscNumber as i32,
-                        duration: ticks_to_ms(track.Duration),
+                        disc_number: track.disc_number() as i32,
+                        duration: track.duration() as i32,
                         updated: Local::now().format("%Y-%m-%d").to_string(),
                     })
                 }
