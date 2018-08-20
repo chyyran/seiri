@@ -9,7 +9,7 @@ private:
 	std::shared_ptr<TagLib::FileRef> f;
 public:
 	TrackData(const char* track_path);
-	~TrackData();
+	virtual ~TrackData() {};
 	const enum track_file_type GetFileType();
 	const TagLib::String GetTitle();
 	const TagLib::String GetArtist();
@@ -23,5 +23,5 @@ public:
 	const int GetSampleRate();
 	const unsigned int GetDiscNumber();
 	const long long GetDuration();
-	const std::optional<TagLib::ByteVector> GetAlbumArtBytes();
+	std::unique_ptr<TagLib::ByteVector> GetAlbumArtBytes();
 };

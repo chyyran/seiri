@@ -12,10 +12,10 @@ use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
 use std::ffi::NulError;
 use std::ffi::{CStr, CString};
-use libc::c_char;
+use std::os::raw::{c_char, c_void};
 use std::slice::from_raw_parts;
 use imagesize::blob_size;
-
+use std::io::{Read, BufReader};
 use chrono::Local;
 
 pub use num_traits::{FromPrimitive, ToPrimitive};
@@ -30,11 +30,15 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
     }
 
     let bytes = unsafe { CStr::from_ptr(c_str).to_bytes() };
-    if bytes.is_empty() {
+    let result = if bytes.is_empty() {
         None
     } else {
         Some(String::from_utf8_lossy(bytes).to_string())
-    }
+    };
+
+    unsafe { sys::free_allocated_data(c_str as *mut c_void); }
+
+    result
 }
 
 struct TrackData {
@@ -93,15 +97,26 @@ impl TrackData {
 
     pub fn file_type(&self) -> TrackFileType {
         let file_type = unsafe { sys::get_file_type(self.raw) };
-        TrackFileType::from_u32(file_type).unwrap()
+        TrackFileType::from_u32(file_type as u32).unwrap()
     }
 
     pub fn has_front_cover(&self) -> bool {
         unsafe { sys::has_album_art(self.raw) }
     }
 
-    pub unsafe fn cover_bytes(&self, size: usize) -> *const u8 {
-        sys::get_album_art_bytes(self.raw, size) as *const u8 
+    pub unsafe fn cover_bytes(&self, size: usize) -> CoverBytes {
+        CoverBytes { raw: sys::get_album_art_all_bytes(self.raw) as *const u8 }
+    }
+}
+
+
+struct CoverBytes {
+    raw: *const u8
+}
+
+impl Drop for CoverBytes {
+    fn drop(&mut self) {
+        unsafe { sys::free_allocated_data(self.raw as *mut c_void) }
     }
 }
 
@@ -145,11 +160,27 @@ impl Track {
                     let mut fcw = 0;
                     let mut fch = 0;
                     if track.has_front_cover() {
-                        let slice = unsafe { from_raw_parts(track.cover_bytes(32), 32) };
-                        if let Ok(size) = blob_size(slice) {
-                            fcw = size.width as i32;
-                            fch = size.height as i32;
+                        let bytes = unsafe { track.cover_bytes(384) };
+                        let slice = unsafe { from_raw_parts(bytes.raw, 384) };
+                        println!("{:X?}", slice);
+                        match blob_size(slice) {
+                            Ok(size) => {
+                                fcw = size.width as i32;
+                                fch = size.height as i32;
+                                println!("Width: {}, Height: {}", fcw, fch);
+
+                            }
+                            Err(err) => println!("{:?}", err)
                         }
+                        // if let Ok(size) = blob_size(slice) {
+                        //     fcw = size.width as i32;
+                        //     fch = size.height as i32;
+                        //     println!("Width: {}, Height: {}", fcw, fch);
+                        // } else {
+                        //     println!("Cover but unreadable");
+                        // }
+                    } else {
+                        println!("No front cover");
                     }
 
 

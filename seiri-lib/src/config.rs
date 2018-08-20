@@ -1,10 +1,9 @@
-use std::env::home_dir;
 use std::default::Default;
 use std::path::Path;
 use paths::*;
 use std::fs;
 use toml;
-
+use dirs::home_dir;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {

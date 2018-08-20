@@ -13,6 +13,8 @@
 #include "taglib/opusfile.h"
 #include "taglib/oggflacfile.h"
 #include "taglib/tstring.h"
+#include "taglib/xiphcomment.h"
+#include "taglib/flacpicture.h"
 #include <array>
 #include <optional>
 #include <iostream>
@@ -43,21 +45,38 @@ const unsigned int TrackData::GetYear() {
 }
 
 
-const std::optional<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
-    auto *flacFile = dynamic_cast<TagLib::FLAC::File *>(f->file());
-    if (flacFile) {
+unique_ptr<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
+    if (auto flacFile = dynamic_cast<TagLib::FLAC::File *>(f->file())) {
         const TagLib::List<TagLib::FLAC::Picture *> pictureList = flacFile->pictureList();
         // Prefer FrontCover.
         for (const TagLib::FLAC::Picture* picture : pictureList) {
             if (picture->type() == TagLib::FLAC::Picture::FrontCover) {
-                return std::optional<TagLib::ByteVector>{picture->data()};
+                return make_unique<TagLib::ByteVector>(std::move(picture->data()));
             }
         }
 
         // Settle for Other.
         for (const TagLib::FLAC::Picture* picture : pictureList) {
             if (picture->type() == TagLib::FLAC::Picture::Other) {
-                return std::optional<TagLib::ByteVector>{picture->data()};
+                return make_unique<TagLib::ByteVector>(std::move(picture->data()));
+            }
+        }
+    }
+    
+    // OGG Files tag()->pictures() is unimplemented in taglib2.
+    // Use the legacy method of xiphComment picture list then.
+
+    if (auto xiphComment = dynamic_cast<TagLib::Ogg::XiphComment *>(f->file()->tag())) {
+        const TagLib::List<TagLib::FLAC::Picture *> pictureList = xiphComment->pictureList();
+        for (const TagLib::FLAC::Picture* picture : pictureList) {
+            if (picture->type() == TagLib::FLAC::Picture::FrontCover) {
+                return make_unique<TagLib::ByteVector>(std::move(picture->data()));
+            }
+        }
+
+         for (const TagLib::FLAC::Picture* picture : pictureList) {
+            if (picture->type() == TagLib::FLAC::Picture::Other) {
+                return make_unique<TagLib::ByteVector>(std::move(picture->data()));
             }
         }
     }
@@ -66,12 +85,12 @@ const std::optional<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
     // Prefer FrontCover, but settle for other.
     if (pictureMap.contains(TagLib::Picture::Type::FrontCover)) {
         auto picture = pictureMap[TagLib::Picture::Type::FrontCover].front();
-        return std::optional<TagLib::ByteVector>{picture.data()};
+            return make_unique<TagLib::ByteVector>(std::move(picture.data()));
     } else if (pictureMap.contains(TagLib::Picture::Type::Other)) {
         auto picture = pictureMap[TagLib::Picture::Type::Other].front();
-        return std::optional<TagLib::ByteVector>{picture.data()};
+            return make_unique<TagLib::ByteVector>(std::move(picture.data()));
     }
-    return std::nullopt;
+    return nullptr;
 }
 
 const unsigned int TrackData::GetTrackNumber() {
@@ -79,7 +98,7 @@ const unsigned int TrackData::GetTrackNumber() {
 }
 
 const bool TrackData::HasAlbumArt() {
-    return GetAlbumArtBytes().has_value();
+    return GetAlbumArtBytes() != nullptr;
 }
 
 const int TrackData::GetBitrate() {

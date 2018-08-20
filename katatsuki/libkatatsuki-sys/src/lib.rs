@@ -16,6 +16,9 @@ extern "C" {
     pub fn delete_track_data(track_path: *mut track_data);
 }
 extern "C" {
+    pub fn free_allocated_data(data: *mut ::std::os::raw::c_void);
+}
+extern "C" {
     pub fn get_title(track_path: *mut track_data)
      -> *const ::std::os::raw::c_char;
 }
@@ -59,15 +62,15 @@ extern "C" {
 }
 extern "C" {
     pub fn get_album_art_all_bytes(track_data: *mut track_data)
-     -> *const ::std::os::raw::c_char;
+     -> *const ::std::os::raw::c_uchar;
 }
 extern "C" {
     pub fn get_album_art_bytes(track_data: *mut track_data, size: usize)
-     -> *const ::std::os::raw::c_char;
+     -> *const ::std::os::raw::c_uchar;
 }
 extern "C" {
     pub fn get_file_type(track_data: *mut track_data)
-     -> ::std::os::raw::c_uint;
+     -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn has_album_art(track_data: *mut track_data) -> bool;

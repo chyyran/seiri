@@ -7,7 +7,6 @@
 #include <utility>
 #include <optional>
 #include <iostream>
-using namespace std;
 
 extern "C" const int get_file_type(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
@@ -78,22 +77,23 @@ extern "C" const int get_sample_rate(track_data* track_data) {
     return trackData->GetSampleRate();
 }
 
-extern "C" const char* get_album_art_all_bytes(track_data* track_data) {
+extern "C" const unsigned char* get_album_art_all_bytes(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
     auto bytes = trackData->GetAlbumArtBytes();
-    if (bytes.has_value()) {
-        auto byteVectorCopy = new TagLib::ByteVector(bytes.value());
-        return byteVectorCopy->data();
+    if (bytes) {
+        unsigned char *copy = new unsigned char[bytes->size()];
+        memcpy(copy, bytes->data(), bytes->size());
+        return copy;
     }
     return nullptr;
 }
 
-extern "C" const char* get_album_art_bytes(track_data* track_data, size_t size) {
+extern "C" const unsigned char* get_album_art_bytes(track_data* track_data, size_t size) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
     auto bytes = trackData->GetAlbumArtBytes();
-    if (bytes.has_value()) {
-        char *copy = new char[size];
-        memcpy(copy, bytes.value().data(), size);
+    if (bytes) {
+        unsigned char *copy = new unsigned char[size];
+        memcpy(copy, bytes->data(), size);
         return copy;
     }
     return nullptr;
@@ -102,4 +102,8 @@ extern "C" const char* get_album_art_bytes(track_data* track_data, size_t size) 
 extern "C" const bool has_album_art(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
     return trackData->HasAlbumArt();
+}
+
+extern "C" void free_allocated_data(void* data) {
+    std::free(data);
 }

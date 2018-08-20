@@ -1,4 +1,3 @@
-#![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
 
 #[macro_use]
@@ -18,6 +17,7 @@ extern crate rusqlite;
 extern crate app_dirs;
 extern crate toml;
 extern crate katatsuki;
+extern crate dirs;
 
 mod bangs;
 mod error;
