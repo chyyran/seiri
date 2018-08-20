@@ -70,5 +70,5 @@ extern "C" {
      -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    pub fn has_cover_art(track_data: *mut track_data) -> bool;
+    pub fn has_album_art(track_data: *mut track_data) -> bool;
 }

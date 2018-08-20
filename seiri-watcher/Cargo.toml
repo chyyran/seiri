@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 include = ["tools/**/*"]
 
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C target-feature=+crt-static"]
+
 [dependencies]
 notify = "4.0.3"
 rand = "0.4.2"

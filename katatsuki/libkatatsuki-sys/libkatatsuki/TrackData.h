@@ -6,9 +6,10 @@
 
 class TrackData {
 private:
-	TagLib::FileRef& f;
+	std::shared_ptr<TagLib::FileRef> f;
 public:
-	TrackData(TagLib::FileRef&& _f);
+	TrackData(const char* track_path);
+	~TrackData();
 	const enum track_file_type GetFileType();
 	const TagLib::String GetTitle();
 	const TagLib::String GetArtist();
@@ -17,7 +18,7 @@ public:
 	const TagLib::String GetMusicBrainzTrackId();
 	const unsigned int GetYear();
 	const unsigned int GetTrackNumber();
-	const bool HasCoverArt();
+	const bool HasAlbumArt();
 	const int GetBitrate();
 	const int GetSampleRate();
 	const unsigned int GetDiscNumber();

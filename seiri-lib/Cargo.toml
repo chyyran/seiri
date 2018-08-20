@@ -21,7 +21,9 @@ app_dirs ="1.2.1"
 r2d2_sqlite = "0.5.0"
 r2d2 = "0.8.2"
 toml = "0.4.6"
-katatsuki = "1.0.3"
+
+[dependencies.katatsuki]
+path = "../katatsuki/katatsuki-rs"
 
 [dependencies.rusqlite]
 version = "0.13.0"

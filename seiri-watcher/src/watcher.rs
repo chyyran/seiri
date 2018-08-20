@@ -8,7 +8,6 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
-use std::thread;
 use std::time::Duration;
 use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};

@@ -38,9 +38,9 @@ const char *get_album_art_all_bytes(track_data *track_data);
 
 const char *get_album_art_bytes(track_data* track_data, size_t size);
 
-const unsigned int get_file_type(track_data *track_data);
+const int get_file_type(track_data *track_data);
 
-const bool has_cover_art(track_data *track_data);
+const bool has_album_art(track_data *track_data);
 #ifdef __cplusplus
 }
 #endif

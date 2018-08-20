@@ -10,6 +10,7 @@ extern crate libkatatsuki_sys as sys;
 
 use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
+use std::ffi::NulError;
 use std::ffi::{CStr, CString};
 use libc::c_char;
 use std::slice::from_raw_parts;
@@ -91,16 +92,31 @@ impl TrackData {
     }
 
     pub fn file_type(&self) -> TrackFileType {
-       TrackFileType::from_u32(unsafe { sys::get_file_type(self.raw) }).unwrap()
+        let file_type = unsafe { sys::get_file_type(self.raw) };
+        TrackFileType::from_u32(file_type).unwrap()
     }
 
     pub fn has_front_cover(&self) -> bool {
-        unsafe { sys::has_cover_art(self.raw) }
+        unsafe { sys::has_album_art(self.raw) }
     }
 
     pub unsafe fn cover_bytes(&self, size: usize) -> *const u8 {
         sys::get_album_art_bytes(self.raw, size) as *const u8 
     }
+}
+
+impl Drop for TrackData {
+    fn drop(&mut self) {
+        unsafe { sys::delete_track_data(self.raw) }
+    }
+}
+#[derive(Debug)]
+pub enum FileError {
+    OpenFailure,
+    SaveFailure,
+    PathAsString,
+    NullPathString(NulError),
+    InvalidTagFile
 }
 
 impl Track {
@@ -112,9 +128,14 @@ impl Track {
                 format!("File {:?} not found.", path),
             ))
         } else {
-            if let Ok(path_ptr) = CString::new(path.as_os_str().to_string_lossy().as_ref()) {
+            if let Ok(path_ptr) = path
+            .to_owned()
+            .to_str()
+            .ok_or(FileError::PathAsString)
+            .and_then(|path| {
+                CString::new(path).map_err(|err| FileError::NullPathString(err))
+            }) {
                 let track: TrackData = TrackData::new(&path_ptr);
-
                 if let TrackFileType::Unknown = track.file_type() {
                     Err(Error::new(
                         ErrorKind::InvalidData,
@@ -130,8 +151,9 @@ impl Track {
                             fch = size.height as i32;
                         }
                     }
-                    
-                    Ok(Track {
+
+
+                    let track = Ok(Track {
                         file_path: path.to_owned(),
                         file_type: track.file_type(),
                         title: track.title(),
@@ -153,7 +175,9 @@ impl Track {
                         disc_number: track.disc_number() as i32,
                         duration: track.duration() as i32,
                         updated: Local::now().format("%Y-%m-%d").to_string(),
-                    })
+                    });
+                    drop(path_ptr);
+                    track
                 }
             } else {
                 Err(Error::new(

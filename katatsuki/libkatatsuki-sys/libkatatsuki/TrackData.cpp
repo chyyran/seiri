@@ -12,6 +12,7 @@
 #include "taglib/vorbisfile.h"
 #include "taglib/opusfile.h"
 #include "taglib/oggflacfile.h"
+#include "taglib/tstring.h"
 #include <array>
 #include <optional>
 #include <iostream>
@@ -19,25 +20,31 @@
 #include "taglib/tlist.h"
 using namespace std;
 
-TrackData::TrackData(TagLib::FileRef&& _f) : f(_f) {
-    f = _f;
+TrackData::TrackData(const char* track_path) {
+    TagLib::String path(track_path, TagLib::String::UTF8);
+    
+    #ifdef _WIN32
+    f = make_shared<TagLib::FileRef>(TagLib::FileName(path.toWString().data()), true, TagLib::AudioProperties::Accurate);
+    #else
+    f = make_shared<TagLib::FileRef>(TagLib::FileName(path.to8Bit(true)), true, TagLib::AudioProperties::Accurate);
+    #endif
 }
 
 const TagLib::String TrackData::GetTitle() {
-    return this->f.tag()->title();
+    return f->tag()->title();
 }
 
 const TagLib::String TrackData::GetArtist() {
-    return this->f.tag()->artist();
+    return f->tag()->artist();
 }
 
 const unsigned int TrackData::GetYear() {
-    return this->f.tag()->year();
+    return f->tag()->year();
 }
 
 
 const std::optional<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
-    auto *flacFile = dynamic_cast<TagLib::FLAC::File *>(this->f.file());
+    auto *flacFile = dynamic_cast<TagLib::FLAC::File *>(f->file());
     if (flacFile) {
         const TagLib::List<TagLib::FLAC::Picture *> pictureList = flacFile->pictureList();
         // Prefer FrontCover.
@@ -55,7 +62,7 @@ const std::optional<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
         }
     }
 
-    auto pictureMap = this->f.tag()->pictures();
+    auto pictureMap = f->tag()->pictures();
     // Prefer FrontCover, but settle for other.
     if (pictureMap.contains(TagLib::Picture::Type::FrontCover)) {
         auto picture = pictureMap[TagLib::Picture::Type::FrontCover].front();
@@ -68,37 +75,36 @@ const std::optional<TagLib::ByteVector> TrackData::GetAlbumArtBytes() {
 }
 
 const unsigned int TrackData::GetTrackNumber() {
-    return this->f.tag()->track();
+    return f->tag()->track();
 }
 
-const bool TrackData::HasCoverArt() {
-    return this->GetAlbumArtBytes().has_value();
+const bool TrackData::HasAlbumArt() {
+    return GetAlbumArtBytes().has_value();
 }
 
 const int TrackData::GetBitrate() {
-    return this->f.audioProperties()->bitrate();
+    return f->audioProperties()->bitrate();
 }
 
 const int TrackData::GetSampleRate() {
-    return this->f.audioProperties()->sampleRate();
+    return f->audioProperties()->sampleRate();
 }
 
 const unsigned int TrackData::GetDiscNumber() {
-    if(this->f.tag()->properties()["DISCNUMBER"].size() != 0) {
-        TagLib::String discNumber = this->f.tag()->properties()["DISCNUMBER"].front();
+    if(!f->tag()->properties()["DISCNUMBER"].isEmpty()) {
+        TagLib::String discNumber = f->tag()->properties()["DISCNUMBER"].front();
         return static_cast<unsigned int>(stoul(discNumber.to8Bit()));
     }
     return 1;
 }
 
 const long long TrackData::GetDuration() {
-    return this->f.audioProperties()->lengthInMilliseconds();
+    return f->audioProperties()->lengthInMilliseconds();
 }
-
 
 const enum track_file_type TrackData::GetFileType() {
 
-    if (auto mp3File = dynamic_cast<TagLib::MPEG::File *>(this->f.file())) {
+    if (auto mp3File = dynamic_cast<TagLib::MPEG::File *>(f->file())) {
         // https://github.com/mono/taglib-sharp/blob/b1155885656c9625c2cc6d928b9329e2a5206048/src/TagLib/Mpeg/AudioHeader.cs#L519
         // Mimics taglib-sharp behaviour, even though VBR files may not necessarily have a xing header.
         if (mp3File->audioProperties()->xingHeader()) {
@@ -106,7 +112,7 @@ const enum track_file_type TrackData::GetFileType() {
         }
         return track_file_type::MP3CBR;
     }
-    if (auto mp4File = dynamic_cast<TagLib::MP4::File *>(this->f.file())) {
+    if (auto mp4File = dynamic_cast<TagLib::MP4::File *>(f->file())) {
         switch (mp4File->audioProperties()->codec()) {
             case TagLib::MP4::AudioProperties::Codec::AAC:
                 return track_file_type::AAC;
@@ -117,41 +123,45 @@ const enum track_file_type TrackData::GetFileType() {
                 return get_alac_type(bitDepth);
         }
     }
-    if (auto flacFile = dynamic_cast<TagLib::FLAC::File *>(this->f.file())) {
+    if (auto flacFile = dynamic_cast<TagLib::FLAC::File *>(f->file())) {
         int bitDepth = flacFile->audioProperties()->bitsPerSample();
         return get_flac_type(bitDepth);
     }
-    if (auto oggFlacFile = dynamic_cast<TagLib::Ogg::FLAC::File *>(this->f.file())) {
+    if (auto oggFlacFile = dynamic_cast<TagLib::Ogg::FLAC::File *>(f->file())) {
         int bitDepth = oggFlacFile->audioProperties()->bitsPerSample();
         return get_flac_type(bitDepth);
     }
-    if (auto aiffFile = dynamic_cast<TagLib::RIFF::AIFF::File *>(this -> f.file())) {
+    if (auto aiffFile = dynamic_cast<TagLib::RIFF::AIFF::File *>(this -> f->file())) {
         int bitDepth = aiffFile->audioProperties()->bitsPerSample();
         return get_aiff_type(bitDepth);
     }
-    if (auto apeFile = dynamic_cast<TagLib::APE::File *>(this->f.file())) {
+    if (auto apeFile = dynamic_cast<TagLib::APE::File *>(f->file())) {
         int bitDepth = apeFile->audioProperties()->bitsPerSample();
         return get_monkeys_audio_type(bitDepth);
     }
-    if (dynamic_cast<TagLib::Ogg::Vorbis::File *>(this->f.file())) {
+    if (dynamic_cast<TagLib::Ogg::Vorbis::File *>(f->file())) {
         return track_file_type::Vorbis;
     }
-    if (dynamic_cast<TagLib::Ogg::Opus::File *>(this->f.file())) {
+    if (dynamic_cast<TagLib::Ogg::Opus::File *>(f->file())) {
         return track_file_type::Opus;
     }
-
-    const track_file_type result = track_file_type::Unknown;
-    return result;
+    return track_file_type::Unknown;
 }
 
 const TagLib::String TrackData::GetAlbum() {
-    return this->f.tag()->album();
+    return f->tag()->album();
 }
 
 const TagLib::String TrackData::GetAlbumArtists() {
-    return join(this->f.tag()->properties()["ALBUMARTIST"], ";");
+    if (!f->tag()->properties()["ALBUMARTIST"].isEmpty()) {
+        return join(f->tag()->properties()["ALBUMARTIST"], ";");
+    }
+    return TagLib::String();
 }
 
 const TagLib::String TrackData::GetMusicBrainzTrackId() {
-    return this->f.tag()->properties()["MUSICBRAINZ_TRACKID"].front();
+    if (!f->tag()->properties()["MUSICBRAINZ_TRACKID"].isEmpty()) {
+        return f->tag()->properties()["MUSICBRAINZ_TRACKID"].front();
+    }
+    return TagLib::String();
 }

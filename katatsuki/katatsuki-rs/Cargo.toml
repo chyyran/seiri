@@ -10,5 +10,7 @@ libc = "0.2"
 chrono = "0.4"
 enum-primitive-derive = "^0.1"
 num-traits = "^0.1"
-libkatatsuki-sys = "1.0.3"
 imagesize = "0.5.1"
+
+[dependencies.libkatatsuki-sys]
+path = "../libkatatsuki-sys"

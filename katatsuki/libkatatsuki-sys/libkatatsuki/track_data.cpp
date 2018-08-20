@@ -6,20 +6,20 @@
 #include "TrackData.h"
 #include <utility>
 #include <optional>
+#include <iostream>
+using namespace std;
 
-extern "C" const unsigned int get_file_type(track_data* track_data) {
+extern "C" const int get_file_type(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
-    return (unsigned int) trackData->GetFileType();
+    return trackData->GetFileType();
 }
 
 extern "C" track_data * create_track_data(const char* track_path) {
-    auto track = new TagLib::FileName(track_path);
-    auto ref = new TagLib::FileRef(*track);
-    auto trackData = new TrackData(std::move(*ref));
+    auto trackData = new TrackData(track_path);
     return reinterpret_cast<track_data*>(trackData);
 }
 
-extern "C" void free_track_data(track_data* track_data) {
+extern "C" void delete_track_data(track_data* track_data) {
     delete reinterpret_cast<TrackData*>(track_data);
 }
 
@@ -101,6 +101,5 @@ extern "C" const char* get_album_art_bytes(track_data* track_data, size_t size) 
 
 extern "C" const bool has_album_art(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);
-    auto bytes = trackData->GetAlbumArtBytes();
-    return bytes.has_value();
+    return trackData->HasAlbumArt();
 }
