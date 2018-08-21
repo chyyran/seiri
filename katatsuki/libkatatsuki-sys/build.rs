@@ -2,22 +2,20 @@ extern crate cmake;
 extern crate bindgen;
 
 use std::path::PathBuf;
-use std::env;
 
 fn main() {
   let dst = cmake::Config::new("libkatatsuki")
+            .generator("NMake Makefiles")
             .build_target("katatsuki")
             .static_crt(true)
-            .cxxflag("/NODEFAULTLIB:msvcrt.lib")
-            .cxxflag("/MT")
             .always_configure(true)
             .profile("Release")
+            .very_verbose(true)
             .build();
   //let profile = env::var("PROFILE").unwrap();
   let mut taglib_dst = PathBuf::from("libkatatsuki");
   let mut lib_dst = PathBuf::from(format!("{}", dst.display()));
   lib_dst.push("build");
-  lib_dst.push("Release");
 
   taglib_dst.push("taglib");
   taglib_dst.push("lib");

@@ -1,25 +1,27 @@
 #include "TrackData.h"
 #include "StringUtils.h"
 #include "track_file_type.h"
-#include "taglib/tpicture.h"
-#include "taglib/tpicturemap.h"
-#include "taglib/flacfile.h"
-#include "taglib/aifffile.h"
-#include "taglib/apefile.h"
-#include "taglib/mpegfile.h"
-#include "taglib/mp4file.h"
-#include "taglib/oggfile.h"
-#include "taglib/vorbisfile.h"
-#include "taglib/opusfile.h"
-#include "taglib/oggflacfile.h"
-#include "taglib/tstring.h"
-#include "taglib/xiphcomment.h"
-#include "taglib/flacpicture.h"
+
+#include <tpicture.h>
+#include <tpicturemap.h>
+#include <flacfile.h>
+#include <aifffile.h>
+#include <apefile.h>
+#include <mpegfile.h>
+#include <mp4file.h>
+#include <oggfile.h>
+#include <vorbisfile.h>
+#include <opusfile.h>
+#include <oggflacfile.h>
+#include <tstring.h>
+#include <xiphcomment.h>
+#include <flacpicture.h>
+#include <tlist.h>
+
 #include <array>
 #include <optional>
 #include <iostream>
 #include <utility>
-#include "taglib/tlist.h"
 using namespace std;
 
 TrackData::TrackData(const char* track_path) {

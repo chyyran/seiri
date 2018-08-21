@@ -2,21 +2,21 @@
 extern crate enum_primitive_derive;
 
 extern crate chrono;
+extern crate imagesize;
 extern crate libc;
 extern crate num_traits;
-extern crate imagesize;
 
 extern crate libkatatsuki_sys as sys;
 
-use std::io::{Error, ErrorKind, Result};
-use std::path::Path;
+use chrono::Local;
+use imagesize::blob_size;
 use std::ffi::NulError;
 use std::ffi::{CStr, CString};
+use std::io::{BufReader, Read};
+use std::io::{Error, ErrorKind, Result};
 use std::os::raw::{c_char, c_void};
+use std::path::Path;
 use std::slice::from_raw_parts;
-use imagesize::blob_size;
-use std::io::{Read, BufReader};
-use chrono::Local;
 
 pub use num_traits::{FromPrimitive, ToPrimitive};
 pub use track::Track;
@@ -36,19 +36,23 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
         Some(String::from_utf8_lossy(bytes).to_string())
     };
 
-    unsafe { sys::free_allocated_data(c_str as *mut c_void); }
+    unsafe {
+        sys::free_allocated_data(c_str as *mut c_void);
+    }
 
     result
 }
 
 struct TrackData {
-    raw: *mut sys::track_data
+    raw: *mut sys::track_data,
 }
 
 impl TrackData {
     // Dangerous access here, path not existing is UB.
     pub fn new(path: &CString) -> TrackData {
-         TrackData { raw: unsafe { sys::create_track_data(path.to_owned().into_raw()) } }
+        TrackData {
+            raw: unsafe { sys::create_track_data(path.to_owned().into_raw()) },
+        }
     }
 
     pub fn title(&self) -> String {
@@ -62,12 +66,12 @@ impl TrackData {
     pub fn album(&self) -> String {
         c_str_to_str(unsafe { sys::get_album(self.raw) }).unwrap_or("".to_owned())
     }
-  
+
     pub fn album_artists(&self) -> String {
         c_str_to_str(unsafe { sys::get_album_artist(self.raw) }).unwrap_or("".to_owned())
     }
 
-     pub fn musicbrainz_track_id(&self) -> Option<String> {
+    pub fn musicbrainz_track_id(&self) -> Option<String> {
         c_str_to_str(unsafe { sys::get_musicbrainz_track_id(self.raw) })
     }
 
@@ -105,13 +109,14 @@ impl TrackData {
     }
 
     pub unsafe fn cover_bytes(&self, size: usize) -> CoverBytes {
-        CoverBytes { raw: sys::get_album_art_all_bytes(self.raw) as *const u8 }
+        CoverBytes {
+            raw: sys::get_album_art_all_bytes(self.raw) as *const u8,
+        }
     }
 }
 
-
 struct CoverBytes {
-    raw: *const u8
+    raw: *const u8,
 }
 
 impl Drop for CoverBytes {
@@ -131,12 +136,11 @@ pub enum FileError {
     SaveFailure,
     PathAsString,
     NullPathString(NulError),
-    InvalidTagFile
+    InvalidTagFile,
 }
 
 impl Track {
     pub fn from_path(path: &Path, source: Option<&str>) -> Result<Track> {
-
         if !path.exists() {
             Err(Error::new(
                 ErrorKind::NotFound,
@@ -144,12 +148,11 @@ impl Track {
             ))
         } else {
             if let Ok(path_ptr) = path
-            .to_owned()
-            .to_str()
-            .ok_or(FileError::PathAsString)
-            .and_then(|path| {
-                CString::new(path).map_err(|err| FileError::NullPathString(err))
-            }) {
+                .to_owned()
+                .to_str()
+                .ok_or(FileError::PathAsString)
+                .and_then(|path| CString::new(path).map_err(|err| FileError::NullPathString(err)))
+            {
                 let track: TrackData = TrackData::new(&path_ptr);
                 if let TrackFileType::Unknown = track.file_type() {
                     Err(Error::new(
@@ -162,27 +165,25 @@ impl Track {
                     if track.has_front_cover() {
                         let bytes = unsafe { track.cover_bytes(384) };
                         let slice = unsafe { from_raw_parts(bytes.raw, 384) };
-                        println!("{:X?}", slice);
-                        match blob_size(slice) {
-                            Ok(size) => {
-                                fcw = size.width as i32;
-                                fch = size.height as i32;
-                                println!("Width: {}, Height: {}", fcw, fch);
-
-                            }
-                            Err(err) => println!("{:?}", err)
+                        // match blob_size(slice) {
+                        //     Ok(size) => {
+                        //         fcw = size.width as i32;
+                        //         fch = size.height as i32;
+                        //     }
+                        //     Err(err) => println!("{:?}", err)
+                        // }
+                        if let Ok(size) = blob_size(slice) {
+                            fcw = size.width as i32;
+                            fch = size.height as i32;
+                            // println!("Width: {}, Height: {}", fcw, fch);
                         }
-                        // if let Ok(size) = blob_size(slice) {
-                        //     fcw = size.width as i32;
-                        //     fch = size.height as i32;
-                        //     println!("Width: {}, Height: {}", fcw, fch);
                         // } else {
                         //     println!("Cover but unreadable");
                         // }
-                    } else {
-                        println!("No front cover");
+                        // } else {
+                        //     println!("No front cover");
+                        // }
                     }
-
 
                     let track = Ok(Track {
                         file_path: path.to_owned(),
@@ -190,7 +191,8 @@ impl Track {
                         title: track.title(),
                         artist: track.artist(),
                         album: track.album(),
-                        album_artists: track.album_artists()
+                        album_artists: track
+                            .album_artists()
                             .split(';')
                             .map(|c| c.to_owned())
                             .collect::<Vec<String>>(),

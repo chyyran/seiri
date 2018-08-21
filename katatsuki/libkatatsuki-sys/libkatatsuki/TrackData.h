@@ -1,6 +1,7 @@
 #include "track_file_type.h"
-#include "taglib/tstring.h"
-#include "taglib/fileref.h"
+
+#include <tstring.h>
+#include <fileref.h>
 #include <array>
 #include <optional>
 

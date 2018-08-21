@@ -1,8 +1,10 @@
 #include "track_data.h"
-#include "taglib/tstring.h"
-#include "taglib/fileref.h"
-#include "taglib/tfile.h"
-#include "taglib/tbytevector.h"
+
+#include <tstring.h>
+#include <fileref.h>
+#include <tfile.h>
+#include <tbytevector.h>
+
 #include "TrackData.h"
 #include <utility>
 #include <optional>

@@ -5,7 +5,6 @@ authors = ["Ronny Chan <ronny6993@gmail.com>"]
 links = "libkatatsuki"
 description = "Rust bindings for the Track interface of katatsuki"
 license = "MIT"
-exclude = ["libkatatsuki/taglib/**/*"]
 
 [dependencies]
 libc = "0.2"
