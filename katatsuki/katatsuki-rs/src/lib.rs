@@ -12,7 +12,6 @@ use chrono::Local;
 use imagesize::blob_size;
 use std::ffi::NulError;
 use std::ffi::{CStr, CString};
-use std::io::{BufReader, Read};
 use std::io::{Error, ErrorKind, Result};
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
@@ -110,7 +109,7 @@ impl TrackData {
 
     pub unsafe fn cover_bytes(&self, size: usize) -> CoverBytes {
         CoverBytes {
-            raw: sys::get_album_art_all_bytes(self.raw) as *const u8,
+            raw: sys::get_album_art_bytes(self.raw, size) as *const u8,
         }
     }
 }

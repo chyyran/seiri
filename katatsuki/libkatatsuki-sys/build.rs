@@ -1,6 +1,7 @@
 extern crate cmake;
 extern crate bindgen;
 
+use std::env;
 use std::path::PathBuf;
 
 fn main() {
@@ -13,10 +14,12 @@ fn main() {
             .very_verbose(true)
             .build();
   //let profile = env::var("PROFILE").unwrap();
-  let mut taglib_dst = PathBuf::from("libkatatsuki");
   let mut lib_dst = PathBuf::from(format!("{}", dst.display()));
+  let mut taglib_dst = PathBuf::from(format!("{}", dst.display()));
+
   lib_dst.push("build");
 
+  taglib_dst.push("build");
   taglib_dst.push("taglib");
   taglib_dst.push("lib");
 
@@ -31,7 +34,7 @@ fn main() {
   //   .generate()
   //   .expect("Unable to generate bindings");
 
-  // let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+ //  let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
   // bindings
   //   .write_to_file(out_path.join("bindings.rs"))
   //   .expect("Couldn't write bindings!");

@@ -29,17 +29,17 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.10")
 endif()
 
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/taglib)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/taglib)
 #
 # download and make TagLib
 #
 ExternalProject_Add(
         taglib
-        PREFIX "${CMAKE_SOURCE_DIR}/taglib"
+        PREFIX "${CMAKE_BINARY_DIR}/taglib"
         GIT_REPOSITORY https://github.com/taglib/taglib
         GIT_TAG ${REVISION}
-        INSTALL_DIR "${CMAKE_SOURCE_DIR}/taglib"
-        CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/taglib" "-DCMAKE_BUILD_TYPE=RELEASE" "-DTAGLIB_C_EXPORT=" "-DTAGLIB_STATIC=" "-DBUILD_SHARED_LIBS=OFF"
+        INSTALL_DIR "${CMAKE_BINARY_DIR}/taglib"
+        CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/taglib" "-DCMAKE_BUILD_TYPE=RELEASE" "-DTAGLIB_C_EXPORT=" "-DTAGLIB_STATIC=" "-DBUILD_SHARED_LIBS=OFF"
         CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true" "-DENABLE_STATIC_RUNTIME=ON" "-DBUILD_SHARED_LIBS=OFF"
         )
 
@@ -56,8 +56,8 @@ ExternalProject_Add_Step(
         ALWAYS 1
 )
 
-include_directories(. ${CMAKE_SOURCE_DIR}/taglib/include/taglib)
-link_directories(${CMAKE_SOURCE_DIR}/taglib/lib)
+include_directories(. ${CMAKE_BINARY_DIR}/taglib/include/taglib)
+link_directories(${CMAKE_BINARY_DIR}/taglib/lib)
 
 add_library(katatsuki
         STATIC
