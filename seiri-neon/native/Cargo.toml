@@ -10,12 +10,12 @@ name = "seiri_neon"
 crate-type = ["dylib"]
 
 [build-dependencies]
-neon-build = "0.1.22"
+neon-build = "0.2.0"
 
 [dependencies]
-neon = "0.1.22"
+neon = "0.2.0"
 num-traits = "0.2.2"
-seiri = "1.0.4"
+seiri = "1.0.5"
 
 [dependencies.rusqlite]
 version = "0.13.0"

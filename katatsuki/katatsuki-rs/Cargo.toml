@@ -1,6 +1,6 @@
 [package]
 name = "katatsuki"
-version = "1.0.4"
+version = "1.0.5"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
 description = "Rusty wrapper for libkatatsuki-sys"
 license = "MIT"
@@ -11,4 +11,7 @@ chrono = "0.4"
 enum-primitive-derive = "^0.1"
 num-traits = "^0.1"
 imagesize = "0.5.2"
-libkatatsuki-sys = "1.0.4"
+libkatatsuki-sys = "1.0.5"
+
+# [dependencies.libkatatsuki-sys]
+# path = "../libkatatsuki-sys"

@@ -6,9 +6,12 @@ use std::path::PathBuf;
 
 fn main() {
   let dst = cmake::Config::new("libkatatsuki")
-            .generator("NMake Makefiles")
+          //  .generator("NMake Makefiles")
             .build_target("katatsuki")
             .static_crt(true)
+            .cxxflag("/MT")
+            .cflag("/MT")
+            .cxxflag("/NODEFAULTLIB:MSVCRT")
             .always_configure(true)
             .profile("Release")
             .very_verbose(true)
@@ -18,6 +21,7 @@ fn main() {
   let mut taglib_dst = PathBuf::from(format!("{}", dst.display()));
 
   lib_dst.push("build");
+  lib_dst.push("Release");
 
   taglib_dst.push("build");
   taglib_dst.push("taglib");
