@@ -11,7 +11,6 @@ use regex::Regex;
 use rusqlite::types::ToSql;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::str::FromStr;
 use katatsuki::Track;
 use katatsuki::TrackFileType;
 use katatsuki::{ToPrimitive, FromPrimitive};

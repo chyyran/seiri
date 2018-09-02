@@ -1,7 +1,5 @@
-#![feature(fs_read_write)]
 #![feature(toowned_clone_into)]
 #![feature(mpsc_select)]
-#![feature(ascii_ctype)]
 
 extern crate notify;
 extern crate seiri;

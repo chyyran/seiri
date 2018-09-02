@@ -19,3 +19,4 @@ seiri-client/*.asar
 seiri-client-internals/ui.asar
 katatsuki/katatsuki-sys-main/
 rls/
+katatsuki/libkatatsuki-sys/libkatatsuki/taglib/

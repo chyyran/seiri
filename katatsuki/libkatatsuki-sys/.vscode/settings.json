@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "*.partial": "nunjucks",
+        "*.html": "html",
+        "*.tcc": "cpp",
+        "memory": "cpp",
+        "type_traits": "cpp",
+        "xutility": "cpp",
+        "array": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp",
+        "optional": "cpp",
+        "iosfwd": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "xtree": "cpp"
+    }
+}

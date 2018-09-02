@@ -8,7 +8,6 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
-use std::thread;
 use std::time::Duration;
 use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};
@@ -78,7 +77,7 @@ where
     // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(32))?;
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.

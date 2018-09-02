@@ -7,7 +7,6 @@ const TICKS_PER_MS: i64 = 10000;
 const NS_PER_TICK: i64 = 100;
 const SEC_PER_MS: i64 = 1000;
 use humantime::Duration;
-use chrono::NaiveDate;
 
 pub fn ticks_to_ms(ticks: i64) -> i32 {
     (ticks / TICKS_PER_MS) as i32

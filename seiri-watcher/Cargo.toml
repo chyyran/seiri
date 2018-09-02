@@ -4,15 +4,16 @@ version = "0.1.0"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 include = ["tools/**/*"]
 
+
 [dependencies]
 notify = "4.0.3"
 rand = "0.4.2"
 walkdir = "2"
 threadpool = "1.7.1"
-
+seiri = "1.0.5"
 [dependencies.rusqlite]
 version = "0.13.0"
 features = ["bundled", "functions"]
 
-[dependencies.seiri]
-path = "../seiri-lib"
+#[dependencies.seiri]
+#path = "../seiri-lib"
