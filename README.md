@@ -89,8 +89,8 @@ Bangs are parsed and transpiled into SQLite statements, which are then executed 
 *seiri* consists of multiple components.
  - *seiri-lib* is the main component written in Rust that handles database connections, monitoring of the library folder, and parsing and transpilation of query bangs. This library is automatically built as part of *seiri-watcher* and *seiri-client*.
  
- - *libkatatsuki*, is a forked version of Katatsuki's Track handling code, written in C#. This is needed because the native version of [TagLib](http://taglib.org/) lacks features that [TagLibSharp](https://github.com/mono/taglib-sharp) implements that are required for compatible semantics with *Katatsuki*, and richer queries (such as cover-art size). Rust bindings are created using CoreRT to compile C# to native code, and a C interface.
- *libkatatsuki* and its Rust bindings are automatically built when building *seiri-watcher* and *seiri-client*.
+ - *libkatatsuki* is an abstraction over [taglib2](https://github.com/taglib/taglib/tree/taglib2) used to read tags from music files. 
+ *libkatatsuki* and its Rust bindings *katatsuki-rs* are automatically built when building *seiri-watcher* and *seiri-client*.
  
  - *seiri-client* is an [Electron](https://github.com/electron/electron) application that handles interfacing with *seiri-client*, and acts as a watchdog in case *seiri-client* crashes, as well an automatic updater. We try to be mindful of memory usage, and usually start the Chrome render process only when necessary. You will need to build this with `yarn build`.
  
