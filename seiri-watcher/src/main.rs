@@ -4,28 +4,31 @@ extern crate notify;
 extern crate seiri;
 extern crate threadpool;
 extern crate walkdir;
-
+extern crate leak;
 extern crate crossbeam;
+
+use crossbeam::channel::{unbounded, Receiver};
+use leak::Leak;
 
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::io;
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
-use crossbeam::channel::{unbounded, Receiver};
 use std::thread;
 use std::time::Duration;
 mod utils;
 mod watcher;
 
+use self::watcher::WatchStatus;
 use seiri::config;
 use seiri::config::Config;
 use seiri::database;
 use seiri::database::Connection;
 use seiri::database::ConnectionPool;
 use seiri::paths;
+use seiri::ConfigErrorType;
 use seiri::Error;
-use self::watcher::WatchStatus;
 
 fn osstr_to_string(osstr: Option<&OsStr>) -> Cow<str> {
     osstr
@@ -55,7 +58,9 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
             Err(err) => match err {
                 Error::UnsupportedFile(file_name) => {
                     match paths::move_non_track(&file_name, &library_path.1) {
-                        Ok(()) => eprintln!("ENONTRACK::{}", osstr_to_string(file_name.file_name())),
+                        Ok(()) => {
+                            eprintln!("ENONTRACK::{}", osstr_to_string(file_name.file_name()))
+                        }
                         Err(_) => {
                             eprintln!("ETRACKMOVE::{}", osstr_to_string(file_name.file_name()))
                         }
@@ -86,41 +91,40 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: Config, pool: ConnectionPool, rx: &Receiver<WatchStatus>) {
+fn begin_watch(config: &'static Config, pool: ConnectionPool, rx: &Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
-    watcher::list(&watch_path, &config, &pool, process);
+    watcher::list(&watch_path, config, &pool, process);
     // Create a channel to receive the events.
     if let Err(e) = watcher::watch(&watch_path, config, pool, process, &rx) {
         eprintln!("EWATCHER::{}", e);
     }
 }
 
-fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandle<()>> {
+fn get_watcher_thread(rx: Receiver<WatchStatus>, config: &'static Config) -> io::Result<thread::JoinHandle<()>> {
     thread::Builder::new()
         .name("WatchThread".to_string())
         .spawn(move || {
-            let config = config::get_config();
             let pool = database::get_connection_pool();
             begin_watch(config, pool, &rx)
         })
 }
 
-fn start_watcher_watchdog(wait_time: Duration) {
+fn start_watcher_watchdog(wait_time: Duration, config: &'static Config) {
     thread::spawn(move || {
         let (tx, rx) = unbounded();
         let mut tx = tx;
-        let config = config::get_config();
+
         wait_for_watch_root_available(&config.music_folder);
-        let mut _watch_thread = get_watcher_thread(rx).unwrap();
+        let mut _watch_thread = get_watcher_thread(rx, config).unwrap();
         loop {
             thread::park_timeout(wait_time);
             if tx.send(WatchStatus::KeepAlive).is_err() {
                 eprintln!("EWATCHERDIED::Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
                 let (new_tx, rx) = unbounded();
                 tx = new_tx.clone();
-                _watch_thread = get_watcher_thread(rx).unwrap();
+                _watch_thread = get_watcher_thread(rx, config).unwrap();
             }
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
@@ -133,7 +137,7 @@ fn start_watcher_watchdog(wait_time: Duration) {
                     "EWATCHERRESTART::Requested watcher thread exit. Restarting Watcher Thread..."
                 );
                 tx = new_tx.clone();
-                _watch_thread = get_watcher_thread(rx).unwrap();
+                _watch_thread = get_watcher_thread(rx, config).unwrap();
             }
         }
     });
@@ -147,11 +151,30 @@ fn ensure_port(port: u16) -> Result<TcpListener, io::Error> {
 }
 
 fn main() {
-    let _lock = ensure_port(9235).expect("Unable to acquire lock");
+    let _lock = ensure_port(9235).expect("ENOLOCK::Unable to acquire lock");
 
     let wait_time = Duration::from_secs(5);
-    start_watcher_watchdog(wait_time);
+    match config::get_config() {
+        Ok(config) => {
+            // Config will stay for lifetime of the program.
+            let config = Box::new(config).leak();
 
-    let conn = database::get_database_connection();
-    utils::wait_for_exit(&conn);
+            start_watcher_watchdog(wait_time, config);
+            let conn = database::get_database_connection();
+            utils::wait_for_exit(&conn, config);
+        }
+        Err(err) => {
+            if let Error::ConfigError(err) = err {
+                match err {
+                    ConfigErrorType::Invalid => {
+                        eprintln!("ECONFIGINVALID::The configuration file is invalid");
+                    }
+                    ConfigErrorType::IOError(path) => {
+                        eprintln!("ECONFIGIO::The path {} can not be accessed", path);
+                    }
+                }
+            }
+        }
+    }
+ 
 }

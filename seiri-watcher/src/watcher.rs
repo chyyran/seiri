@@ -13,23 +13,19 @@ use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};
 
 fn check_idle(path: &PathBuf) -> bool {
-    match OpenOptions::new()
+    OpenOptions::new()
         .read(true)
         .write(true)
         .create(false)
         .truncate(false)
-        .open(&path)
-    {
-        Err(_) => false,
-        Ok(_) => true,
-    }
+        .open(&path).is_ok()
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|s| s.starts_with("."))
+        .map(|s| s.starts_with('.'))
         .unwrap_or(false)
 }
 
@@ -37,7 +33,7 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
     entry
         .file_name()
         .and_then(|s| s.to_str())
-        .map(|s| s.starts_with("."))
+        .map(|s| s.starts_with('.'))
         .unwrap_or(false)
 }
 
@@ -63,7 +59,7 @@ pub enum WatchStatus {
 
 pub fn watch<F>(
     watch_dir: &str,
-    config: Config,
+    config: &'static Config,
     pool: ConnectionPool,
     process: F,
     quit_rx: &Receiver<WatchStatus>,

@@ -7,9 +7,16 @@ use std::path::PathBuf;
 
 pub type Result<T> = result::Result<T, Error>;
 
+#[derive(Debug)]
+pub enum ConfigErrorType {
+    IOError(String),
+    Invalid,
+}
+
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+    
         UnsupportedFile(file_name: PathBuf) {
             description("File is not supported or is not a music file.")
             display(r#"The file "{:?}" is not supported or is not a music file"#, file_name)
@@ -61,6 +68,10 @@ quick_error! {
         ParserInvalidInput(input: String) {
             description("Invalid input when parsing bang argument")
             display(r#"Invalid input "{}" when parsing bang"#, input)
+        }
+        ConfigError(error: ConfigErrorType) {
+            description("Error occurred when parsing configuration")
+            display(r#"Error "{:?}" when parsing configuration"#, error)
         }
     }
 }

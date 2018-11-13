@@ -25,7 +25,7 @@ mod error;
 
 pub use katatsuki::TrackFileType;
 pub use katatsuki::Track;
-pub use error::{Error, Result};
+pub use error::{Error, Result, ConfigErrorType};
 pub use bangs::Bang;
 
 pub mod config;

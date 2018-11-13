@@ -11,6 +11,7 @@ walkdir = "2"
 threadpool = "1.7.1"
 seiri = "2.0"
 crossbeam = "0.5.0"
+leak = "0.1.2"
 
 [dependencies.rusqlite]
 version = "0.13.0"
