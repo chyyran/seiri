@@ -1,7 +1,0 @@
-[workspace]
-members = ["katatsuki/libkatatsuki-sys", "katatsuki/katatsuki-rs", "seiri-lib", "seiri-watcher"]
-
-[patch.crates-io]
-seiri = { path = "seiri-lib", branch = "2.0.0" }
-libkatatsuki-sys = { path = "katatsuki/libkatatsuki-sys" }
-katatsuki = { path = "katatsuki/katatsuki-rs" }
