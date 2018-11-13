@@ -17,6 +17,7 @@ This system is intended for the Electron browser process to handle desktop notif
 | `EMISSINGTAG(Track||Tag)`     | The given track is missing the given tag               |
 | `EWATCHER`                    | Generic watcher error                                  |
 | `EWATCHERDIED`                | The watcher died                                       |
+| `EWATCHERRESTART`             | Watcher is restarting                                  |
 | `EWATCHERNOACCESS(Path)`      | The watcher can not access the given folder            |
 | `ECONFIGINVALID`              | The configuration file is invalid                      |
 | `ECONFIGIO(Path)`             | The given configuration path can not be accessed       |
