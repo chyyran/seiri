@@ -6,13 +6,14 @@ use seiri::database::{Connection, ConnectionPool};
 use seiri::paths::is_in_hidden_path;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use crossbeam::channel::{unbounded, Receiver};
+use crossbeam::channel::{unbounded, Receiver, select};
 use std::sync::Arc;
 use std::time::Duration;
 use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};
+
 fn check_idle(path: &PathBuf) -> bool {
-    return match OpenOptions::new()
+    match OpenOptions::new()
         .read(true)
         .write(true)
         .create(false)
@@ -21,7 +22,7 @@ fn check_idle(path: &PathBuf) -> bool {
     {
         Err(_) => false,
         Ok(_) => true,
-    };
+    }
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
@@ -40,7 +41,7 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
         .unwrap_or(false)
 }
 
-pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F) -> ()
+pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F)
 where
     F: Fn(&Path, &Config, &Connection, bool) -> (),
 {
@@ -65,7 +66,7 @@ pub fn watch<F>(
     config: Config,
     pool: ConnectionPool,
     process: F,
-    quit_rx: Receiver<WatchStatus>,
+    quit_rx: &Receiver<WatchStatus>,
 ) -> notify::Result<()>
 where
     F: Fn(&Path, &Config, &Connection, bool) -> () + Send + Sync + Copy + 'static,
@@ -97,7 +98,7 @@ where
                         // However, if the write finishes before the delay, only the create event is fired.
                         // Otherwise, the write event will be delayed until the latest possible.
                         DebouncedEvent::Write(ref path) | DebouncedEvent::Create(ref path) => {
-                            if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
+                            if check_idle(path) && path.is_file() && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
                                 let db_pool = Arc::clone(&db_pool);
                                 let config = Arc::clone(&config);
                                 let path = path.clone();

@@ -3,7 +3,7 @@ name = "seiri-watcher"
 version = "0.1.0"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 include = ["tools/**/*"]
-
+edition = "2018"
 
 [dependencies]
 rand = "0.4.2"

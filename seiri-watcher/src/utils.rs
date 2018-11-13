@@ -17,7 +17,7 @@ pub fn wait_for_exit(conn: &Connection) {
             return;
         }
         if input.trim().starts_with("refresh") {
-            let file_name: &str = match input.trim().splitn(2, " ").nth(1) {
+            let file_name: &str = match input.trim().splitn(2, ' ').nth(1) {
                 Some(query_str) => query_str,
                 None => "",
             };

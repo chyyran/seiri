@@ -5,7 +5,6 @@ extern crate seiri;
 extern crate threadpool;
 extern crate walkdir;
 
-#[macro_use]
 extern crate crossbeam;
 
 use std::borrow::Cow;
@@ -26,7 +25,7 @@ use seiri::database::Connection;
 use seiri::database::ConnectionPool;
 use seiri::paths;
 use seiri::Error;
-use watcher::WatchStatus;
+use self::watcher::WatchStatus;
 
 fn osstr_to_string(osstr: Option<&OsStr>) -> Cow<str> {
     osstr
@@ -41,39 +40,39 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
             Ok(track) => match paths::move_new_track(&track, &library_path.0, &library_path.1) {
                 Ok(track) => {
                     database::add_track(&track, conn);
-                    eprintln!("TRACKADDED~{} – {}", track.artist, track.title);
+                    eprintln!("TRACKADDED::{} – {}", track.artist, track.title);
                 }
                 Err(_) if retry => process(path, config, conn, false),
                 Err(Error::UnableToMove(_)) => {
-                    eprintln!("TRACKMOVEERROR~{}", track.file_path.display())
+                    eprintln!("ETRACKMOVE::{}", track.file_path.display())
                 }
                 Err(Error::UnableToCreateDirectory(new_directory)) => {
-                    eprintln!("CREATEDIRECTORYERROR~{}", new_directory)
+                    eprintln!("ECREATEDIRECTORY::{}", new_directory)
                 }
-                Err(_) => eprintln!("TRACKERROR~{}", track.file_path.display()),
+                Err(_) => eprintln!("ETRACK::{}", track.file_path.display()),
             },
             Err(_) if retry => process(path, config, conn, false),
             Err(err) => match err {
                 Error::UnsupportedFile(file_name) => {
                     match paths::move_non_track(&file_name, &library_path.1) {
-                        Ok(()) => eprintln!("NONTRACK~{}", osstr_to_string(file_name.file_name())),
+                        Ok(()) => eprintln!("ENONTRACK::{}", osstr_to_string(file_name.file_name())),
                         Err(_) => {
-                            eprintln!("TRACKMOVEERROR~{}", osstr_to_string(file_name.file_name()))
+                            eprintln!("ETRACKMOVE::{}", osstr_to_string(file_name.file_name()))
                         }
                     }
                 }
                 Error::FileIOError(file_name) => {
-                    eprintln!("TRACKERROR~{}", osstr_to_string(file_name.file_name()))
+                    eprintln!("ETRACK::{}", osstr_to_string(file_name.file_name()))
                 }
                 Error::MissingRequiredTag(file_name, tag) => eprintln!(
-                    "MISSINGTAG~Track {} is missing tag {}.",
+                    "EMISSINGTAG::Track {} is missing tag {}.",
                     osstr_to_string(Path::new(&file_name).file_name()),
                     tag
                 ),
-                _ => eprintln!("TRACKERROR~"),
+                _ => eprintln!("ETRACK::Unknown Error"),
             },
         },
-        Err(_) => eprintln!("LIBRARYNOTFOUND~{}.", path.display()),
+        Err(_) => eprintln!("ELIBRARYNOTFOUND::{}.", path.display()),
     }
 }
 
@@ -87,14 +86,14 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: Config, pool: ConnectionPool, rx: Receiver<WatchStatus>) {
+fn begin_watch(config: Config, pool: ConnectionPool, rx: &Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
     watcher::list(&watch_path, &config, &pool, process);
     // Create a channel to receive the events.
-    if let Err(e) = watcher::watch(&watch_path, config, pool, process, rx) {
-        println!("{}", e);
+    if let Err(e) = watcher::watch(&watch_path, config, pool, process, &rx) {
+        eprintln!("EWATCHER::{}", e);
     }
 }
 
@@ -104,7 +103,7 @@ fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandl
         .spawn(move || {
             let config = config::get_config();
             let pool = database::get_connection_pool();
-            begin_watch(config, pool, rx)
+            begin_watch(config, pool, &rx)
         })
 }
 
@@ -117,21 +116,21 @@ fn start_watcher_watchdog(wait_time: Duration) {
         let mut _watch_thread = get_watcher_thread(rx).unwrap();
         loop {
             thread::park_timeout(wait_time);
-            if let Err(_) = tx.send(WatchStatus::KeepAlive) {
-                eprintln!("WATCHERKEEPALIVEFAIL~Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
+            if tx.send(WatchStatus::KeepAlive).is_err() {
+                eprintln!("EWATCHERDIED::Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
                 let (new_tx, rx) = unbounded();
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
             }
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
-            if let Err(_) = music_folder {
-                eprintln!("WATCHERFOLDERACCESSLOST~{}", &config.music_folder);
+            if music_folder.is_err() {
+                eprintln!("EWATCHERNOACCESS::{}", &config.music_folder);
                 wait_for_watch_root_available(&config.music_folder);
                 let (new_tx, rx) = unbounded();
                 tx.send(WatchStatus::Exit).unwrap();
                 eprintln!(
-                    "WATCHERRESTART~Requested watcher thread exit. Restarting Watcher Thread..."
+                    "EWATCHERRESTART::Requested watcher thread exit. Restarting Watcher Thread..."
                 );
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
