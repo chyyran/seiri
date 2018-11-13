@@ -1,11 +1,9 @@
 extern crate rusqlite;
 
-use bangs::ms_to_ticks;
-use bangs::ticks_to_ms;
+use crate::bangs::{ms_to_ticks, ticks_to_ms, Bang};
 use r2d2::{CustomizeConnection, Pool};
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Error, Result};
-use bangs::Bang;
+use rusqlite::{Error, Result, NO_PARAMS};
 use rand::{thread_rng, Rng};
 use regex::Regex;
 use rusqlite::types::ToSql;
@@ -14,7 +12,7 @@ use std::path::PathBuf;
 use katatsuki::Track;
 use katatsuki::TrackFileType;
 use katatsuki::{ToPrimitive, FromPrimitive};
-use paths::get_appdata_path;
+use crate::paths::get_appdata_path;
 
 pub use rusqlite::Connection;
 
@@ -118,14 +116,14 @@ pub fn create_database(conn: &Connection) {
         FileType INTEGER,
         Updated DATE
     )",
-        &[],
+        NO_PARAMS,
     ).unwrap();
 }
 
 #[allow(dead_code)]
 pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     let mut statement = conn.prepare("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
-    statement.query(&[])?;
+    statement.query(NO_PARAMS)?;
     Ok(())
 }
 
@@ -476,7 +474,7 @@ pub fn add_track(track: &Track, conn: &Connection) {
                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7,
                         ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
         &[
-            &track.file_path.as_os_str().to_string_lossy().into_owned(),
+            &track.file_path.as_os_str().to_string_lossy().into_owned() as &ToSql,
             &track.title,
             &track.artist,
             &track.album_artists.join(";"),

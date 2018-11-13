@@ -1,10 +1,9 @@
 extern crate quick_error;
 
-use bangs::LexerMode;
-use bangs::Token;
+use crate::bangs::{LexerMode, Token};
 use std::result;
 use std::path::PathBuf;
-
+use quick_error::quick_error;
 pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Debug)]

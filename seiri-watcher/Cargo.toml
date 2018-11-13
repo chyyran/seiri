@@ -19,5 +19,4 @@ features = ["bundled", "functions"]
 
 [dependencies.notify]
 path = "./notify"
-[patch.crates-io]
-seiri = { path = "../seiri-lib", branch = "2.0.0" }
+

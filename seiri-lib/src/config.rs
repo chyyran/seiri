@@ -1,6 +1,7 @@
 use dirs::home_dir;
-use error::{ConfigErrorType, Error, Result};
-use paths::*;
+use crate::error::{ConfigErrorType, Error, Result};
+use crate::paths::*;
+use serde_derive::{Serialize, Deserialize};
 use std::default::Default;
 use std::fs;
 use std::path::Path;
