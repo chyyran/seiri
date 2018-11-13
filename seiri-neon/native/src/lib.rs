@@ -17,7 +17,7 @@ use std::path::Path;
 
 #[allow(non_snake_case)]
 fn refresh_tracks(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
-    let config = get_config();
+    let config = get_config().unwrap();
     let conn = database::get_database_connection();
     let library_path = Path::new(&config.music_folder);
 
