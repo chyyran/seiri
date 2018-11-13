@@ -3,7 +3,7 @@ use std::str::FromStr;
 use super::lexer::Token;
 use super::bangs::Bang;
 use katatsuki::TrackFileType;
-use error::{Error, Result};
+use crate::error::{Error, Result};
 use humantime::Duration;
 use chrono::NaiveDate;
 use super::time::*;
@@ -256,7 +256,7 @@ pub fn parse_token_stream(tokens: &mut Iter<Token>) -> Result<Bang> {
                 extract_argument(tokens),
             ),
             BangType::Grouping => {
-                let mut grouping_token_stream = take_until_braces_balanced(tokens)?;
+                let grouping_token_stream = take_until_braces_balanced(tokens)?;
                 Ok(Bang::Grouping(Box::new(parse_token_stream(
                     &mut grouping_token_stream.iter(),
                 )?)))

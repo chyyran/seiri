@@ -4,12 +4,12 @@ use seiri::Bang;
 use seiri::database::query_tracks;
 use seiri::database::Connection;
 use seiri::paths::reconsider_track;
-use seiri::config::get_config;
+use seiri::config::Config;
 
-pub fn wait_for_exit(conn: &Connection) {
+pub fn wait_for_exit(conn: &Connection, config: &Config) {
     let stdin = io::stdin();
     println!("Type 'exit' to exit");
-    let folder = get_config().music_folder;
+    let folder = &config.music_folder;
     let library_path = Path::new(&folder);
     let mut input = String::new();
     while let Ok(_) = stdin.read_line(&mut input) {
@@ -17,7 +17,7 @@ pub fn wait_for_exit(conn: &Connection) {
             return;
         }
         if input.trim().starts_with("refresh") {
-            let file_name: &str = match input.trim().splitn(2, " ").nth(1) {
+            let file_name: &str = match input.trim().splitn(2, ' ').nth(1) {
                 Some(query_str) => query_str,
                 None => "",
             };

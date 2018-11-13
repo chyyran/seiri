@@ -6,29 +6,26 @@ use seiri::database::{Connection, ConnectionPool};
 use seiri::paths::is_in_hidden_path;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver};
+use crossbeam::channel::{unbounded, Receiver, select};
 use std::sync::Arc;
 use std::time::Duration;
 use threadpool::ThreadPool;
 use walkdir::{DirEntry, WalkDir};
+
 fn check_idle(path: &PathBuf) -> bool {
-    return match OpenOptions::new()
+    OpenOptions::new()
         .read(true)
         .write(true)
         .create(false)
         .truncate(false)
-        .open(&path)
-    {
-        Err(_) => false,
-        Ok(_) => true,
-    };
+        .open(&path).is_ok()
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
     entry
         .file_name()
         .to_str()
-        .map(|s| s.starts_with("."))
+        .map(|s| s.starts_with('.'))
         .unwrap_or(false)
 }
 
@@ -36,11 +33,11 @@ fn is_hidden_file(entry: &PathBuf) -> bool {
     entry
         .file_name()
         .and_then(|s| s.to_str())
-        .map(|s| s.starts_with("."))
+        .map(|s| s.starts_with('.'))
         .unwrap_or(false)
 }
 
-pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F) -> ()
+pub fn list<F>(watch_dir: &str, config: &Config, pool: &ConnectionPool, process: F)
 where
     F: Fn(&Path, &Config, &Connection, bool) -> (),
 {
@@ -62,22 +59,23 @@ pub enum WatchStatus {
 
 pub fn watch<F>(
     watch_dir: &str,
-    config: Config,
+    config: &'static Config,
     pool: ConnectionPool,
     process: F,
-    quit_rx: Receiver<WatchStatus>,
+    quit_rx: &Receiver<WatchStatus>,
 ) -> notify::Result<()>
 where
     F: Fn(&Path, &Config, &Connection, bool) -> () + Send + Sync + Copy + 'static,
 {
-    let (tx, rx) = channel();
+    let (tx, rx) = unbounded::<notify::DebouncedEvent>();
+    
     let exec_pool = ThreadPool::new(8);
     let db_pool = Arc::new(pool);
     let config = Arc::new(config);
     // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(30))?;
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.
@@ -89,14 +87,14 @@ where
 
     loop {
         select! {
-            event = rx.recv() => match event {
+            recv(rx) -> event => match event {
                 Ok(event) => {
                     match event {
                         // We only want to process events when the file is idle.
                         // However, if the write finishes before the delay, only the create event is fired.
                         // Otherwise, the write event will be delayed until the latest possible.
                         DebouncedEvent::Write(ref path) | DebouncedEvent::Create(ref path) => {
-                            if check_idle(path) && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
+                            if check_idle(path) && path.is_file() && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
                                 let db_pool = Arc::clone(&db_pool);
                                 let config = Arc::clone(&config);
                                 let path = path.clone();
@@ -116,7 +114,8 @@ where
                 // to trigger a thread restart.
                 Err(_) => break,
             },
-            keepalive = quit_rx.recv() => match keepalive {
+
+            recv(quit_rx) -> keepalive => match keepalive {
                 Ok(WatchStatus::KeepAlive) => (),
                 Ok(WatchStatus::Exit) => break,
                 Err(_) => break,

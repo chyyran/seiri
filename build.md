@@ -6,9 +6,9 @@
 
 1. Rust
 
-Install Rust (1.25.0) or higher at https://www.rust-lang.org, or through your package manager of choice. *seiri* requires the nightly compiler, so once rustup is installed, run `rustup default nightly`.
+Install Rust 2018 at https://www.rust-lang.org, or through your package manager of choice. *seiri* requires the nightly compiler, so once rustup is installed, run `rustup default nightly`.
 
-2. CMake
+1. CMake
 
 CMake [3.12](https://cmake.org/) or higher is required to build `libkatatsuki-sys`.
 

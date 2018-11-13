@@ -1,6 +1,6 @@
 use app_dirs::*;
 use chrono::prelude::*;
-use error::{Error, Result};
+use crate::error::{Error, Result};
 use katatsuki::Track;
 // use tree_magic;
 use std::fs;

@@ -1,4 +1,4 @@
-use error::{Error, Result};
+use crate::error::{Error, Result};
 use itertools::Itertools;
 use itertools::multipeek;
 use itertools::MultiPeek;

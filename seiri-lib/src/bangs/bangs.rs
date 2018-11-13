@@ -1,7 +1,7 @@
 extern crate itertools;
 
 use katatsuki::TrackFileType;
-use error::{Result};
+use crate::error::{Result};
 use super::lexer::{lex_query};
 use super::parser::{parse_token_stream};
 use std::path::{Path, PathBuf};
