@@ -77,7 +77,7 @@ where
     // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1))?;
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(30))?;
 
     // Add a path to be watched. All files and directories at that path and
     // below will be monitored for changes.

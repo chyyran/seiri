@@ -1788,7 +1788,7 @@ sax@^1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
 
-"seiri-neon@file:../seiri-neon":
+seiri-neon@../seiri-neon:
   version "0.1.0"
   dependencies:
     neon-cli "^0.1.22"

@@ -11,7 +11,7 @@ chrono = "0.4"
 enum-primitive-derive = "^0.1"
 num-traits = "^0.1"
 imagesize = "0.5.2"
-libkatatsuki-sys = "1.0.5"
+libkatatsuki-sys = "1.0"
 
-# [dependencies.libkatatsuki-sys]
-# path = "../libkatatsuki-sys"
+[patch.crates-io]
+libkatatsuki-sys = { path = "../libkatatsuki-sys" }
