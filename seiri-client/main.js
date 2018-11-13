@@ -19,10 +19,9 @@ let runningWatcher = null
 let watcherShouldQuit = false
 const newTracksAdded = []
 
-const shouldQuit = app.makeSingleInstance(function(
-  commandLine,
-  workingDirectory
-) {
+const gotLock = app.requestSingleInstanceLock()
+
+app.on('second-instance', (commandLine, workingDirectory) => {
   // Someone tried to run a second instance, we should focus our window.
   if (winClose && win !== null) {
     clearTimeout(winClose)
@@ -38,7 +37,7 @@ const shouldQuit = app.makeSingleInstance(function(
   }
 })
 
-if (shouldQuit) {
+if (!gotLock) {
   watcherShouldQuit = true
   app.quit()
   return
@@ -61,26 +60,29 @@ if (shouldQuit) {
 | `ECONFIGIO(Path)`             | The given configuration path can not be accessed       |
 */
 
+const expression = /^(TRACKADDED|E[A-Z]+)::(.*)$/
+const twoparamexpr = /^(.*)\|\|(.*)$/
+
 const processWatcherMessage = message => {
-  const expression = /^(TRACKADDED|E[A-Z]+)::(.*)$/
-  const twoparamexpr = /^(.*)\|\|(.*)$/
+  let matches = expression.exec(message.trim())
 
-  let matches = message.match(expression)
-
+  console.log('Received message: ' + message)
   let messageType = matches[1]
   let messagePayload = matches[2]
   switch (messageType) {
     case 'TRACKADDED':
       console.log('Track added...')
       console.log(messagePayload)
-      let trackdata = messagePayload.match(twoparamexpr)
+      let trackdata = twoparamexpr.exec(messagePayload)
       newTracksAdded.push(trackdata[1] + ' - ' + trackdata[2])
       break
     case 'EMISSINGTAG':
       console.log('Missing tag...')
+      let tagdata = twoparamexpr.exec(messagePayload)
       notifier.notify({
         title: 'Track is missing tag.',
-        message: messagePayload,
+        message:
+          'Track ' + trackdata[1] + ' is missing the ' + trackdata[2] + ' tag.',
         appID: appId
       })
       break
