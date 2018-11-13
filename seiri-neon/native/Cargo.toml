@@ -15,8 +15,8 @@ neon-build = "0.2.0"
 [dependencies]
 neon = "0.2.0"
 num-traits = "0.2.2"
-seiri = "1.0.5"
+seiri = "2.0.0"
 
 [dependencies.rusqlite]
-version = "0.13.0"
+version = "0.15.0"
 features = ["bundled", "functions"]

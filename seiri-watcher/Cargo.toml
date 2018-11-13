@@ -14,7 +14,7 @@ crossbeam = "0.5.0"
 leak = "0.1.2"
 
 [dependencies.rusqlite]
-version = "0.13.0"
+version = "0.15.0"
 features = ["bundled", "functions"]
 
 [dependencies.notify]

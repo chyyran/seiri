@@ -1,6 +1,6 @@
 {
   "name": "seiri-client",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "license": "MIT",
   "main": "main.js",
   "appId": "moe.chyyran.seiri",
@@ -9,7 +9,7 @@
   "author": "Ronny Chan",
   "scripts": {
     "start": "electron .",
-    "build": "electron-build-env neon build seiri-neon",
+    "build": "electron-build-env neon build seiri-neon --release",
     "clean": "electron-build-env neon clean seiri-neon",
     "postinstall": "electron-builder install-app-deps",
     "pack-electron": "electron-builder --dir",
@@ -41,17 +41,17 @@
     "backgroundColor": "#EA0032"
   },
   "dependencies": {
-    "electron-is-dev": "^0.3.0",
-    "electron-updater": "^2.21.10",
-    "node-notifier": "^5.2.1",
-    "opn": "^5.3.0",
+    "electron-is-dev": "^1.0.1",
+    "electron-updater": "^3.2.3",
+    "node-notifier": "^5.3.0",
+    "opn": "^5.4.0",
     "seiri-neon": "../seiri-neon",
     "toml-js": "^0.0.8"
   },
   "devDependencies": {
-    "electron": "^1.8.3",
+    "electron": "^3.0.9",
     "electron-build-env": "^0.2",
-    "electron-builder": "^20.11.1",
-    "neon-cli": "^0.1.17"
+    "electron-builder": "^20.34.0",
+    "neon-cli": "^0.2.0"
   }
 }
