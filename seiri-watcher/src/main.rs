@@ -43,7 +43,7 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
             Ok(track) => match paths::move_new_track(&track, &library_path.0, &library_path.1) {
                 Ok(track) => {
                     database::add_track(&track, conn);
-                    eprintln!("TRACKADDED::{} – {}", track.artist, track.title);
+                    eprintln!("TRACKADDED::{}||{}", track.artist, track.title);
                 }
                 Err(_) if retry => process(path, config, conn, false),
                 Err(Error::UnableToMove(_)) => {
@@ -70,14 +70,14 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
                     eprintln!("ETRACK::{}", osstr_to_string(file_name.file_name()))
                 }
                 Error::MissingRequiredTag(file_name, tag) => eprintln!(
-                    "EMISSINGTAG::Track {} is missing tag {}.",
+                    "EMISSINGTAG::{}||{}",
                     osstr_to_string(Path::new(&file_name).file_name()),
                     tag
                 ),
                 _ => eprintln!("ETRACK::Unknown Error"),
             },
         },
-        Err(_) => eprintln!("ELIBRARYNOTFOUND::{}.", path.display()),
+        Err(_) => eprintln!("ELIBRARYNOTFOUND::{}", path.display()),
     }
 }
 
@@ -170,7 +170,7 @@ fn main() {
                         eprintln!("ECONFIGINVALID::The configuration file is invalid");
                     }
                     ConfigErrorType::IOError(path) => {
-                        eprintln!("ECONFIGIO::The path {} can not be accessed", path);
+                        eprintln!("ECONFIGIO::{}", path);
                     }
                 }
             }

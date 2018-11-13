@@ -1,21 +1,22 @@
 # Error Reporting.
-*seiri-core* outputs to stderr whenever a file-related error has occurred. The error message is separated by a tilde (`~`), with the first part being an error code. Error codes with a colon (`:`) have a parameter that follows the tilde, and is before the octothorpe.
+
+*seiri-core* outputs to stderr whenever a file-related error has occurred. The error message is separated by a double colon (`::`), with the first part being an error code. Error codes with a colon emit parameters that should be formatted, and error codes without emit a pre-formatted message. Some messages have more than one parameter, these parameters are separated by a double pipe.
 
 Note that bang-parsing related errors are not included in this system, and are returned by the GraphQL endpoints. The following are the lists of error codes.
 
-This system works outside of the GraphQL endpoints, and is intended for the Electron browser process to handle desktop notifications.
+This system is intended for the Electron browser process to handle desktop notifications.
 
-|Code|Description|
-|----|-----------|
-|`WATCHERROR(:)`|Generic watch error|
-|`WATCHERKEEPALIVEFAIL`|The file watcher died|
-|`WATCHERFOLDERACCESSLOST`|Access to the folder being watch died.|
-|`WATCHERRESTART`|The watcher is being restarted|
-|`TRACKMOVEERR(:)`|An error occurred when moving the track to a new location|
-|`CONFIGWRITEERR`|An error occurred when writing the configuration file|
-|`CONFIGINVALID`|The configuration file was invalid|
-|`HELPERNOTFOUND`|The taglib helper was not found|
-|`LIBRARYNOTFOUND`|The library path was not found|
-|`TRACKADDED(:)`|Not an error, but the given track was added to the database|
-|`NONTRACK(:)`|Not an error, but the given non-track file was moved away|
-|`MISSINGTAG`|A track was missing a required tag. Details are in the error message|
+
+| Code                          | Description                                            |
+| ----------------------------- | ------------------------------------------------------ |
+| `TRACKADDED(Artist||Title)`   | A track has successfully been added to the library     |
+| `ETRACK`                      | Generic track error                                    |
+| `ETRACKMOVE(Path)`            | The given track could not be moved to its library path |
+| `ECREATEDIRECTORY(Directory)` | The given directory could not be created               |
+| `ENONTRACK(Path)`             | The given path is not a track                          |
+| `EMISSINGTAG(Track||Tag)`     | The given track is missing the given tag               |
+| `EWATCHER`                    | Generic watcher error                                  |
+| `EWATCHERDIED`                | The watcher died                                       |
+| `EWATCHERNOACCESS(Path)`      | The watcher can not access the given folder            |
+| `ECONFIGINVALID`              | The configuration file is invalid                      |
+| `ECONFIGIO(Path)`             | The given configuration path can not be accessed       |
