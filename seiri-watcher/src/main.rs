@@ -1,17 +1,19 @@
 #![feature(toowned_clone_into)]
-#![feature(mpsc_select)]
 
 extern crate notify;
 extern crate seiri;
 extern crate threadpool;
 extern crate walkdir;
 
+#[macro_use]
+extern crate crossbeam;
+
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::io;
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver};
+use crossbeam::channel::{unbounded, Receiver};
 use std::thread;
 use std::time::Duration;
 mod utils;
@@ -108,7 +110,7 @@ fn get_watcher_thread(rx: Receiver<WatchStatus>) -> io::Result<thread::JoinHandl
 
 fn start_watcher_watchdog(wait_time: Duration) {
     thread::spawn(move || {
-        let (tx, rx) = channel();
+        let (tx, rx) = unbounded();
         let mut tx = tx;
         let config = config::get_config();
         wait_for_watch_root_available(&config.music_folder);
@@ -117,7 +119,7 @@ fn start_watcher_watchdog(wait_time: Duration) {
             thread::park_timeout(wait_time);
             if let Err(_) = tx.send(WatchStatus::KeepAlive) {
                 eprintln!("WATCHERKEEPALIVEFAIL~Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
-                let (new_tx, rx) = channel();
+                let (new_tx, rx) = unbounded();
                 tx = new_tx.clone();
                 _watch_thread = get_watcher_thread(rx).unwrap();
             }
@@ -126,7 +128,7 @@ fn start_watcher_watchdog(wait_time: Duration) {
             if let Err(_) = music_folder {
                 eprintln!("WATCHERFOLDERACCESSLOST~{}", &config.music_folder);
                 wait_for_watch_root_available(&config.music_folder);
-                let (new_tx, rx) = channel();
+                let (new_tx, rx) = unbounded();
                 tx.send(WatchStatus::Exit).unwrap();
                 eprintln!(
                     "WATCHERRESTART~Requested watcher thread exit. Restarting Watcher Thread..."

@@ -6,7 +6,7 @@ use seiri::database::{Connection, ConnectionPool};
 use seiri::paths::is_in_hidden_path;
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver};
+use crossbeam::channel::{unbounded, Receiver};
 use std::sync::Arc;
 use std::time::Duration;
 use threadpool::ThreadPool;
@@ -70,7 +70,8 @@ pub fn watch<F>(
 where
     F: Fn(&Path, &Config, &Connection, bool) -> () + Send + Sync + Copy + 'static,
 {
-    let (tx, rx) = channel();
+    let (tx, rx) = unbounded::<notify::DebouncedEvent>();
+    
     let exec_pool = ThreadPool::new(8);
     let db_pool = Arc::new(pool);
     let config = Arc::new(config);
@@ -89,7 +90,7 @@ where
 
     loop {
         select! {
-            event = rx.recv() => match event {
+            recv(rx) -> event => match event {
                 Ok(event) => {
                     match event {
                         // We only want to process events when the file is idle.
@@ -116,7 +117,8 @@ where
                 // to trigger a thread restart.
                 Err(_) => break,
             },
-            keepalive = quit_rx.recv() => match keepalive {
+
+            recv(quit_rx) -> keepalive => match keepalive {
                 Ok(WatchStatus::KeepAlive) => (),
                 Ok(WatchStatus::Exit) => break,
                 Err(_) => break,

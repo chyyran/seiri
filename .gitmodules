@@ -1,3 +1,6 @@
 [submodule "seiri-core/deps/taglib-rust"]
 	path = seiri-core/deps/taglib-rust
 	url = https://github.com/RonnChyran/taglib-rust
+[submodule "seiri-watcher/notify"]
+	path = seiri-watcher/notify
+	url = https://github.com/chyyran/notify

@@ -6,15 +6,17 @@ include = ["tools/**/*"]
 
 
 [dependencies]
-notify = "4.0.3"
 rand = "0.4.2"
 walkdir = "2"
 threadpool = "1.7.1"
 seiri = "2.0"
+crossbeam = "0.5.0"
 
 [dependencies.rusqlite]
 version = "0.13.0"
 features = ["bundled", "functions"]
 
+[dependencies.notify]
+path = "./notify"
 [patch.crates-io]
 seiri = { path = "../seiri-lib", branch = "2.0.0" }
