@@ -1,6 +1,6 @@
 {
   "name": "seiri-client",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "main": "main.js",
   "appId": "moe.chyyran.seiri",
