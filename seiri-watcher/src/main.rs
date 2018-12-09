@@ -1,12 +1,5 @@
 #![feature(toowned_clone_into)]
 
-extern crate notify;
-extern crate seiri;
-extern crate threadpool;
-extern crate walkdir;
-extern crate leak;
-extern crate crossbeam;
-
 use crossbeam::channel::{unbounded, Receiver};
 use leak::Leak;
 
@@ -17,6 +10,8 @@ use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+use std::sync::Arc;
+
 mod utils;
 mod watcher;
 
@@ -91,40 +86,39 @@ fn wait_for_watch_root_available(folder: &str) -> (PathBuf, PathBuf) {
     paths::ensure_music_folder(folder).unwrap()
 }
 
-fn begin_watch(config: &'static Config, pool: ConnectionPool, rx: &Receiver<WatchStatus>) {
+fn begin_watch(config: &'static Config, pool: Arc<ConnectionPool>, rx: &Receiver<WatchStatus>) {
     let auto_paths = wait_for_watch_root_available(&config.music_folder);
     let watch_path = &auto_paths.1.to_str().unwrap();
     println!("Watching {}", watch_path);
-    watcher::list(&watch_path, config, &pool, process);
+    watcher::list(&watch_path, config, pool.as_ref(), process);
     // Create a channel to receive the events.
     if let Err(e) = watcher::watch(&watch_path, config, pool, process, &rx) {
         eprintln!("EWATCHER::{}", e);
     }
 }
 
-fn get_watcher_thread(rx: Receiver<WatchStatus>, config: &'static Config) -> io::Result<thread::JoinHandle<()>> {
+fn get_watcher_thread(rx: Receiver<WatchStatus>, config: &'static Config, pool: Arc<ConnectionPool>) -> io::Result<thread::JoinHandle<()>> {
     thread::Builder::new()
         .name("WatchThread".to_string())
         .spawn(move || {
-            let pool = database::get_connection_pool();
             begin_watch(config, pool, &rx)
         })
 }
 
-fn start_watcher_watchdog(wait_time: Duration, config: &'static Config) {
+fn start_watcher_watchdog(wait_time: Duration, config: &'static Config, pool: Arc<ConnectionPool>) {
     thread::spawn(move || {
         let (tx, rx) = unbounded();
         let mut tx = tx;
 
         wait_for_watch_root_available(&config.music_folder);
-        let mut _watch_thread = get_watcher_thread(rx, config).unwrap();
+        let mut _watch_thread = get_watcher_thread(rx, config, Arc::clone(&pool)).unwrap();
         loop {
             thread::park_timeout(wait_time);
             if tx.send(WatchStatus::KeepAlive).is_err() {
                 eprintln!("EWATCHERDIED::Keep-alive failed. Watcher thread probably panicked. Restarting Watcher Thread...");
                 let (new_tx, rx) = unbounded();
                 tx = new_tx.clone();
-                _watch_thread = get_watcher_thread(rx, config).unwrap();
+                _watch_thread = get_watcher_thread(rx, config, Arc::clone(&pool)).unwrap();
             }
 
             let music_folder = paths::ensure_music_folder(&config.music_folder);
@@ -137,7 +131,7 @@ fn start_watcher_watchdog(wait_time: Duration, config: &'static Config) {
                     "EWATCHERRESTART::Requested watcher thread exit. Restarting Watcher Thread..."
                 );
                 tx = new_tx.clone();
-                _watch_thread = get_watcher_thread(rx, config).unwrap();
+                _watch_thread = get_watcher_thread(rx, config, Arc::clone(&pool)).unwrap();
             }
         }
     });
@@ -158,10 +152,15 @@ fn main() {
         Ok(config) => {
             // Config will stay for lifetime of the program.
             let config = Box::new(config).leak();
-
-            start_watcher_watchdog(wait_time, config);
+            // so will db_pool but we want to be able to drop it later.
+            let pool = database::get_connection_pool();
+            let db_pool = Arc::new(pool);
+            //let config = Arc::new(config);
+            start_watcher_watchdog(wait_time, config, Arc::clone(&db_pool));
             let conn = database::get_database_connection();
             utils::wait_for_exit(&conn, config);
+            drop(conn);
+            drop(db_pool);
         }
         Err(err) => {
             if let Error::ConfigError(err) = err {

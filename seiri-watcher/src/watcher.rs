@@ -60,7 +60,7 @@ pub enum WatchStatus {
 pub fn watch<F>(
     watch_dir: &str,
     config: &'static Config,
-    pool: ConnectionPool,
+    pool: Arc<ConnectionPool>,
     process: F,
     quit_rx: &Receiver<WatchStatus>,
 ) -> notify::Result<()>
@@ -70,8 +70,6 @@ where
     let (tx, rx) = unbounded::<notify::DebouncedEvent>();
     
     let exec_pool = ThreadPool::new(8);
-    let db_pool = Arc::new(pool);
-    let config = Arc::new(config);
     // let process = Arc::new(process);
     // Automatically select the best implementation for your platform.
     // You can also access each implementation directly e.g. INotifyWatcher.
@@ -95,12 +93,10 @@ where
                         // Otherwise, the write event will be delayed until the latest possible.
                         DebouncedEvent::Write(ref path) | DebouncedEvent::Create(ref path) => {
                             if check_idle(path) && path.is_file() && !is_in_hidden_path(path, watch_dir) && !is_hidden_file(path) {
-                                let db_pool = Arc::clone(&db_pool);
-                                let config = Arc::clone(&config);
+                                let db_pool = Arc::clone(&pool);
                                 let path = path.clone();
                                 exec_pool.execute(move || {
                                     let pool_ref = &db_pool;
-                                    let config = config.as_ref();
                                     let db_conn = pool_ref.get().unwrap();
                                     let path = path.as_path();
                                     process(path, config, &db_conn, true);
