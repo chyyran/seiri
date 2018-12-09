@@ -43,7 +43,7 @@ fn process(path: &Path, config: &Config, conn: &Connection, retry: bool) {
             Ok(track) => match paths::move_new_track(&track, &library_path.0, &library_path.1) {
                 Ok(track) => {
                     database::add_track(&track, conn);
-                    eprintln!("TRACKADDED::{}||{}", track.artist, track.title);
+                    eprintln!("TRACKADDED::{}||{}", track.artist.trim(), track.title.trim());
                 }
                 Err(_) if retry => process(path, config, conn, false),
                 Err(Error::UnableToMove(_)) => {

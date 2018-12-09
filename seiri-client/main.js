@@ -10,6 +10,7 @@ const opn = require("opn");
 const ensureConfig = require("./ensureConfig");
 const autoUpdater = require("electron-updater").autoUpdater;
 const log = require("electron-log");
+log.transports.file.level = 'info';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -74,7 +75,7 @@ const processWatcherMessage = message => {
     case "TRACKADDED":
       log.info("TRACKADDED recv with payload <" + messagePayload + ">");
       let trackdata = twoparamexpr.exec(messagePayload);
-      if (trackdata) {
+      if (trackdata && trackdata.length === 2) {
         newTracksAdded.push(trackdata[1] + " - " + trackdata[2]);
       } else {
         log.warn("TRACKADDED bad recv <" + message + ">");
@@ -83,7 +84,7 @@ const processWatcherMessage = message => {
     case "EMISSINGTAG":
       log.info("EMISSINGTAG recv with payload <" + messagePayload + ">");
       let tagdata = twoparamexpr.exec(messagePayload);
-      if (tagdata) {
+      if (tagdata && tagdata.length === 2) {
         notifier.notify({
           title: "Track is missing tag.",
           message:
@@ -91,7 +92,7 @@ const processWatcherMessage = message => {
           appID: appId
         });
       } else {
-        log.info("EMISSINGTAG bad recv <" + messagePayload + ">");
+        log.info("EMISSINGTAG bad recv <" + message + ">");
       }
       break;
     case "ETRACKMOVE":
