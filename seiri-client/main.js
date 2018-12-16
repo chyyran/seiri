@@ -66,25 +66,30 @@ const expression = /^(TRACKADDED|E[A-Z]+)::(.*)$/;
 const twoparamexpr = /^(.*)\|\|(.*)$/;
 
 const processWatcherMessage = message => {
-  let matches = expression.exec(message.trim());
+  let _message = message.trim();
+  let matches = expression.exec(_message);
 
-  log.info("MsgRecv <" + message + ">");
+  log.info("MsgRecv <" + _message + ">");
+  if (matches.length !== 3) {
+    log.warn("bad recv <" + _message + ">");
+    return;
+  }
   let messageType = matches[1];
   let messagePayload = matches[2];
   switch (messageType) {
     case "TRACKADDED":
       log.info("TRACKADDED recv with payload <" + messagePayload + ">");
       let trackdata = twoparamexpr.exec(messagePayload);
-      if (trackdata && trackdata.length === 2) {
+      if (trackdata && trackdata.length === 3) {
         newTracksAdded.push(trackdata[1] + " - " + trackdata[2]);
       } else {
-        log.warn("TRACKADDED bad recv <" + message + ">");
+        log.warn("TRACKADDED bad recv <" + _message + ">");
       }
       break;
     case "EMISSINGTAG":
       log.info("EMISSINGTAG recv with payload <" + messagePayload + ">");
       let tagdata = twoparamexpr.exec(messagePayload);
-      if (tagdata && tagdata.length === 2) {
+      if (tagdata && tagdata.length === 3) {
         notifier.notify({
           title: "Track is missing tag.",
           message:
@@ -92,7 +97,7 @@ const processWatcherMessage = message => {
           appID: appId
         });
       } else {
-        log.info("EMISSINGTAG bad recv <" + message + ">");
+        log.info("EMISSINGTAG bad recv <" + _message + ">");
       }
       break;
     case "ETRACKMOVE":
