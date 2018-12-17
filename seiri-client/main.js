@@ -70,7 +70,7 @@ const processWatcherMessage = message => {
   let matches = expression.exec(_message);
 
   log.info("MsgRecv <" + _message + ">");
-  if (matches.length !== 3) {
+  if (!matches || matches.length !== 3) {
     log.warn("bad recv <" + _message + ">");
     return;
   }
