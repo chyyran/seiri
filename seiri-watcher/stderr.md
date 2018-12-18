@@ -9,12 +9,12 @@ This system is intended for the Electron browser process to handle desktop notif
 
 | Code                          | Description                                            |
 | ----------------------------- | ------------------------------------------------------ |
-| `TRACKADDED(Artist||Title)`   | A track has successfully been added to the library     |
+| `TRACKADDED(Artist\|\|Title)`   | A track has successfully been added to the library     |
 | `ETRACK`                      | Generic track error                                    |
 | `ETRACKMOVE(Path)`            | The given track could not be moved to its library path |
 | `ECREATEDIRECTORY(Directory)` | The given directory could not be created               |
 | `ENONTRACK(Path)`             | The given path is not a track                          |
-| `EMISSINGTAG(Track||Tag)`     | The given track is missing the given tag               |
+| `EMISSINGTAG(Track\|\|Tag)`     | The given track is missing the given tag               |
 | `EWATCHER`                    | Generic watcher error                                  |
 | `EWATCHERDIED`                | The watcher died                                       |
 | `EWATCHERRESTART`             | Watcher is restarting                                  |
