@@ -27,18 +27,25 @@
     "extraFiles": [
       "**/VisualElements/*",
       "**/seiri.VisualElementsManifest.xml"
-    ]
-  },
-  "win": {
-    "files": [
-      "seiri-watcher.exe"
     ],
-    "publish": [
-      "github"
-    ]
-  },
-  "appx": {
-    "backgroundColor": "#EA0032"
+    "win": {
+      "publish": [
+        "github"
+      ]
+    },
+    "linux": {
+      "publish": [
+        "github"
+      ],
+      "target": [
+        "dir",
+        "tar.gz",
+        "zip"
+      ]
+    },
+    "appx": {
+      "backgroundColor": "#DEDEDE"
+    }
   },
   "dependencies": {
     "electron-is-dev": "^1.0.1",
