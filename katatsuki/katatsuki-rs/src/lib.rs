@@ -42,12 +42,22 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
     result
 }
 
+
+//! # Katatsuki
+//!
+//! `katatsuki` wraps [taglib2](https://taglib.org/) to allow safe access to 
+//! the metadata of various music files.
+
+
 struct TrackData {
     raw: *mut sys::track_data,
 }
 
+/// Unsafe backing 
 impl TrackData {
     // Dangerous access here, path not existing is UB.
+    /// Do not use `TrackData::new`, instead use `Track::from_path` to ensure 
+    /// safe access.
     pub fn new(path: &CString) -> TrackData {
         TrackData {
             raw: unsafe { sys::create_track_data(path.to_owned().into_raw()) },
@@ -129,6 +139,7 @@ impl Drop for TrackData {
         unsafe { sys::delete_track_data(self.raw) }
     }
 }
+
 #[derive(Debug)]
 pub enum FileError {
     OpenFailure,

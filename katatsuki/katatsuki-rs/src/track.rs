@@ -2,7 +2,12 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 #[derive(Debug, Primitive)]
+/// The File Type of the Track.
+/// TrackFileType discriminates on bitrates for lossless files, but
+/// does not for lossy files. 
 pub enum TrackFileType {
+
+    /// Unknown file type.
     Unknown = 0,
 
     // For backwards compatibility purposes, the following have to hold
@@ -12,18 +17,43 @@ pub enum TrackFileType {
 
     // The FLAC range is [1, 6]
     // Dummy for switching on.
+
+    /// FLAC with a 4-bit bitrate is invalid, but this format exists for
+    /// backwards compatibility purposes with other language implementations
+    /// of katatsuki.
     FLAC4 = 1,
+
+    /// FLAC with 8-bit per sample bitrate.
     FLAC8 = 2,
+
+    /// FLAC with 16-bit per sample bitrate. The most common bit rate.
     FLAC16 = 3,
+
+    /// FLAC with 24-bit per sample bitrate.
     FLAC24 = 4,
+
+    /// FLAC with 32-bit per sample bitrate. This is an uncommon and not
+    /// very well supported bit rate.
     FLAC32 = 5,
+
+    /// FLAC with an unspecified bitrate.
     FLAC = 6,
 
     // The lossy range is [7, 11]
+
+    /// Constant bit rate MP3.
     MP3CBR = 7,
+
+    /// Variable bit rate MP3.
     MP3VBR = 8,
+
+    /// AAC audio with unspecified bitrate.
     AAC = 9,
+
+    /// Vorbis audio with unspecified bitrate.
     Vorbis = 10,
+
+    /// Opus audio with unspecified bitrate.
     Opus = 11,
 
     // The Alac range is [12, 14]
@@ -49,10 +79,12 @@ pub enum TrackFileType {
     MonkeysAudio = 24,
 
     /// Generic for matching, this is not actually a valid return from katatsuki.
+    /// Exists for 
     MP3 = 780,
 }
 
 #[derive(Debug)]
+/// Represents a Track.
 pub struct Track {
     pub file_path: PathBuf,
     pub file_type: TrackFileType,
@@ -74,9 +106,11 @@ pub struct Track {
     pub updated: String,
 }
 
+/// Converts a lowercase string representation of a 
+/// `TrackFileType` to its representation. If a 
+/// string does not match, returns `TrackFileType::Unknown`
 impl FromStr for TrackFileType {
     type Err = ();
-
     fn from_str(s: &str) -> Result<Self, ()> {
         match s.to_lowercase().as_str() {
             "flac" => Ok(TrackFileType::FLAC),
