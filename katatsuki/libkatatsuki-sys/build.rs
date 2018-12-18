@@ -47,6 +47,18 @@ fn main() {
   println!("cargo:rustc-link-lib=static=tag");
   println!("cargo:rustc-link-lib=static=tag_c");
   println!("cargo:rustc-link-lib=static=katatsuki");
+  
+  let target  = env::var("TARGET").unwrap();
+  if target.contains("apple")
+  {
+      println!("cargo:rustc-link-lib=dylib=c++");
+      println!("cargo:rustc-link-lib=dylib=z");
+  }
+  else if target.contains("linux")
+  {
+      println!("cargo:rustc-link-lib=dylib=stdc++");
+      println!("cargo:rustc-link-lib=dylib=z");
+  }
 
   // let bindings = bindgen::Builder::default()
   //   .header("wrapper.h")
