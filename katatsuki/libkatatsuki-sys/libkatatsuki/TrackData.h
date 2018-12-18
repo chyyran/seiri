@@ -4,6 +4,7 @@
 #include <fileref.h>
 #include <array>
 #include <optional>
+#include <memory>
 
 class TrackData {
 private:

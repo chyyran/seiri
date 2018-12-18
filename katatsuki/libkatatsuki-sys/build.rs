@@ -5,23 +5,36 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-  let dst = cmake::Config::new("libkatatsuki")
-          //  .generator("NMake Makefiles")
-            .build_target("katatsuki")
-            .static_crt(true)
-            .cxxflag("/MT")
-            .cflag("/MT")
-            .cxxflag("/NODEFAULTLIB:MSVCRT")
-            .always_configure(true)
-            .profile("Release")
-            .very_verbose(true)
-            .build();
+  let dst = if cfg!(target_os = "windows") {
+    cmake::Config::new("libkatatsuki")
+            //  .generator("NMake Makefiles")
+              .build_target("katatsuki")
+              .static_crt(true)
+              .cxxflag("/MT")
+              .cflag("/MT")
+              .cxxflag("/NODEFAULTLIB:MSVCRT")
+              .always_configure(true)
+              .profile("Release")
+              .very_verbose(true)
+              .build()
+    } else {
+      cmake::Config::new("libkatatsuki")
+        .build_target("katatsuki")
+        .profile("Release")
+        .always_configure(true)
+        .very_verbose(true)
+        .cxxflag("-std=c++1z")
+        .build()
+    };
   //let profile = env::var("PROFILE").unwrap();
   let mut lib_dst = PathBuf::from(format!("{}", dst.display()));
   let mut taglib_dst = PathBuf::from(format!("{}", dst.display()));
 
   lib_dst.push("build");
-  lib_dst.push("Release");
+
+  if cfg!(target_os = "windows") {
+    lib_dst.push("Release");
+  }
 
   taglib_dst.push("build");
   taglib_dst.push("taglib");

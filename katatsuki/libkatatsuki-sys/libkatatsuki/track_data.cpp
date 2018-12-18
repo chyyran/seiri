@@ -9,6 +9,8 @@
 #include <utility>
 #include <optional>
 #include <iostream>
+#include <memory>
+#include <cstring>
 
 extern "C" const int get_file_type(track_data* track_data) {
     auto* trackData = reinterpret_cast<TrackData*>(track_data);

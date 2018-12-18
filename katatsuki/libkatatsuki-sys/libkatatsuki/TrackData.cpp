@@ -22,6 +22,8 @@
 #include <optional>
 #include <iostream>
 #include <utility>
+#include <memory>
+
 using namespace std;
 
 TrackData::TrackData(const char* track_path) {
@@ -30,7 +32,7 @@ TrackData::TrackData(const char* track_path) {
     #ifdef _WIN32
     f = make_shared<TagLib::FileRef>(TagLib::FileName(path.toWString().data()), true, TagLib::AudioProperties::Accurate);
     #else
-    f = make_shared<TagLib::FileRef>(TagLib::FileName(path.to8Bit(true)), true, TagLib::AudioProperties::Accurate);
+    f = make_shared<TagLib::FileRef>(TagLib::FileName(path.to8Bit(true).data()), true, TagLib::AudioProperties::Accurate);
     #endif
 }
 

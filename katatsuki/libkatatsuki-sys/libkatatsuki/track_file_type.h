@@ -49,7 +49,7 @@ typedef enum track_file_type {
 
     /// Generic for matching, this is not actually a valid return from katatsuki.
     MP3 = 780,
-};
+} track_file_type;
 
 static inline const enum track_file_type get_flac_type(int bitdepth) {
     switch (bitdepth)
