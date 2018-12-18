@@ -95,7 +95,7 @@ pub fn ensure_music_folder(folder_path: &str) -> io::Result<(PathBuf, PathBuf)> 
 }
 
 fn sanitize_file_name(path: &str) -> String {
-    path.replace(|c: char| c.is_invalid_for_path(), "_").trim_end_matches('.').to_string();
+    path.replace(|c: char| c.is_invalid_for_path(), "_").trim_end_matches('.').to_string()
 }
 
 pub fn get_track_directory(track: &Track, library_path: &Path) -> PathBuf {

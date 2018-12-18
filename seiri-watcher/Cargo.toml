@@ -1,6 +1,6 @@
 [package]
 name = "seiri-watcher"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ronny Chan <ronny@ronnchyran.com>"]
 include = ["tools/**/*"]
 edition = "2018"
@@ -9,7 +9,7 @@ edition = "2018"
 rand = "0.4.2"
 walkdir = "2"
 threadpool = "1.7.1"
-seiri = "2.0"
+seiri = "2.0.1"
 crossbeam = "0.5.0"
 leak = "0.1.2"
 
