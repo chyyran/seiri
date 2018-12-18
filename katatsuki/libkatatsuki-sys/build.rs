@@ -24,6 +24,8 @@ fn main() {
         .always_configure(true)
         .very_verbose(true)
         .cxxflag("-std=c++1z")
+        .cxxflag("-lstdc++")
+        .cflag("-lstdc++")
         .build()
     };
   //let profile = env::var("PROFILE").unwrap();
