@@ -1,3 +1,9 @@
+//! # Katatsuki
+//!
+//! `katatsuki` wraps [taglib2](https://taglib.org/) to allow safe access to 
+//! the metadata of various music files.
+
+
 #[macro_use]
 extern crate enum_primitive_derive;
 
@@ -41,13 +47,6 @@ fn c_str_to_str(c_str: *const c_char) -> Option<String> {
 
     result
 }
-
-
-//! # Katatsuki
-//!
-//! `katatsuki` wraps [taglib2](https://taglib.org/) to allow safe access to 
-//! the metadata of various music files.
-
 
 struct TrackData {
     raw: *mut sys::track_data,
