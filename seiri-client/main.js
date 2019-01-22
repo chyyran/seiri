@@ -10,7 +10,7 @@ const opn = require("opn");
 const ensureConfig = require("./ensureConfig");
 const autoUpdater = require("electron-updater").autoUpdater;
 const log = require("electron-log");
-log.transports.file.level = 'info';
+log.transports.file.level = "info";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -66,140 +66,151 @@ const expression = /^(TRACKADDED|E[A-Z]+)::(.*)$/;
 const twoparamexpr = /^(.*)\|\|(.*)$/;
 
 const processWatcherMessage = message => {
-  let _message = message.trim();
-  let matches = expression.exec(_message);
-  log.info("MsgRecv <" + _message + ">");
-  if (!!!matches || (!!matches && matches.length !== 3)) {
-    log.warn("bad recv <" + _message + ">");
-    return;
-  }
-  let messageType = matches[1];
-  let messagePayload = matches[2];
- 
-  switch (messageType) {
-    case "TRACKADDED":
-      log.info("TRACKADDED recv with payload <" + messagePayload + ">");
-      let trackdata = twoparamexpr.exec(messagePayload);
-      if (trackdata && trackdata.length === 3) {
-        newTracksAdded.push(trackdata[1] + " - " + trackdata[2]);
-      } else {
-        log.warn("TRACKADDED bad recv <" + _message + ">");
-      }
-      break;
-    case "EMISSINGTAG":
-      log.info("EMISSINGTAG recv with payload <" + messagePayload + ">");
-      let tagdata = twoparamexpr.exec(messagePayload);
-      if (tagdata && tagdata.length === 3) {
+  try {
+    if (message === null || message === undefined || !!!message) {
+      log.warn("bad recv <" + _message + ">");
+      return;
+    }
+
+    let _message = message.trim();
+    let matches = expression.exec(_message);
+    log.info("MsgRecv <" + _message + ">");
+
+    if (!!!matches || (!!matches && matches.length !== 3)) {
+      log.warn("bad recv <" + _message + ">");
+      return;
+    }
+    let messageType = matches[1];
+    let messagePayload = matches[2];
+
+    switch (messageType) {
+      case "TRACKADDED":
+        log.info("TRACKADDED recv with payload <" + messagePayload + ">");
+        let trackdata = twoparamexpr.exec(messagePayload);
+        if (trackdata && trackdata.length === 3) {
+          newTracksAdded.push(trackdata[1] + " - " + trackdata[2]);
+        } else {
+          log.warn("TRACKADDED bad recv <" + _message + ">");
+        }
+        break;
+      case "EMISSINGTAG":
+        log.info("EMISSINGTAG recv with payload <" + messagePayload + ">");
+        let tagdata = twoparamexpr.exec(messagePayload);
+        if (tagdata && tagdata.length === 3) {
+          notifier.notify({
+            title: "Track is missing tag.",
+            message:
+              "Track " + tagdata[1] + " is missing the " + tagdata[2] + " tag.",
+            appID: appId
+          });
+        } else {
+          log.info("EMISSINGTAG bad recv <" + _message + ">");
+        }
+        break;
+      case "ETRACKMOVE":
+        log.info("ETRACKMOVE recv");
         notifier.notify({
-          title: "Track is missing tag.",
-          message:
-            "Track " + tagdata[1] + " is missing the " + tagdata[2] + " tag.",
+          title: "Error when moving track",
+          message: "Error occurred when moving " + messagePayload,
           appID: appId
         });
-      } else {
-        log.info("EMISSINGTAG bad recv <" + _message + ">");
-      }
-      break;
-    case "ETRACKMOVE":
-      log.info("ETRACKMOVE recv");
-      notifier.notify({
-        title: "Error when moving track",
-        message: "Error occurred when moving " + messagePayload,
-        appID: appId
-      });
-      break;
-    case "ETRACK":
-      log.info("ETRACK recv");
-      notifier.notify({
-        title: "Track error occurred.",
-        message: messagePayload,
-        appID: appId
-      });
-      break;
-    case "ECREATEDIRECTORY":
-      log.info("ECREATEDIRECTORY recv");
-      notifier.notify({
-        title: "Unable to create folder.",
-        message: "Unable to create folder " + messagePayload,
-        appID: appId
-      });
-      break;
-    case "ENONTRACK":
-      log.info("ENONTRACK recv");
-      notifier.notify({
-        title: "Non-track file found.",
-        message: messagePayload + " is not a track.",
-        appID: appId
-      });
-      break;
-    case "EWATCHERDIED":
-      log.info("EWATCHERDIED recv");
-      notifier.notify({
-        title: "Track watcher restarting.",
-        message: "Restarting the track watcher due to an error.",
-        appID: appId
-      });
-      break;
-    case "EWATCHERRESTART":
-      log.info("EWATCHERRESTART recv");
-      notifier.notify({
-        title: "Track watcher restarting.",
-        message: "Restarting the track watcher.",
-        appID: appId
-      });
-      break;
-    case "EWATCHERNOACCESS":
-      log.info("EWATCHERNOACCESS recv");
-      notifier.notify({
-        title: "Can not access the track library folder.",
-        message:
-          "The track library folder can not be accessed. Ensure it exists and then restart the track watcher.",
-        appID: appId
-      });
-      if (runningWatcher) {
-        runningWatcher.quit();
-      }
-      break;
-    case "EWATCHER":
-      log.info("EWATCHER recv");
-      notifier.notify({
-        title: "Track watcher error.",
-        message: "Unknown track watcher error occurred.",
-        appID: appId
-      });
-      break;
-    case "ECONFIGINVALID":
-      log.info("ECONFIGINVALID recv");
-      notifier.notify({
-        title: "Configuration error.",
-        message:
-          "The configuration file is invalid. Fix it then restart the track watcher.",
-        appID: appId
-      });
-      if (runningWatcher) {
-        runningWatcher.quit();
-      }
-      break;
-    case "ECONFIGIO":
-      log.info("ECONFIGIO recv");
-      notifier.notify({
-        title: "Configuration error.",
-        message: "Can not write to configuration path " + messagePayload + ".",
-        appID: appId
-      });
-      if (runningWatcher) {
-        runningWatcher.quit();
-      }
-      break;
-    default:
-      log.warn("EUNKNOWN recv");
+        break;
+      case "ETRACK":
+        log.info("ETRACK recv");
+        notifier.notify({
+          title: "Track error occurred.",
+          message: messagePayload,
+          appID: appId
+        });
+        break;
+      case "ECREATEDIRECTORY":
+        log.info("ECREATEDIRECTORY recv");
+        notifier.notify({
+          title: "Unable to create folder.",
+          message: "Unable to create folder " + messagePayload,
+          appID: appId
+        });
+        break;
+      case "ENONTRACK":
+        log.info("ENONTRACK recv");
+        notifier.notify({
+          title: "Non-track file found.",
+          message: messagePayload + " is not a track.",
+          appID: appId
+        });
+        break;
+      case "EWATCHERDIED":
+        log.info("EWATCHERDIED recv");
+        notifier.notify({
+          title: "Track watcher restarting.",
+          message: "Restarting the track watcher due to an error.",
+          appID: appId
+        });
+        break;
+      case "EWATCHERRESTART":
+        log.info("EWATCHERRESTART recv");
+        notifier.notify({
+          title: "Track watcher restarting.",
+          message: "Restarting the track watcher.",
+          appID: appId
+        });
+        break;
+      case "EWATCHERNOACCESS":
+        log.info("EWATCHERNOACCESS recv");
+        notifier.notify({
+          title: "Can not access the track library folder.",
+          message:
+            "The track library folder can not be accessed. Ensure it exists and then restart the track watcher.",
+          appID: appId
+        });
+        if (runningWatcher) {
+          runningWatcher.quit();
+        }
+        break;
+      case "EWATCHER":
+        log.info("EWATCHER recv");
+        notifier.notify({
+          title: "Track watcher error.",
+          message: "Unknown track watcher error occurred.",
+          appID: appId
+        });
+        break;
+      case "ECONFIGINVALID":
+        log.info("ECONFIGINVALID recv");
+        notifier.notify({
+          title: "Configuration error.",
+          message:
+            "The configuration file is invalid. Fix it then restart the track watcher.",
+          appID: appId
+        });
+        if (runningWatcher) {
+          runningWatcher.quit();
+        }
+        break;
+      case "ECONFIGIO":
+        log.info("ECONFIGIO recv");
+        notifier.notify({
+          title: "Configuration error.",
+          message:
+            "Can not write to configuration path " + messagePayload + ".",
+          appID: appId
+        });
+        if (runningWatcher) {
+          runningWatcher.quit();
+        }
+        break;
+      default:
+        log.warn("EUNKNOWN recv");
 
-      notifier.notify({
-        title: "Error occurred.",
-        message: messagePayload + ": " + messageType,
-        appID: appId
-      });
-      break;
+        notifier.notify({
+          title: "Error occurred.",
+          message: messagePayload + ": " + messageType,
+          appID: appId
+        });
+        break;
+    }
+  } catch(err) {
+    log.warn("bad err recv <" + _message + ">");
   }
 };
 
