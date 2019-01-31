@@ -7,9 +7,6 @@
 ## About
 *seiri* is a music manager designed for large libraries (10000+ tracks). The manager was created to be *opinionated*. It organizes music in one way and has few customizable options. *seiri*'s features are constrained to keep large libraries of music consolidated and searchable. *seiri* depends on how files are organized in folders, and ignores music players and song tagging tools. *seiri* works best with music players that disregard where music is stored, such as [foobar2000](https://www.foobar2000.org/).
 
-*seiri* is a backwards-compatible rewrite of [katatsuki](https://github.com/RonnChyran/Katatsuki) in Rust and React.
-
-
 ## *seiri* features.
 * Move files between directories.
 * Makes music queryable.
