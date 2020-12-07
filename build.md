@@ -6,7 +6,7 @@
 
 1. Rust
 
-Install Rust 2018 at https://www.rust-lang.org, or through your package manager of choice. *seiri* requires the nightly compiler, so once rustup is installed, run `rustup default nightly`.
+Install Rust at https://www.rust-lang.org, or through your package manager of choice.
 
 1. CMake
 
