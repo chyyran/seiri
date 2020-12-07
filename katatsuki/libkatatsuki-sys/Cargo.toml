@@ -1,6 +1,6 @@
 [package]
 name = "libkatatsuki-sys"
-version = "1.0.9"
+version = "1.0.10"
 authors = ["Ronny Chan <ronny@ronnychan.ca>"]
 links = "libkatatsuki"
 description = "Rust bindings for the Track interface of katatsuki"
@@ -10,5 +10,5 @@ license = "MIT"
 libc = "0.2"
 
 [build-dependencies]
-cmake = "0.1"
-bindgen = "0.26.3"
+cmake = "0.1.45"
+bindgen = "0.56.0"
