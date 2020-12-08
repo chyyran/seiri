@@ -5,6 +5,7 @@ use r2d2::{CustomizeConnection, Pool};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, Result, NO_PARAMS, functions::FunctionFlags};
 use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
 use regex::Regex;
 use rusqlite::types::ToSql;
 use std::collections::HashMap;
@@ -198,8 +199,7 @@ pub fn query_tracks(
 
 #[allow(dead_code)]
 fn get_rand_param() -> String {
-    let mut rng = thread_rng();
-    format!(":{}", rng.gen_ascii_chars().take(10).collect::<String>()).to_owned()
+    format!(":{}", thread_rng().sample_iter(&Alphanumeric).take(10).collect::<String>()).to_owned()
 }
 
 #[allow(dead_code)]
