@@ -4,26 +4,19 @@
 //! the metadata of various music files.
 
 
-#[macro_use]
-extern crate enum_primitive_derive;
 
-extern crate chrono;
-extern crate imagesize;
-extern crate libc;
-extern crate num_traits;
+use libkatatsuki_sys as sys;
 
-extern crate libkatatsuki_sys as sys;
-
-use chrono::Local;
-use imagesize::blob_size;
-use std::ffi::NulError;
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, NulError};
 use std::io::{Error, ErrorKind, Result};
 use std::os::raw::{c_char, c_void};
 use std::path::Path;
 use std::slice::from_raw_parts;
 
+use chrono::Local;
+use imagesize::blob_size;
 pub use num_traits::{FromPrimitive, ToPrimitive};
+
 pub use track::Track;
 pub use track::TrackFileType;
 
