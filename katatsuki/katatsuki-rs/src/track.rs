@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::str::FromStr;
+use enum_primitive_derive::Primitive;
 
 #[derive(Debug, Primitive)]
 /// The File Type of the Track.
