@@ -1,6 +1,6 @@
 [package]
 name = "seiri"
-version = "2.0.4"
+version = "2.0.11"
 authors = ["Ronny Chan <ronny@ronnychan.ca>"]
 description = "Support library for seiri music manager"
 license = "MIT"
@@ -10,11 +10,11 @@ edition = "2018"
 name = "seiri"
 
 [dependencies]
-quick-error = "1.2.1"
+quick-error = "2"
 regex = "1.4.2"
-itertools = "0.7.8"
-humantime = "1.1.1"
-rand = "0.4.2"
+itertools = "0.9"
+humantime = "2"
+rand = "0.7"
 chrono = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
@@ -22,8 +22,8 @@ app_dirs ="1.2.1"
 r2d2_sqlite = "0.17.0"
 r2d2 = "0.8"
 toml = "0.5"
-dirs = "1.0.3"
-katatsuki = "1.0.10"
+dirs = "3"
+katatsuki = "1.0.11"
 
 [dependencies.rusqlite]
 version = "0.24"
