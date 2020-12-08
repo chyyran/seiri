@@ -82,11 +82,9 @@ pub fn get_appdata_path() -> PathBuf {
 }
 
 pub fn ensure_music_folder(folder_path: &str) -> io::Result<(PathBuf, PathBuf)> {
-    // Todo: handle these unwraps properly.
     let music_folder = Path::new(folder_path);
+    let mut auto_add_folder = PathBuf::from(music_folder);
     let music_folder = PathBuf::from(music_folder);
-    let mut auto_add_folder = PathBuf::new();
-    music_folder.clone_into(&mut auto_add_folder);
     auto_add_folder.pop();
     auto_add_folder.push("Automatically Add to Library");
     fs::create_dir_all(music_folder.as_path())?;

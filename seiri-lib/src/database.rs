@@ -3,7 +3,7 @@ extern crate rusqlite;
 use crate::bangs::{ms_to_ticks, ticks_to_ms, Bang};
 use r2d2::{CustomizeConnection, Pool};
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Error, Result, NO_PARAMS};
+use rusqlite::{Error, Result, NO_PARAMS, functions::FunctionFlags};
 use rand::{thread_rng, Rng};
 use regex::Regex;
 use rusqlite::types::ToSql;
@@ -67,7 +67,7 @@ fn escape_regex_search(string: &str) -> String {
 #[allow(dead_code)]
 pub fn add_regexp_function(db: &Connection) -> Result<()> {
     let mut cached_regexes = HashMap::new();
-    db.create_scalar_function("regexp", 2, true, move |ctx| {
+    db.create_scalar_function("regexp", 2, FunctionFlags::SQLITE_DETERMINISTIC, move |ctx| {
         let regex_s = ctx.get::<String>(0)?;
         let text = ctx.get::<String>(1)?;
         let entry = cached_regexes.entry(regex_s.clone());
@@ -123,7 +123,7 @@ pub fn create_database(conn: &Connection) {
 #[allow(dead_code)]
 pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     let mut statement = conn.prepare("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
-    statement.query(NO_PARAMS)?;
+    statement.execute(NO_PARAMS)?;
     Ok(())
 }
 
@@ -161,34 +161,34 @@ pub fn query_tracks(
 
     let params = params
         .iter()
-        .map(|c| (c.0.as_ref(), &c.1 as &ToSql))
-        .collect::<Vec<(&str, &ToSql)>>();
+        .map(|c| (c.0.as_ref(), &c.1 as &dyn ToSql))
+        .collect::<Vec<(&str, &dyn ToSql)>>();
 
     let mut rows = statement.query_named(params.as_slice())?;
-    while let Some(Ok(row)) = rows.next() {
+    while let Ok(Some(row)) = rows.next() {
         let track = Track {
-            file_path: PathBuf::from(&row.get_checked::<_, String>(0)?),
-            title: row.get_checked(1)?,
-            artist: row.get_checked(2)?,
-            album_artists: row.get_checked::<_, String>(3)?
+            file_path: PathBuf::from(&row.get::<_, String>(0)?),
+            title: row.get(1)?,
+            artist: row.get(2)?,
+            album_artists: row.get::<_, String>(3)?
                 .split(';')
                 .map(|c| c.to_owned())
                 .collect::<Vec<String>>(),
-            album: row.get_checked(4)?,
-            year: row.get_checked(5)?,
-            track_number: row.get_checked(6)?,
-            musicbrainz_track_id: row.get_checked(7).ok(),
-            has_front_cover: row.get_checked(8)?,
-            front_cover_width: row.get_checked(9).ok().unwrap_or(0),
-            front_cover_height: row.get_checked(10).ok().unwrap_or(0),
-            bitrate: row.get_checked(11)?,
-            sample_rate: row.get_checked(12)?,
-            source: row.get_checked(13).ok().unwrap_or("None".to_owned()),
-            disc_number: row.get_checked(14)?,
-            duration: ticks_to_ms(row.get_checked(15)?),
-            file_type: TrackFileType::from_i32(row.get_checked::<_, i32>(16)?)
+            album: row.get(4)?,
+            year: row.get(5)?,
+            track_number: row.get(6)?,
+            musicbrainz_track_id: row.get(7).ok(),
+            has_front_cover: row.get(8)?,
+            front_cover_width: row.get(9).ok().unwrap_or(0),
+            front_cover_height: row.get(10).ok().unwrap_or(0),
+            bitrate: row.get(11)?,
+            sample_rate: row.get(12)?,
+            source: row.get(13).ok().unwrap_or("None".to_owned()),
+            disc_number: row.get(14)?,
+            duration: ticks_to_ms(row.get(15)?),
+            file_type: TrackFileType::from_i32(row.get::<_, i32>(16)?)
                 .unwrap_or(TrackFileType::Unknown),
-            updated: row.get_checked::<_, String>(17)?
+            updated: row.get::<_, String>(17)?
         };
         tracks.push(track)
     }
@@ -474,7 +474,7 @@ pub fn add_track(track: &Track, conn: &Connection) {
                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7,
                         ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
         &[
-            &track.file_path.as_os_str().to_string_lossy().into_owned() as &ToSql,
+            &track.file_path.as_os_str().to_string_lossy().into_owned() as &dyn ToSql,
             &track.title,
             &track.artist,
             &track.album_artists.join(";"),

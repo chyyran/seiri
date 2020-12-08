@@ -1,5 +1,3 @@
-#![feature(toowned_clone_into)]
-
 extern crate quick_error;
 extern crate chrono;
 extern crate humantime;
