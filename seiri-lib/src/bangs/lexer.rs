@@ -280,8 +280,8 @@ fn ensure_arguments_balanced(tokens: &Vec<Token>) -> bool {
         }
     }
 
-    ((argument_begin == argument_end) && (bang_prefix == bang_ident)
-        && (bang_prefix == argument_begin))
+    (argument_begin == argument_end) && (bang_prefix == bang_ident)
+        && (bang_prefix == argument_begin)
 }
 /// Lexes the given query string, and
 /// returns an ordered vector of tokens.
