@@ -1,6 +1,6 @@
 # Error Reporting.
 
-*seiri-core* outputs to stderr whenever a file-related error has occurred. The error message is separated by a double colon (`::`), with the first part being an error code. Error codes with a colon emit parameters that should be formatted, and error codes without emit a pre-formatted message. Some messages have more than one parameter, these parameters are separated by a double pipe.
+*seiri-watcher* outputs to stderr whenever a file-related error has occurred. The error message is separated by a double colon (`::`), with the first part being an error code. Error codes with a colon emit parameters that should be formatted, and error codes without emit a pre-formatted message. Some messages have more than one parameter, these parameters are separated by a double pipe.
 
 This system is intended for the Electron browser process to handle desktop notifications.
 
