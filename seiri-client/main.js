@@ -2,14 +2,13 @@ const { app, BrowserWindow, Menu, Tray } = require("electron");
 const notifier = require("node-notifier");
 const path = require("path");
 const child = require("child_process");
-const url = require("url");
 const watcher = require("./watcher");
 const isDev = require("electron-is-dev");
 const appId = "moe.chyyran.seiri";
-const opn = require("opn");
 const ensureConfig = require("./ensureConfig");
 const autoUpdater = require("electron-updater").autoUpdater;
 const log = require("electron-log");
+
 log.transports.file.level = "info";
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -330,9 +329,14 @@ function createWindow() {
     width: 1000,
     height: 600,
     frame: false,
-    icon: __dirname + "/branding/seiri.png",
+    icon: path.join(__dirname, "branding", "seiri.png"),
     show: false,
-    webSecurity: false
+    webSecurity: false,
+    webPreferences: {
+      contextIsolation: true,
+      enableRemoteModule: true,
+      preload: path.join(__dirname , "preload.js")
+    },
   });
 
   let dir = isDev
@@ -345,7 +349,9 @@ function createWindow() {
   win.loadURL(dir);
 
   // Open the DevTools.
-  // win.webContents.openDevTools();
+  if (isDev) {
+    win.webContents.openDevTools();
+  }
 
   win.on("hide", () => {
     log.info("Closing in 60 seconds...");

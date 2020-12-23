@@ -1,6 +1,5 @@
 import actionCreatorFactory from 'typescript-fsa';
 import { asyncFactory } from 'typescript-fsa-redux-thunk';
-import seiri from "./seiri-neon";
 import State from "./State";
 import { Track } from "./types";
 
@@ -35,12 +34,12 @@ export const updateTracks = actionCreator<{tracks: Track[]}>("UPDATE_TRACKS")
 
 export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (query, dispatch) => {
     try {
-        const tracks = seiri.queryTracks(query.query)
+        const tracks = window.seiri.queryTracks(query.query)
         // tslint:disable-next-line:no-console
         dispatch(updateTracks(tracks))
-    } catch {
+    } catch (e) {
         // tslint:disable-next-line:no-console
-        console.log("invalid bang?")
+        console.log("invalid bang?", e)
     }
     return { type: "UPDATE_QUERY", query }
 })
@@ -48,7 +47,8 @@ export const updateQuery = createAsync<{query: string}, {}>("UPDATE_QUERY", (que
 export const updateTracksTick = createAsync<{}, {}>("UPDATE_TRACKS_TICK", (query, dispatch, getState) => {
     const state = getState();
     try {
-        const tracks = seiri.queryTracks(state.query)
+        const tracks = window.seiri.queryTracks(state.query)
+        console.log(tracks)
          // tslint:disable-next-line:no-console
         console.log("tick!")
         dispatch(updateTracks(tracks))
