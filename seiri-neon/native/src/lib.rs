@@ -1,18 +1,10 @@
-#[macro_use]
-extern crate neon;
-extern crate num_traits;
-extern crate seiri;
 use neon::prelude::*;
-// use neon::{JsArray, JsBoolean, JsNumber, JsNull, JsObject, JsString, JsUndefined, Object};
-// use neon::vm::Throw;
-// use neon::vm::{FunctionContext, JsResult};
 use num_traits::cast::ToPrimitive;
 use seiri::config::get_config;
 use seiri::database;
 use seiri::paths;
 use seiri::Bang;
 use seiri::Track;
-use seiri::TrackFileType;
 use std::path::Path;
 
 #[allow(non_snake_case)]
@@ -24,12 +16,12 @@ fn refresh_tracks(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
     let args = ctx.argument::<JsArray>(0)?;
 
     let mut track_filenames: Vec<String> = Vec::new();
-    for i in 0..args.len() {
+    for i in 0..args.len(&mut ctx) {
         let result = args
             .get(&mut ctx, i)?
-            .downcast::<JsString>()
+            .downcast::<JsString, _>(&mut ctx)
             .or_throw(&mut ctx)?
-            .value();
+            .value(&mut ctx);
         track_filenames.push(result);
     }
 
@@ -47,10 +39,12 @@ fn refresh_tracks(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
                         println!("RECONSIDERED NOT FOUND {:?}", track);
                         database::remove_track(&track, &conn);
                     }
-                    Err(_) => panic!(
-                        "Error when reconsidering {}. Is tools set up correctly?",
-                        file
-                    ),
+                    Err(_) => {
+                        println!(
+                            "RECONSIDER ERROR FOR {}. Is tools set up correctly?",
+                            file
+                        )
+                    },
                 }
             }
         }
@@ -62,7 +56,7 @@ fn refresh_tracks(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
 fn query_tracks(mut ctx: FunctionContext) -> JsResult<JsObject> {
     let ret = ctx.empty_object();
 
-    let query = ctx.argument::<JsString>(0)?.value();
+    let query = ctx.argument::<JsString>(0)?.value(&mut ctx);
 
     let bang = Bang::new(&query).unwrap();
     let conn = database::get_database_connection();
@@ -70,7 +64,7 @@ fn query_tracks(mut ctx: FunctionContext) -> JsResult<JsObject> {
     let jsTracks = ctx.empty_array();
 
     for (i, track) in results.into_iter().enumerate() {
-        let mut jsTrack = ctx.empty_object();
+        let jsTrack = ctx.empty_object();
         let filePath = ctx.string(&track.file_path.into_os_string().into_string().unwrap());
         jsTrack.set(&mut ctx, "filePath", filePath)?;
 
@@ -142,6 +136,7 @@ fn query_tracks(mut ctx: FunctionContext) -> JsResult<JsObject> {
 }
 
 register_module!(mut m, {
-    m.export_function("queryTracks", query_tracks);
-    m.export_function("refreshTracks", refresh_tracks)
+    m.export_function("queryTracks", query_tracks)?;
+    m.export_function("refreshTracks", refresh_tracks)?;
+    Ok(())
 });

@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Ronny Chan <ronny6993@gmail.com>"]
 license = "MIT"
 build = "build.rs"
+edition = "2018"
 
 [lib]
 name = "seiri_neon"
@@ -13,10 +14,14 @@ crate-type = ["dylib"]
 neon-build = "0.6.0"
 
 [dependencies]
-neon = "0.6.0"
 num-traits = "0.2"
 seiri = "2.0.12"
 
 [dependencies.rusqlite]
 version = "0.24.2"
 features = ["bundled", "functions"]
+
+[dependencies.neon]
+version = "0.6.0"
+default-features = false
+features = ["napi-runtime"]
