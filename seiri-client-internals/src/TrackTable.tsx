@@ -1,8 +1,9 @@
+import React from "react";
+
 import { orderBy as _, range } from "lodash";
 import * as Mousetrap from "mousetrap";
-import * as React from "react";
 import Draggable, { DraggableData } from "react-draggable";
-import { Dispatch } from "react-redux";
+import { Dispatch } from "redux";
 import {
 
   Column,
@@ -11,6 +12,7 @@ import {
   SortDirectionType,
   SortIndicator,
   Table,
+  TableCellRenderer,
   TableHeaderProps,
   WindowScroller
 } from "react-virtualized";
@@ -23,10 +25,19 @@ import { Track, TrackFileType } from "./types";
 
 declare var window: ElectronWindow;
 
+const toLodashDirection = (direction: SortDirectionType) => {
+  switch(direction) {
+    case "ASC":
+      return "asc";
+    case "DESC":
+      return "desc";
+  }
+}
+
 interface TrackTableProps {
   tracks: Track[];
   query: string;
-  dispatch: Dispatch<any>;
+  dispatch?: Dispatch<any>;
   hidden: boolean;
 }
 
@@ -35,7 +46,7 @@ interface TrackTableState {
   sortBy: string;
   sortDirection: SortDirectionType;
   sortedList: Track[];
-  selected: { [index: number]: boolean | undefined };
+  selected:  boolean[] | undefined ;
   lastSelected: number | undefined;
 }
 
@@ -45,7 +56,7 @@ const TOTAL_WIDTH = 3000;
 class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   constructor(props: TrackTableProps) {
     super(props);
-    const sortBy = "album";
+    const sortBy = "updated";
     const sortDirection = SortDirection.ASC;
     this.state = {
       // tslint:disable:object-literal-sort-keys
@@ -77,16 +88,16 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       // tslint:disable-next-line:no-console
       console.log("bound!")
       const tracksToRefresh = this.state.sortedList.filter(
-        (track, index) => this.state.selected[index] === true
-      ).map(track => track.filePath)
+        (track, index) => this.state.selected?.[index] === true
+      ).map(track => track.filePath);
 
       seiri.refreshTracks(tracksToRefresh)
       // tslint:disable-next-line:no-console
       console.log("REFRESHED!");
       // tslint:disable-next-line:no-console
       console.log(tracksToRefresh);
-      this.setState({ selected: [] })
-      this.props.dispatch!(updateTracksTick.action())
+      this.setState({ selected: [] });
+      this.props.dispatch?.(updateTracksTick.action({}));
       return false;
     });
     this.rowClassName = this.rowClassName.bind(this);
@@ -100,11 +111,11 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     this.hasCoverArtCellRenderer = this.hasCoverArtCellRenderer.bind(this);
   }
 
-  public componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
-    this.props.dispatch(updateSelectedCount({ count: (nextState.selected as boolean[]).filter(s => s).length }));
+  componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
+    this.props.dispatch?.(updateSelectedCount({ count: nextState.selected?.filter(s => s).length ?? 0 }));
   }
 
-  public componentWillReceiveProps(newProps: TrackTableProps) {
+  componentWillReceiveProps(newProps: TrackTableProps) {
     const { sortBy, sortDirection } = this.state;
     if (newProps.query !== this.props.query || newProps.tracks.length !== this.props.tracks.length) {
       this.setState({
@@ -117,12 +128,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     }
   }
 
-  private rowClassName({ index }: { index: number }) {
+  rowClassName({ index }: { index: number }) {
     if (index < 0) {
       return "table-row table-header";
     }
     let tableRowClass = "table-row";
-    if (!!this.state.selected[index]) {
+    if (!!this.state.selected?.[index]) {
       tableRowClass += " selected";
     }
     if (index % 2 === 0) {
@@ -133,49 +144,49 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     return tableRowClass;
   }
 
-  private rowGetter = ({ index }: { index: number }) =>
+  rowGetter = ({ index }: { index: number }) =>
     this.getDatum(this.state.sortedList, index);
 
-  private getDatum(list: Track[], index: number) {
+  getDatum(list: Track[], index: number) {
     return list[index] || {};
   }
 
-  private sort({
+  sort({
     sortBy,
     sortDirection
   }: {
-      sortBy: string;
-      sortDirection: SortDirectionType;
-    }) {
+    sortBy: string;
+    sortDirection: SortDirectionType;
+  }) {
     const sortedList = this.sortList({ list: this.props.tracks, sortBy, sortDirection });
 
     this.setState({ sortBy, sortDirection, sortedList });
   }
 
-  private sortList({
+  sortList({
     list,
     sortBy,
     sortDirection
   }: {
-      list: Track[];
-      sortBy: string;
-      sortDirection: SortDirectionType;
-    }) {
+    list: Track[];
+    sortBy: string;
+    sortDirection: SortDirectionType;
+  }) {
     return _(
       list,
       [sortBy, "album", "tracknumber"],
-      sortDirection.toLowerCase()
+      toLodashDirection(sortDirection)
     );
   }
 
-  private headerResizeHandler(dataKey: string, event: MouseEvent, { deltaX }: DraggableData) {
+  headerResizeHandler(dataKey: string, event: MouseEvent, { deltaX }: DraggableData) {
     this.resizeRow({
       dataKey,
       deltaX
     })
   }
 
-  private headerRenderer = ({
+  headerRenderer = ({
     columnData,
     dataKey,
     disableSort,
@@ -195,7 +206,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
           defaultClassNameDragging="DragHandleActive"
           // tslint:disable-next-line:jsx-no-bind
           onDrag={this.headerResizeHandler.bind(this, dataKey)}
-          position={{ x: 0 } as any}
+          position={{ x: 0, y: 0 }}
         >
           <span className="DragHandleIcon">⋮</span>
         </Draggable>
@@ -203,13 +214,13 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     );
   };
 
-  private resizeRow = ({
+  resizeRow = ({
     dataKey,
     deltaX
   }: {
-      dataKey: string;
-      deltaX: number;
-    }) => {
+    dataKey: string;
+    deltaX: number;
+  }) => {
     window.requestAnimationFrame(() => {
       this.setState(prevState => {
         const prevWidths = prevState.widths;
@@ -229,13 +240,13 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     });
   };
 
-  private msToTime(ms: number) {
+  msToTime(ms: number) {
     const minutes = Math.floor(ms / 60000);
     const seconds = ((ms % 60000) / 1000).toFixed(0);
     return minutes + ":" + (Number(seconds) < 10 ? "0" : "") + seconds;
   }
 
-  private fileTypeString(fileType: TrackFileType) {
+  fileTypeString(fileType: TrackFileType) {
     switch (fileType) {
       case TrackFileType.FLAC:
         return "FLAC";
@@ -290,29 +301,29 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     }
   }
 
-  private handleDoubleClick(event: RowMouseEventHandlerParams) {
-    const track: Track = event.rowData as any;
+  handleDoubleClick(event: RowMouseEventHandlerParams) {
+    const track: Track = event.rowData;
     const path = window.require<any>("path");
-    const open = window.require<any>("electron").remote.require('opn');
+    const shell = window.require<any>("electron").shell
     const child = window.require<any>("child_process");
     // explicitly use exporer on windows.
     if (window.require<any>('process').platform === 'win32') {
       // open(path.dirname(track.filePath), {app: 'explorer'});
       // tslint:disable-next-line:no-console
       console.log("win32!");
-      child.spawn("explorer", [path.dirname(track.filePath)], {detached: true})
+      child.spawn("explorer", [path.dirname(track.filePath)], { detached: true })
     } else {
-            // tslint:disable-next-line:no-console
-      open(path.dirname(track.filePath));
+      // tslint:disable-next-line:no-console
+      shell.openExternal(path.dirname(track.filePath));
     }
   }
 
   // tslint:disable:no-shadowed-variable
-  private handleClick(event: RowMouseEventHandlerParams) {
+  handleClick(event: RowMouseEventHandlerParams) {
     // tslint:disable-next-line:no-console
-    const mouseEvent = event.event as React.MouseEvent<any>;
+    const mouseEvent = event.event;
     if (this.state.lastSelected === undefined) {
-      const newSelection = !!!this.state.selected[event.index];
+      const newSelection = !!!this.state.selected?.[event.index];
       const clearState = [];
       clearState[event.index] = newSelection;
       this.setState({ selected: clearState, lastSelected: event.index });
@@ -338,27 +349,29 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       const selected = this.state.selected;
       // tslint:disable-next-line:no-console
       console.log(event.index);
-      selected[event.index] = !!!this.state.selected[event.index];
+      if (selected) {
+        selected[event.index] = !!!this.state.selected?.[event.index];
+      }
       this.setState({ selected, lastSelected: event.index });
       return;
     }
-    const newSelection = !!!this.state.selected[event.index];
+    const newSelection = !!!this.state.selected?.[event.index];
     const clearState = [];
     clearState[event.index] = newSelection;
     this.setState({ selected: clearState, lastSelected: event.index });
     return;
   }
 
-  private albumArtistCellRenderer = ({ cellData } : { cellData: any }) => (cellData || []).join(";") 
-  private durationCellRenderer = ({ cellData } : { cellData: any }) => this.msToTime(cellData)
-  private fileTypeCellRenderer = ({ cellData } : { cellData: any }) => this.fileTypeString(cellData)
-  private hasCoverArtCellRenderer = ({ cellData } : { cellData: any}) => (cellData ? "Yes" : "No")
+  albumArtistCellRenderer: TableCellRenderer = ({ cellData }: { cellData?: string[] }) => (cellData || []).join(";")
+  durationCellRenderer: TableCellRenderer = ({ cellData }: { cellData?: number }) => this.msToTime(cellData ?? 0)
+  fileTypeCellRenderer: TableCellRenderer = ({ cellData }: { cellData?: TrackFileType }) => this.fileTypeString(cellData ?? TrackFileType.Unknown)
+  hasCoverArtCellRenderer: TableCellRenderer = ({ cellData }: { cellData?: boolean }) => (cellData ? "Yes" : "No")
   // tslint:disable-next-line:member-ordering
-  public render() {
+  render() {
     return (
       <div className={this.props.hidden ? "table-container hidden" : "table-container"}>
         <WindowScroller>
-          {({ height, isScrolling, registerChild, scrollTop }) => (
+          {({ height, isScrolling, scrollTop }: { height: number, isScrolling: boolean, scrollTop: number }) => (
             <Table
               // tslint:disable-next-line:jsx-no-string-ref
               autoHeight={true}
@@ -409,21 +422,21 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
                 width={this.state.widths.albumArtists * TOTAL_WIDTH}
                 label="Album Artists"
                 dataKey="albumArtists"
-                cellRenderer={this.albumArtistCellRenderer as any}
+                cellRenderer={this.albumArtistCellRenderer}
               />
               <Column
                 headerRenderer={this.headerRenderer}
                 width={this.state.widths.duration * TOTAL_WIDTH}
                 label="Duration"
                 dataKey="duration"
-                cellRenderer={this.durationCellRenderer as any}
+                cellRenderer={this.durationCellRenderer}
               />
               <Column
                 headerRenderer={this.headerRenderer}
                 width={this.state.widths.fileType * TOTAL_WIDTH}
                 label="File Type"
                 dataKey="fileType"
-                cellRenderer={this.fileTypeCellRenderer as any}
+                cellRenderer={this.fileTypeCellRenderer}
               />
               <Column
                 headerRenderer={this.headerRenderer}
@@ -442,7 +455,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
                 width={this.state.widths.hasCoverArt * TOTAL_WIDTH}
                 label="Art"
                 dataKey="hasFrontCover"
-                cellRenderer={this.hasCoverArtCellRenderer as any}
+                cellRenderer={this.hasCoverArtCellRenderer}
               />
               <Column
                 headerRenderer={this.headerRenderer}
