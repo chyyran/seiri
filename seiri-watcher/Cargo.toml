@@ -11,8 +11,7 @@ walkdir = "2"
 threadpool = "1.7.1"
 crossbeam = "0.8.0"
 leak = "0.1.2"
-notify = "5.0.0-pre.4"
-seiri = "2.0.11"
+seiri = "2.0.12"
 
-# [dependencies.seiri]
-# path = "../seiri-lib"
+[dependencies.notify]
+path = "./notify"
