@@ -57,7 +57,7 @@ export const updateTracksTick = createAsync<{}, {}>("UPDATE_TRACKS_TICK", (query
         console.log(err);
     }
 
-    window.setTimeout(() => dispatch(updateTracksTick.action()), 30000)
+    window.setTimeout(() => dispatch(updateTracksTick.action({})), 30000)
     return { type: "UPDATE_TRACKS_TICK" }
 })
 export type SeiriAction = UpdateQuery | UpdateTracks;

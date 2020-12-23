@@ -1,6 +1,7 @@
-import * as React from "react";
+import React from "react";
 import { DebounceInput } from "react-debounce-input";
-import { connect, Dispatch } from "react-redux";
+import { connect } from "react-redux";
+import { Dispatch } from "redux";
 import { updateQuery, updateTracksTick } from "./actions";
 import Helper from "./BangHelper";
 import ElectronWindow from "./ElectronWindow";
@@ -33,19 +34,19 @@ const mapDispatchToProps = (
 
 // tslint:disable:jsx-no-lambda
 class View extends React.Component<ViewProps, ViewState> {
-  private queryInput: HTMLInputElement | null;
+  queryInput: HTMLInputElement | null;
   constructor(props: ViewProps) {
     super(props);
     window.setTimeout(() => {
-      this.props.dispatch!(updateQuery.action({ query: "" }));
-      this.props.dispatch!(updateTracksTick.action());
+      this.props.dispatch?.(updateQuery.action({ query: "" }));
+      this.props.dispatch?.(updateTracksTick.action({}));
     }, 0);
     this.state = {
       showBangs: false,
     }
     window.addEventListener("keydown", event => {
       if (!(event.ctrlKey || event.altKey)) {
-        this.queryInput!.focus();
+        this.queryInput?.focus();
         return false;
       } else {
         return true;
@@ -53,7 +54,7 @@ class View extends React.Component<ViewProps, ViewState> {
     });
   }
 
-  public componentWillReceiveProps(newProps: ViewProps) {
+  componentWillReceiveProps(newProps: ViewProps) {
     if (newProps.query === "??bangs") {
       // tslint:disable-next-line:no-console
       console.log("bang query detcted.");
@@ -64,7 +65,7 @@ class View extends React.Component<ViewProps, ViewState> {
     }
   }
 
-  public render() {
+  render() {
     return (
       <div className={this.props.tracks.length === 0 ? "container no-overflow" : "container"}>
       
@@ -85,7 +86,7 @@ class View extends React.Component<ViewProps, ViewState> {
             // tslint:disable-next-line:no-console
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               // tslint:disable-next-line:no-console
-              this.props.dispatch!(
+              this.props.dispatch?.(
                 updateQuery.action({ query: e.target.value })
               );
             }}
@@ -99,14 +100,14 @@ class View extends React.Component<ViewProps, ViewState> {
             hidden={this.state.showBangs}
             tracks={this.props.tracks}
             query={this.props.query}
-            dispatch={this.props.dispatch!}
+            dispatch={this.props.dispatch}
           />
           <Helper hidden={!this.state.showBangs} />
         </div>
       </div>
     );
   }
-  private hide() {
+  hide() {
     window.require<any>('electron').remote.getCurrentWindow().hide();
   }
 }

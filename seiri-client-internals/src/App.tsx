@@ -1,9 +1,9 @@
-import * as React from "react";
+import React from "react";
 import "./App.css";
 import View from "./View";
 // tslint:disable:jsx-no-lambda
 class App extends React.Component {
-  public render() {
+  render() {
     return (
       <View/>
     );

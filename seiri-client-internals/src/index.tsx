@@ -1,5 +1,4 @@
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import ReactDOM from "react-dom";
 import { Provider } from 'react-redux'
 import thunk from "redux-thunk";
 import App from "./App";
@@ -8,7 +7,7 @@ import State from "./State"
 
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
-import { reducerWithInitialState } from 'typescript-fsa-reducers';
+import { reducerWithInitialState } from "typescript-fsa-reducers";
 import { updateQuery, updateSelectedCount, updateTracks, updateTracksTick } from "./actions";
 
 const initialState: State = {
@@ -40,7 +39,7 @@ const store = createStore(reducer,
 );
 
 ReactDOM.render(
-  <Provider store={store}>
+  (<Provider store={store}>
     <App />
-  </Provider>, 
-document.getElementById("root") as HTMLElement);
+  </Provider>),
+  document.getElementById("root"));
