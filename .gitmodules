@@ -1,0 +1,3 @@
+[submodule "seiri-watcher/notify"]
+	path = seiri-watcher/notify
+	url = https://github.com/chyyran/notify
