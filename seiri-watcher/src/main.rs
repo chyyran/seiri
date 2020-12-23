@@ -1,5 +1,3 @@
-#![feature(toowned_clone_into)]
-
 use crossbeam::channel::{select, unbounded, Receiver, Sender};
 use leak::Leak;
 

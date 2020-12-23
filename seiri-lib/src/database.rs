@@ -124,7 +124,7 @@ pub fn create_database(conn: &Connection) {
 #[allow(dead_code)]
 pub fn enable_wal_mode(conn: &Connection) -> Result<()> {
     let mut statement = conn.prepare("PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;")?;
-    statement.execute(NO_PARAMS)?;
+    let _ = statement.query(NO_PARAMS)?;
     Ok(())
 }
 
