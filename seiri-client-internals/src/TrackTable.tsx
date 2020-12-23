@@ -18,15 +18,11 @@ import {
 } from "react-virtualized";
 import "react-virtualized/styles.css"; // only needs to be imported once
 import { updateSelectedCount, updateTracksTick } from "./actions";
-import ElectronWindow from "./ElectronWindow";
-import seiri from "./seiri-neon";
 import "./Table.css";
 import { Track, TrackFileType } from "./types";
 
-declare var window: ElectronWindow;
-
 const toLodashDirection = (direction: SortDirectionType) => {
-  switch(direction) {
+  switch (direction) {
     case "ASC":
       return "asc";
     case "DESC":
@@ -46,7 +42,7 @@ interface TrackTableState {
   sortBy: string;
   sortDirection: SortDirectionType;
   sortedList: Track[];
-  selected:  boolean[] | undefined ;
+  selected: boolean[] | undefined;
   lastSelected: number | undefined;
 }
 
@@ -54,10 +50,13 @@ const TOTAL_WIDTH = 3000;
 
 // tslint:disable:jsx-no-lambda
 class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
+  tableRef: React.RefObject<Table>;
+
   constructor(props: TrackTableProps) {
     super(props);
     const sortBy = "updated";
-    const sortDirection = SortDirection.ASC;
+    const sortDirection = SortDirection.DESC;
+    this.tableRef = React.createRef<Table>();
     this.state = {
       // tslint:disable:object-literal-sort-keys
       widths: {
@@ -84,19 +83,61 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       selected: [],
       lastSelected: undefined
     };
+    window.addEventListener("keydown", event => {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        let newSelected = this.state.lastSelected
+        if (newSelected === undefined) {
+          newSelected = 0
+        } else {
+          if (event.key === "ArrowDown") newSelected++;
+          if (event.key === "ArrowUp") newSelected--;
+
+          if (newSelected < 0) newSelected = 0;
+          if (newSelected >= this.props.tracks.length) newSelected = this.props.tracks.length - 1;
+        }
+
+
+        if (event.shiftKey) {
+          // const selectedIndexes = Object.keys(this.state.selected) as any as number[];
+          let newSelectionKeys = [];
+          const selected = this.state.selected ?? [];
+          const lastSelected = this.state.lastSelected ?? 0;
+          
+          if (event.key === "ArrowDown") {
+            
+          }
+
+          if (newSelected > lastSelected) {
+            newSelectionKeys = range(lastSelected, newSelected + 1);
+          } else {
+            newSelectionKeys = range(newSelected, lastSelected + 1);
+          }
+          for (const key of newSelectionKeys) {
+            selected[key] = true;
+          }
+          this.setState({ selected, lastSelected: lastSelected });
+          return;
+        } else {
+          const clearState = [];
+          clearState[newSelected] = true;
+          this.setState({ selected: clearState, lastSelected: newSelected });
+          this.tableRef?.current?.scrollToPosition(newSelected);
+        }
+      }
+
+    });
     Mousetrap.bind(['command+r', 'ctrl+r'], () => {
       // tslint:disable-next-line:no-console
-      console.log("bound!")
       const tracksToRefresh = this.state.sortedList.filter(
         (track, index) => this.state.selected?.[index] === true
       ).map(track => track.filePath);
 
-      seiri.refreshTracks(tracksToRefresh)
+      window.seiri.refreshTracks(tracksToRefresh)
       // tslint:disable-next-line:no-console
       console.log("REFRESHED!");
       // tslint:disable-next-line:no-console
       console.log(tracksToRefresh);
-      this.setState({ selected: [] });
+      this.setState({ selected: [], lastSelected: undefined });
       this.props.dispatch?.(updateTracksTick.action({}));
       return false;
     });
@@ -175,7 +216,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     return _(
       list,
       [sortBy, "album", "tracknumber"],
-      toLodashDirection(sortDirection)
+      [toLodashDirection(sortDirection), "asc", "asc"]
     );
   }
 
@@ -303,19 +344,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
 
   handleDoubleClick(event: RowMouseEventHandlerParams) {
     const track: Track = event.rowData;
-    const path = window.require<any>("path");
-    const shell = window.require<any>("electron").shell
-    const child = window.require<any>("child_process");
-    // explicitly use exporer on windows.
-    if (window.require<any>('process').platform === 'win32') {
-      // open(path.dirname(track.filePath), {app: 'explorer'});
-      // tslint:disable-next-line:no-console
-      console.log("win32!");
-      child.spawn("explorer", [path.dirname(track.filePath)], { detached: true })
-    } else {
-      // tslint:disable-next-line:no-console
-      shell.openExternal(path.dirname(track.filePath));
-    }
+    window.seiri.openTrackFolder(track);
   }
 
   // tslint:disable:no-shadowed-variable
@@ -373,6 +402,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
         <WindowScroller>
           {({ height, isScrolling, scrollTop }: { height: number, isScrolling: boolean, scrollTop: number }) => (
             <Table
+              ref={this.tableRef}
               // tslint:disable-next-line:jsx-no-string-ref
               autoHeight={true}
               isScrolling={isScrolling}

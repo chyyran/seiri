@@ -1,6 +1,6 @@
 {
   "name": "seiri-client",
-  "version": "0.2.9",
+  "version": "0.2.11",
   "license": "MIT",
   "main": "main.js",
   "appId": "moe.chyyran.seiri",
@@ -48,18 +48,17 @@
     }
   },
   "dependencies": {
-    "electron-is-dev": "^1.0.1",
-    "electron-log": "^2.2.17",
-    "electron-updater": "^3.2.3",
-    "node-notifier": "^5.3.0",
-    "opn": "^5.4.0",
+    "electron-is-dev": "^1.2.0",
+    "electron-log": "^4.3.1",
+    "electron-updater": "^4.3.5",
+    "node-notifier": "^9.0.0",
     "seiri-neon": "../seiri-neon",
     "toml-js": "^0.0.8"
   },
   "devDependencies": {
-    "electron": "^3.0.9",
+    "electron": "^11.1.1",
     "electron-build-env": "^0.2",
-    "electron-builder": "^20.34.0",
-    "neon-cli": "^0.2.0"
+    "electron-builder": "^22.9.1",
+    "neon-cli": "^0.6.0"
   }
 }

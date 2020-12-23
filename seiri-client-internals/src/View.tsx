@@ -4,13 +4,11 @@ import { connect } from "react-redux";
 import { Dispatch } from "redux";
 import { updateQuery, updateTracksTick } from "./actions";
 import Helper from "./BangHelper";
-import ElectronWindow from "./ElectronWindow";
 import State from "./State";
 import TrackTable from "./TrackTable";
 import { Track } from "./types";
 import "./View.css";
 
-declare var window: ElectronWindow;
 interface ViewProps {
   tracks: Track[];
   query: string;
@@ -45,7 +43,7 @@ class View extends React.Component<ViewProps, ViewState> {
       showBangs: false,
     }
     window.addEventListener("keydown", event => {
-      if (!(event.ctrlKey || event.altKey)) {
+      if (!(event.ctrlKey || event.altKey || event.key === "ArrowUp" || event.key === "ArrowDown")) {
         this.queryInput?.focus();
         return false;
       } else {
@@ -108,7 +106,7 @@ class View extends React.Component<ViewProps, ViewState> {
     );
   }
   hide() {
-    window.require<any>('electron').remote.getCurrentWindow().hide();
+    window.seiri.hideWindow();
   }
 }
 
