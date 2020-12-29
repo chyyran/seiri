@@ -12,12 +12,23 @@
   font-family: "Segoe UI", "Noto Sans CJK JP";
   color: #212121;
   background-clip: content-box;
+  box-sizing: border-box;
 }
 
 .selected {
-  background-color: #37474f;
+  background-color: #4e6570;
   color: white;
 }
+
+.selected.pivot {
+  background-color: #37474f;
+  color: white;
+} 
+
+.cursor {
+  box-shadow:inset 0px 0px 0px 1.1px #d6d6d6;
+}
+
 .table-container {
   height: 100%;
   width: 100%;
@@ -25,6 +36,7 @@
 
 
 .ReactVirtualized__Table__rowColumn {
+  box-sizing: border-box;
   border-right: solid 1px #BDBDBD;
   padding: 12px 2px;
 }

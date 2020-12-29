@@ -43,7 +43,8 @@ interface TrackTableState {
   sortDirection: SortDirectionType;
   sortedList: Track[];
   selected: boolean[] | undefined;
-  lastSelected: number | undefined;
+  cursor: number | undefined;
+  pivot: number | undefined;
 }
 
 const TOTAL_WIDTH = 3000;
@@ -81,11 +82,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       sortDirection,
       sortedList: this.sortList({ list: this.props.tracks, sortBy, sortDirection }),
       selected: [],
-      lastSelected: undefined
+      cursor: undefined,
+      pivot: undefined,
     };
     window.addEventListener("keydown", event => {
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        let newSelected = this.state.lastSelected
+        let newSelected = this.state.cursor
         if (newSelected === undefined) {
           newSelected = 0
         } else {
@@ -98,29 +100,30 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
 
 
         if (event.shiftKey) {
-          // const selectedIndexes = Object.keys(this.state.selected) as any as number[];
+          // everything between the cursor and the pivot is selected.
           let newSelectionKeys = [];
-          const selected = this.state.selected ?? [];
-          const lastSelected = this.state.lastSelected ?? 0;
-          
-          if (event.key === "ArrowDown") {
-            
-          }
+          const selected = [];
+          const lastSelected = this.state.pivot ?? 0;
 
           if (newSelected > lastSelected) {
             newSelectionKeys = range(lastSelected, newSelected + 1);
           } else {
             newSelectionKeys = range(newSelected, lastSelected + 1);
           }
+          
           for (const key of newSelectionKeys) {
             selected[key] = true;
           }
-          this.setState({ selected, lastSelected: lastSelected });
+
+          this.setState({ selected, cursor: newSelected });
           return;
+        } else if (event.ctrlKey) {
+          this.setState({ cursor: newSelected });
+          this.tableRef?.current?.scrollToPosition(newSelected);
         } else {
           const clearState = [];
           clearState[newSelected] = true;
-          this.setState({ selected: clearState, lastSelected: newSelected });
+          this.setState({ selected: clearState, cursor: newSelected, pivot: newSelected });
           this.tableRef?.current?.scrollToPosition(newSelected);
         }
       }
@@ -137,7 +140,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       console.log("REFRESHED!");
       // tslint:disable-next-line:no-console
       console.log(tracksToRefresh);
-      this.setState({ selected: [], lastSelected: undefined });
+      this.setState({ selected: [], cursor: undefined, pivot: undefined });
       this.props.dispatch?.(updateTracksTick.action({}));
       return false;
     });
@@ -162,7 +165,8 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       this.setState({
         sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }),
         selected: [],
-        lastSelected: undefined
+        cursor: undefined,
+        pivot: undefined,
       });
     } else {
       this.setState({ sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }) });
@@ -176,6 +180,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     let tableRowClass = "table-row";
     if (!!this.state.selected?.[index]) {
       tableRowClass += " selected";
+    }
+    if (this.state.cursor === index) {
+      tableRowClass += " cursor";
+    }
+    if (this.state.pivot === index) {
+      tableRowClass += " pivot";
     }
     if (index % 2 === 0) {
       tableRowClass += " evenRow";
@@ -201,7 +211,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   }) {
     const sortedList = this.sortList({ list: this.props.tracks, sortBy, sortDirection });
 
-    this.setState({ sortBy, sortDirection, sortedList });
+    this.setState({ 
+      sortBy, sortDirection, sortedList,
+      selected: [],
+      cursor: undefined,
+      pivot: undefined
+    });
   }
 
   sortList({
@@ -351,18 +366,18 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   handleClick(event: RowMouseEventHandlerParams) {
     // tslint:disable-next-line:no-console
     const mouseEvent = event.event;
-    if (this.state.lastSelected === undefined) {
+    if (this.state.pivot === undefined) {
       const newSelection = !!!this.state.selected?.[event.index];
       const clearState = [];
       clearState[event.index] = newSelection;
-      this.setState({ selected: clearState, lastSelected: event.index });
+      this.setState({ selected: clearState, cursor: event.index, pivot: event.index });
       return;
     }
     if (mouseEvent.shiftKey) {
       // const selectedIndexes = Object.keys(this.state.selected) as any as number[];
       let newSelectionKeys = [];
       const selected = [];
-      const lastSelected = this.state.lastSelected;
+      const lastSelected = this.state.pivot;
       if (event.index > lastSelected) {
         newSelectionKeys = range(lastSelected, event.index + 1);
       } else {
@@ -371,23 +386,21 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       for (const key of newSelectionKeys) {
         selected[key] = true;
       }
-      this.setState({ selected });
+      this.setState({ selected, cursor: event.index, pivot: event.index });
       return;
     }
     if (mouseEvent.ctrlKey) {
       const selected = this.state.selected;
-      // tslint:disable-next-line:no-console
-      console.log(event.index);
       if (selected) {
         selected[event.index] = !!!this.state.selected?.[event.index];
       }
-      this.setState({ selected, lastSelected: event.index });
+      this.setState({ selected, cursor: event.index, pivot: event.index });
       return;
     }
     const newSelection = !!!this.state.selected?.[event.index];
     const clearState = [];
     clearState[event.index] = newSelection;
-    this.setState({ selected: clearState, lastSelected: event.index });
+    this.setState({ selected: clearState, cursor: event.index, pivot: event.index });
     return;
   }
 
