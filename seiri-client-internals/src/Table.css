@@ -15,7 +15,7 @@
   box-sizing: border-box;
 }
 
-.selected {
+.selected, .ReactVirtualized__Table__Grid .table-row:not(.selected):hover {
   background-color: #4e6570;
   color: white;
 }
