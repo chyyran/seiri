@@ -14,7 +14,7 @@ CMake [3.12](https://cmake.org/) or higher is required to build `libkatatsuki-sy
 
 3. Node
 
-Building *seiri-neon* requires Node 8.11.1 LTS. Install Node at https://nodejs.org/en/ or through your package manager of choice. 
+Building *seiri-neon* requires Node 14 LTS. Install Node at https://nodejs.org/en/ or through your package manager of choice. 
 
 After, install the `neon` tool using `npm install -g neon-cli`.
 
@@ -32,9 +32,9 @@ If the build was successful, copy the resulting artifact `seiri-watcher`, or `se
 
 2. Building *seiri-client-internals*
 ```bash
-$ npm install
-$ npm build
-$ npm pack-asar
+$ yarn install
+$ yarn build
+$ yarn run pack-asar
 ```
 If the build was successful, copy the resulting artifact `ui.asar` to the `seiri-client` folder.
 
@@ -42,9 +42,9 @@ If the build was successful, copy the resulting artifact `ui.asar` to the `seiri
 Before you build *seiri-client*, ensure that the *seiri-watcher* binary and the *ui.asar* file is present in the same folder as *package.json*.
 
 ```bash
-$ npm install
-$ npm build
-$ npm dist
+$ yarn install
+$ yarn build
+$ yarn run dist
 ```
 
 For more information on building the installation bundle, see https://www.electron.build/
