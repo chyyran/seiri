@@ -48,9 +48,6 @@ export const updateTracksTick = createAsync<{}, {}>("UPDATE_TRACKS_TICK", (query
     const state = getState();
     try {
         const tracks = window.seiri.queryTracks(state.query)
-        console.log(tracks)
-         // tslint:disable-next-line:no-console
-        console.log("tick!")
         dispatch(updateTracks(tracks))
     } catch (err) {
         // tslint:disable-next-line:no-console

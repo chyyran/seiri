@@ -43,29 +43,24 @@ class View extends React.Component<ViewProps, ViewState> {
       showBangs: false,
     }
     window.addEventListener("keydown", event => {
+      event.key
       if (!(event.ctrlKey || event.altKey || event.key === "ArrowUp" || event.key === "ArrowDown")) {
         this.queryInput?.focus();
-        return false;
-      } else {
-        return true;
       }
     });
   }
 
-  componentWillReceiveProps(newProps: ViewProps) {
+  static getDerivedStateFromProps(newProps: ViewProps) {
     if (newProps.query === "??bangs") {
-      // tslint:disable-next-line:no-console
-      console.log("bang query detcted.");
-      this.setState({ showBangs: true })
-
+      return { showBangs: true }
     } else {
-      this.setState({ showBangs: false })
+      return { showBangs: false }
     }
   }
 
   render() {
     return (
-      <div className={this.props.tracks.length === 0 ? "container no-overflow" : "container"}>
+      <div className="container no-overflow">
       
         <div className="main-bar">
         <button className="btn-quit" onClick={() => this.hide()}>

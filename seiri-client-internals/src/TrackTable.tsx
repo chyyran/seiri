@@ -46,6 +46,8 @@ interface TrackTableState {
   selected: boolean[] | undefined;
   cursor: number | undefined;
   pivot: number | undefined;
+  prevTrackLength?: number,
+  prevQuery?: string,
 }
 
 const TOTAL_WIDTH = 3000;
@@ -81,7 +83,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       },
       sortBy,
       sortDirection,
-      sortedList: this.sortList({ list: this.props.tracks, sortBy, sortDirection }),
+      sortedList: TrackTable.sortList({ list: this.props.tracks, sortBy, sortDirection }),
       selected: [],
       cursor: undefined,
       pivot: undefined,
@@ -104,7 +106,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
           // everything between the cursor and the pivot is selected.
           let newSelectionKeys = [];
           const selected = [];
-          const lastSelected = this.state.pivot ?? 0;
+          const lastSelected = this.state.pivot ?? newSelected;
 
           if (newSelected > lastSelected) {
             newSelectionKeys = range(lastSelected, newSelected + 1);
@@ -115,8 +117,8 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
           for (const key of newSelectionKeys) {
             selected[key] = true;
           }
-
-          this.setState({ selected, cursor: newSelected });
+          
+          this.setState(this.asSelected(selected, newSelected, this.state.pivot ?? newSelected));
           return;
         } else if (event.ctrlKey) {
           this.setState({ cursor: newSelected });
@@ -124,7 +126,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
         } else {
           const clearState = [];
           clearState[newSelected] = true;
-          this.setState({ selected: clearState, cursor: newSelected, pivot: newSelected });
+          this.setState(this.asSelected(clearState, newSelected, newSelected));
           this.tableRef?.current?.scrollToPosition(newSelected);
         }
       }
@@ -132,15 +134,15 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     });
     Mousetrap.bindGlobal(['command+r', 'ctrl+r'], () => {
       const tracksToRefresh = this.state.sortedList.filter(
-        (track, index) => this.state.selected?.[index] === true
+        (_track, index) => this.state.selected?.[index] === true
       ).map(track => track.filePath);
 
       window.seiri.refreshTracks(tracksToRefresh)
       // tslint:disable-next-line:no-console
-      console.log("REFRESHED!");
+      // console.log("REFRESHED!");
       // tslint:disable-next-line:no-console
-      console.log(tracksToRefresh);
-      this.setState({ selected: [], cursor: undefined, pivot: undefined });
+      // console.log(tracksToRefresh);
+      this.setState(this.asSelected([], undefined, undefined));
       this.props.dispatch?.(updateTracksTick.action({}));
       return false;
     });
@@ -155,21 +157,29 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     this.hasCoverArtCellRenderer = this.hasCoverArtCellRenderer.bind(this);
   }
 
-  componentWillUpdate(nextProps: TrackTableProps, nextState: TrackTableState) {
-    this.props.dispatch?.(updateSelectedCount({ count: nextState.selected?.filter(s => s).length ?? 0 }));
+  asSelected(selected: boolean[], cursor: number | undefined, pivot: number | undefined) 
+  {
+    this.props.dispatch?.(updateSelectedCount({ count: selected.filter(s => s).length ?? 0 }));
+    return { selected, cursor, pivot }
   }
 
-  componentWillReceiveProps(newProps: TrackTableProps) {
-    const { sortBy, sortDirection } = this.state;
-    if (newProps.query !== this.props.query || newProps.tracks.length !== this.props.tracks.length) {
-      this.setState({
-        sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }),
+  static getDerivedStateFromProps(newProps: TrackTableProps, prevState: TrackTableState) 
+  {
+    const { sortBy, sortDirection, prevQuery, prevTrackLength } = prevState;
+
+    // Need this so setting selected stuff actually works
+    if (newProps.query !== prevQuery || newProps.tracks.length !== prevTrackLength) {
+      newProps.dispatch?.(updateSelectedCount({ count: 0 }))
+      return { 
+        sortedList: TrackTable.sortList({ list: newProps.tracks, sortBy, sortDirection }),
         selected: [],
-        cursor: undefined,
+        cursor: undefined, 
         pivot: undefined,
-      });
+        prevQuery: newProps.query,
+        prevTrackLength: newProps.tracks.length
+      }
     } else {
-      this.setState({ sortedList: this.sortList({ list: newProps.tracks, sortBy, sortDirection }) });
+      return { sortedList: TrackTable.sortList({ list: newProps.tracks, sortBy, sortDirection }) }
     }
   }
 
@@ -209,17 +219,15 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
     sortBy: string;
     sortDirection: SortDirectionType;
   }) {
-    const sortedList = this.sortList({ list: this.props.tracks, sortBy, sortDirection });
+    const sortedList = TrackTable.sortList({ list: this.props.tracks, sortBy, sortDirection });
 
     this.setState({ 
       sortBy, sortDirection, sortedList,
-      selected: [],
-      cursor: undefined,
-      pivot: undefined
+      ...this.asSelected([], undefined, undefined)
     });
   }
 
-  sortList({
+  static sortList({
     list,
     sortBy,
     sortDirection
@@ -236,7 +244,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   }
 
   headerResizeHandler(dataKey: string, event: MouseEvent, { deltaX }: DraggableData) {
-    
+
     this.resizeRow({
       dataKey,
       deltaX
@@ -362,13 +370,12 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
 
   // tslint:disable:no-shadowed-variable
   handleClick(event: RowMouseEventHandlerParams) {
-    // tslint:disable-next-line:no-console
     const mouseEvent = event.event;
     if (this.state.pivot === undefined) {
       const newSelection = !!!this.state.selected?.[event.index];
       const clearState = [];
       clearState[event.index] = newSelection;
-      this.setState({ selected: clearState, cursor: event.index, pivot: event.index });
+      this.setState(this.asSelected(clearState, event.index, event.index));
       return;
     }
     if (mouseEvent.shiftKey) {
@@ -384,21 +391,22 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       for (const key of newSelectionKeys) {
         selected[key] = true;
       }
-      this.setState({ selected, cursor: event.index, pivot: event.index });
+      this.setState(this.asSelected(selected, event.index, this.state.pivot));
       return;
     }
     if (mouseEvent.ctrlKey) {
       const selected = this.state.selected;
       if (selected) {
         selected[event.index] = !!!this.state.selected?.[event.index];
+        this.setState(this.asSelected(selected, event.index, event.index));
       }
-      this.setState({ selected, cursor: event.index, pivot: event.index });
       return;
     }
-    const newSelection = !!!this.state.selected?.[event.index];
+    
+    const newSelection = this.state.pivot !== event.index;
     const clearState = [];
     clearState[event.index] = newSelection;
-    this.setState({ selected: clearState, cursor: event.index, pivot: event.index });
+    this.setState(this.asSelected(clearState, event.index, newSelection ? event.index : undefined));
     return;
   }
 

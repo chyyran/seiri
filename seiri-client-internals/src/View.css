@@ -51,6 +51,7 @@
 .hidden {
     visibility: hidden;
 }
+
 .btn-quit:focus {
     outline: none;
 }
