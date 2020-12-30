@@ -60,7 +60,7 @@ class View extends React.Component<ViewProps, ViewState> {
 
   render() {
     return (
-      <div className="container no-overflow">
+      <div className={this.props.tracks.length === 0 ? "container no-overflow" : "container"}>
       
         <div className="main-bar">
         <button className="btn-quit" onClick={() => this.hide()}>
