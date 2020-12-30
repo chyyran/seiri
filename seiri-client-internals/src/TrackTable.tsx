@@ -1,7 +1,8 @@
 import React from "react";
 
 import { orderBy as _, range } from "lodash";
-import * as Mousetrap from "mousetrap";
+import Mousetrap from "mousetrap";
+import 'mousetrap-global-bind';
 import { DraggableData, DraggableCore } from "react-draggable";
 import { Dispatch } from "redux";
 import {
@@ -129,8 +130,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
       }
 
     });
-    Mousetrap.bind(['command+r', 'ctrl+r'], () => {
-      // tslint:disable-next-line:no-console
+    Mousetrap.bindGlobal(['command+r', 'ctrl+r'], () => {
       const tracksToRefresh = this.state.sortedList.filter(
         (track, index) => this.state.selected?.[index] === true
       ).map(track => track.filePath);
