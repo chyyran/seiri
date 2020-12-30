@@ -12,7 +12,6 @@
     "lodash": "^4.17.20",
     "mousetrap": "^1.6.5",
     "react": "^17.0.1",
-    "react-data-grid": "^7.0.0-canary.33",
     "react-debounce-input": "^3.2.3",
     "react-dom": "^17.0.1",
     "react-draggable": "^4.4.3",

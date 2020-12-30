@@ -36,7 +36,6 @@
 
 
 .ReactVirtualized__Table__rowColumn {
-  box-sizing: border-box;
   border-right: solid 1px #BDBDBD;
   padding: 12px 2px;
 }
@@ -87,17 +86,8 @@
   color: rgba(255,255,255,0.7);
   -webkit-app-region: no-drag;
 }
-.DragHandle:hover {
+.DragHandleIcon:hover, .DragHandleIcon:active {
   background-color: rgba(0, 0, 0, 0.1);
-  -webkit-app-region: no-drag;
-
-}
-
-
-.DragHandleActive,
-.DragHandleActive:hover {
-  color: rgba(0, 0, 0, 0.6);
-  z-index: 3;
   -webkit-app-region: no-drag;
 
 }

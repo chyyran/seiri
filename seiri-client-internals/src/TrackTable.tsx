@@ -2,7 +2,7 @@ import React from "react";
 
 import { orderBy as _, range } from "lodash";
 import * as Mousetrap from "mousetrap";
-import Draggable, { DraggableData } from "react-draggable";
+import { DraggableData, DraggableCore } from "react-draggable";
 import { Dispatch } from "redux";
 import {
 
@@ -236,6 +236,7 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
   }
 
   headerResizeHandler(dataKey: string, event: MouseEvent, { deltaX }: DraggableData) {
+    
     this.resizeRow({
       dataKey,
       deltaX
@@ -256,16 +257,13 @@ class TrackTable extends React.Component<TrackTableProps, TrackTableState> {
           <span className="table-header-label">{label}</span>
         </div>
         {sortBy === dataKey && <SortIndicator sortDirection={sortDirection} />}
-        <Draggable
-          axis="x"
-          defaultClassName="DragHandle"
-          defaultClassNameDragging="DragHandleActive"
-          // tslint:disable-next-line:jsx-no-bind
+        <DraggableCore
+          handle=".DragHandleIcon"
+          scale={0.5}
           onDrag={this.headerResizeHandler.bind(this, dataKey)}
-          position={{ x: 0, y: 0 }}
         >
           <span className="DragHandleIcon">⋮</span>
-        </Draggable>
+        </DraggableCore>
       </React.Fragment>
     );
   };
